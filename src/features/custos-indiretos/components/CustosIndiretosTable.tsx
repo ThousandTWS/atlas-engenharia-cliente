@@ -1,0 +1,141 @@
+import React from 'react';
+import {
+  Table,
+  Tag,
+  Space,
+  Button,
+  Tooltip,
+  Popconfirm,
+  Typography,
+} from 'antd';
+import {
+  EditOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
+
+const { Text } = Typography;
+
+export type CustoIndireto = {
+  id: number;
+  data: string;
+  descricao: string;
+  valor: number;
+  categoria: string;
+};
+
+interface CustosIndiretosTableProps {
+  loading?: boolean;
+  dataSource: CustoIndireto[];
+  onEdit: (record: CustoIndireto) => void;
+  onDelete: (id: number) => void;
+}
+
+export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
+  loading,
+  dataSource,
+  onEdit,
+  onDelete,
+}) => {
+  const getCategoriaColor = (categoria: string) => {
+    const categories: Record<string, string> = {
+      'Administrativo': 'blue',
+      'Infraestrutura': 'purple',
+      'Pessoal': 'green',
+      'Marketing': 'magenta',
+      'Outros': 'default',
+    };
+    return categories[categoria] || 'blue';
+  };
+
+  const columns: ColumnsType<CustoIndireto> = [
+    {
+      title: 'Data',
+      dataIndex: 'data',
+      key: 'data',
+      width: 120,
+      render: (date: string) => new Date(date).toLocaleDateString('pt-BR'),
+      sorter: (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime(),
+    },
+    {
+      title: 'Descrição',
+      dataIndex: 'descricao',
+      key: 'descricao',
+      ellipsis: true,
+    },
+    {
+      title: 'Categoria',
+      dataIndex: 'categoria',
+      key: 'categoria',
+      width: 150,
+      render: (categoria: string) => (
+        <Tag color={getCategoriaColor(categoria)}>
+          {categoria}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Valor',
+      dataIndex: 'valor',
+      key: 'valor',
+      width: 150,
+      render: (valor: number) => (
+        <Text strong>
+          {new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          }).format(valor)}
+        </Text>
+      ),
+      sorter: (a, b) => a.valor - b.valor,
+    },
+    {
+      title: 'Ações',
+      key: 'actions',
+      fixed: 'right',
+      width: 110,
+      render: (_, record) => (
+        <Space size="small">
+          <Tooltip title="Editar">
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => onEdit(record)}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="Excluir Custo"
+            description="Tem certeza que deseja excluir este custo indireto?"
+            onConfirm={() => onDelete(record.id)}
+            okText="Sim"
+            cancelText="Não"
+            okButtonProps={{ danger: true }}
+          >
+            <Tooltip title="Excluir">
+              <Button
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+              />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <Table
+      columns={columns}
+      dataSource={dataSource}
+      rowKey="id"
+      loading={loading}
+      scroll={{ x: 800 }}
+      pagination={{
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: (total) => `Total de ${total} registros`,
+      }}
+    />
+  );
+};
