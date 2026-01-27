@@ -1,7 +1,7 @@
 import React from 'react';
 import { Form, Input, Button, Card, Typography, message } from 'antd';
 import { MailOutlined, ArrowLeftOutlined, SendOutlined } from '@ant-design/icons';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 

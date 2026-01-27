@@ -30,7 +30,6 @@ import type { ProcessoAdm } from '../components/ProcessosAdmTable';
 import { ProcessosAdmFilters } from '../components/ProcessosAdmFilters';
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 

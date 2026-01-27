@@ -21,7 +21,6 @@ import {
   HomeOutlined,
   PlusOutlined,
   DollarOutlined,
-  FileTextOutlined,
   FireOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
