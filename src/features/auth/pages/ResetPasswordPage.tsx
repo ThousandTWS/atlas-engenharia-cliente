@@ -1,19 +1,27 @@
 import React from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import { Form, Input, Button, Card, Typography, App } from 'antd';
 import { LockOutlined, SafetyCertificateOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+
+import { authService } from '../../../core/services/authService';
 
 const { Title, Text } = Typography;
 
 export const ResetPasswordPage: React.FC = () => {
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const initialEmail = location.state?.email || '';
 
-  const onFinish = (values: any) => {
-    console.log('Reset password values:', values);
-    message.success('Senha redefinida com sucesso! Faça login com sua nova senha.');
-    navigate('/auth/login');
+  const onFinish = async (values: any) => {
+    try {
+      // O backend agora espera o payload completo incluindo confirmNewPassword
+      await authService.resetPassword(values);
+      message.success('Senha redefinida com sucesso! Faça login com sua nova senha.');
+      navigate('/auth/login');
+    } catch (error: any) {
+      message.error('Erro ao redefinir senha: ' + error.message);
+    }
   };
 
   return (

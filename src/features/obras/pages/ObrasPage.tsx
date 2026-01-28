@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Form,
   Input,
@@ -11,10 +11,10 @@ import {
   Col,
   Typography,
   Space,
-  message,
   Breadcrumb,
   Grid,
   Modal,
+  App,
 } from 'antd';
 import {
   SaveOutlined,
@@ -26,67 +26,97 @@ import {
 import dayjs from 'dayjs';
 import { ObrasTable } from '../components/ObrasTable';
 import { ObrasFilters } from '../components/ObrasFilters';
+import { GenericChart } from '../../../shared/components/charts/GenericChart';
+import { obrasService } from '../../../core/services/obrasService';
+import type { Obra } from '../../../core/services/obrasService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 
-// Dados mockados para exibição inicial
-const MOCK_DATA: any[] = [
-  {
-    id: 1,
-    codigo: 'OBRA-2024-001',
-    nomeCliente: 'Construtora Rocha',
-    endereco: 'Rua das Palmeiras, 123',
-    telefone: '(11) 98888-7777',
-    servico: 'Reforma estrutural',
-    situacao: 'EM_ANDAMENTO',
-    descricaoSituacao: 'Finalizando a fundação',
-    valorContrato: 50000,
-    dataContrato: '2023-11-01',
-    nf: 'NF-100',
-    condicaoPagamento: 'Entrada + 3x',
-    aReceber: 30000,
-    recebido: 20000,
-    custos: 15000,
-  },
-  {
-    id: 2,
-    codigo: 'OBRA-2024-002',
-    nomeCliente: 'Condomínio Solar',
-    servico: 'Pintura Fachada',
-    situacao: 'PENDENTE',
-    valorContrato: 12000,
-    dataContrato: '2024-01-15',
-  }
-];
-
 export const ObrasPage: React.FC = () => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingObra, setEditingObra] = useState<any>(null);
-  const [obras, setObras] = useState(MOCK_DATA);
+  const [obras, setObras] = useState<Obra[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const [filters, setFilters] = useState<any>({});
 
-  const onFinish = (values: any) => {
-    if (editingObra) {
-      setObras(prev => prev.map(o => o.id === editingObra.id ? { ...o, ...values } : o));
-      message.success('Obra atualizada com sucesso');
-    } else {
-      const newObra = {
+  const fetchObras = async (page = pagination.current, pageSize = pagination.pageSize, currentFilters = filters) => {
+    setLoading(true);
+    try {
+      const data = await obrasService.getAll({
+        page: page - 1, // API é zero-based
+        size: pageSize,
+        ...currentFilters,
+      });
+      setObras(data.content);
+      setPagination({
+        current: page,
+        pageSize: pageSize,
+        total: data.totalElements,
+      });
+    } catch (error: any) {
+      message.error('Erro ao carregar obras: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchObras();
+  }, []);
+
+  const handleTableChange = (newPagination: any) => {
+    fetchObras(newPagination.current, newPagination.pageSize);
+  };
+
+  const handleSearch = (values: any) => {
+    const formattedFilters: any = { ...values };
+    if (values.periodo && values.periodo.length === 2) {
+      formattedFilters.dataContratoInicio = values.periodo[0].format('YYYY-MM-DD');
+      formattedFilters.dataContratoFim = values.periodo[1].format('YYYY-MM-DD');
+      delete formattedFilters.periodo;
+    }
+    setFilters(formattedFilters);
+    fetchObras(1, pagination.pageSize, formattedFilters);
+  };
+
+  const handleClear = () => {
+    setFilters({});
+    fetchObras(1, pagination.pageSize, {});
+  };
+
+  const onFinish = async (values: any) => {
+    try {
+      const obraData = {
         ...values,
-        id: Math.random(),
-        codigo: `OBRA-${new Date().getFullYear()}-00${obras.length + 1}`,
         dataContrato: values.dataContrato.format('YYYY-MM-DD'),
       };
-      setObras(prev => [newObra, ...prev]);
-      message.success('Obra cadastrada com sucesso');
+
+      if (editingObra) {
+        await obrasService.update(editingObra.id, obraData);
+        message.success('Obra atualizada com sucesso');
+      } else {
+        await obrasService.create(obraData);
+        message.success('Obra cadastrada com sucesso');
+      }
+      setIsModalOpen(false);
+      setEditingObra(null);
+      form.resetFields();
+      fetchObras();
+    } catch (error: any) {
+      message.error('Erro ao salvar obra: ' + error.message);
     }
-    setIsModalOpen(false);
-    setEditingObra(null);
-    form.resetFields();
   };
 
   const handleEdit = (record: any) => {
@@ -98,9 +128,14 @@ export const ObrasPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setObras(prev => prev.filter(o => o.id !== id));
-    message.success('Obra excluída com sucesso');
+  const handleDelete = async (id: number) => {
+    try {
+      await obrasService.delete(id);
+      message.success('Obra excluída com sucesso');
+      fetchObras();
+    } catch (error: any) {
+      message.error('Erro ao excluir obra: ' + error.message);
+    }
   };
 
   const handleOpenAddModal = () => {
@@ -128,7 +163,7 @@ export const ObrasPage: React.FC = () => {
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
             Painel de Obras
           </Title>
@@ -146,13 +181,54 @@ export const ObrasPage: React.FC = () => {
       </div>
 
       <ObrasFilters 
-        onSearch={(values) => console.log('Filtrar:', values)} 
-        onClear={() => console.log('Limpar filtros')} 
+        onSearch={handleSearch} 
+        onClear={handleClear} 
       />
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Situação das Obras"
+            subtitle="Distribuição por status atual"
+            loading={loading}
+            data={Object.entries(
+              obras.reduce((acc: Record<string, number>, curr) => {
+                acc[curr.situacao] = (acc[curr.situacao] || 0) + 1;
+                return acc;
+              }, {})
+            ).map(([label, value]) => ({
+              label: label.replace('_', ' '),
+              value,
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+            }))}
+          />
+        </Col>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Volume por Cliente"
+            subtitle="Total em contrato por cliente (R$)"
+            loading={loading}
+            valuePrefix="R$"
+            data={Object.entries(
+              obras.reduce((acc: Record<string, number>, curr) => {
+                const cliente = curr.nomeCliente || 'Não informado';
+                acc[cliente] = (acc[cliente] || 0) + (curr.valorContrato || 0);
+                return acc;
+              }, {})
+            ).map(([label, value]) => ({
+              label,
+              value,
+            })).sort((a, b) => b.value - a.value).slice(0, 5)}
+          />
+        </Col>
+      </Row>
 
       <Card styles={{ body: { padding: 0 } }} style={{ borderRadius: 8, overflow: 'hidden' }}>
         <ObrasTable 
           dataSource={obras} 
+          loading={loading}
+          pagination={pagination}
+          onChange={handleTableChange}
           onEdit={handleEdit} 
           onDelete={handleDelete} 
           onView={(record) => message.info(`Visualizar obra: ${record.codigo}`)}
@@ -166,7 +242,7 @@ export const ObrasPage: React.FC = () => {
         width={1000}
         footer={null}
         style={{ top: 20 }}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}

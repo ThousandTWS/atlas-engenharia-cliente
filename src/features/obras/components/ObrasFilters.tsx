@@ -50,6 +50,21 @@ export const ObrasFilters: React.FC<ObrasFiltersProps> = ({ onSearch, onClear })
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={6}>
+            <Form.Item name="endereco" label="Endereço">
+              <Input placeholder="Endereço da obra" allowClear />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Form.Item name="servico" label="Serviço">
+              <Input placeholder="Tipo de serviço" allowClear />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Form.Item name="nf" label="NF">
+              <Input placeholder="Número da NF" allowClear />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
             <Form.Item name="situacao" label="Situação">
               <Select placeholder="Selecione" allowClear>
                 <Option value="PENDENTE">Pendente</Option>
@@ -59,7 +74,7 @@ export const ObrasFilters: React.FC<ObrasFiltersProps> = ({ onSearch, onClear })
               </Select>
             </Form.Item>
           </Col>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item name="periodo" label="Período do Contrato">
               <RangePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
             </Form.Item>

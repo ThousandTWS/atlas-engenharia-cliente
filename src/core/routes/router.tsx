@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import App from '../../App';
+import { ProtectedRoute } from '../components/ProtectedRoute';
 import { HomePage } from '../../features/home/pages/HomePage';
 import { LoginPage } from '../../features/auth/pages/LoginPage';
 import { RegisterPage } from '../../features/auth/pages/RegisterPage';
@@ -18,7 +19,11 @@ import { NotFoundPage } from '../../shared/components/NotFoundPage';
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: (
+      <ProtectedRoute>
+        <App />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,

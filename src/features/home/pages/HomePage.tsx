@@ -1,18 +1,43 @@
-import { Button, Typography, Space } from 'antd';
-import { RocketOutlined } from '@ant-design/icons';
+import { Breadcrumb, Row, Col } from 'antd';
+import { HomeOutlined } from '@ant-design/icons';
+import { DashboardChartAntd } from '../components/DashboardChartAntd';
+import { DashboardBarChartAntd } from '../components/DashboardBarChartAntd';
+import { DashboardTableAntd } from '../components/DashboardTableAntd';
+import { WelcomeBanner } from '../components/WelcomeBanner';
 
-const { Title, Text } = Typography;
 
 export const HomePage = () => {
   return (
-    <Space orientation="vertical" size="large" style={{ display: 'flex' }}>
-      <Title>Bem-vindo ao Atlas Engenharia</Title>
-      <Text style={{ fontSize: '16px' }}>
-        Projeto em Desenvolvimento
-      </Text>
-      <Button type="primary" size="large" icon={<RocketOutlined />}>
-        Em breve
-      </Button>
-    </Space>
+    <div style={{ padding: '4px' }}>
+      <Breadcrumb
+        items={[
+          { title: <HomeOutlined />, href: '/' },
+          { title: 'Dashboard' },
+          { title: 'Insights' },
+        ]}
+        style={{ marginBottom: 16 }}
+      />
+      
+      <Row gutter={[24, 24]} align="middle" style={{ marginBottom: 24 }}>
+          <Col span={24}>
+              <WelcomeBanner />
+          </Col>
+      </Row>
+      
+      <div style={{ marginTop: '24px' }}>
+        <DashboardChartAntd />
+      </div>
+      
+      <div style={{ marginTop: '24px' }}>
+        <DashboardBarChartAntd />
+      </div>
+
+      <DashboardTableAntd />
+      
+      {/* Espaço para futuras seções do dashboard */}
+      <div style={{ marginTop: 32 }}>
+        {/* Gráficos, Tabelas de Atividade Recente, etc */}
+      </div>
+    </div>
   );
 };

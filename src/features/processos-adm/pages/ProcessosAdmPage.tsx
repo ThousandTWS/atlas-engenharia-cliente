@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Form,
   Input,
@@ -11,10 +11,10 @@ import {
   Col,
   Typography,
   Space,
-  message,
   Breadcrumb,
   Grid,
   Modal,
+  App,
 } from 'antd';
 import {
   SaveOutlined,
@@ -28,74 +28,65 @@ import dayjs from 'dayjs';
 import { ProcessosAdmTable } from '../components/ProcessosAdmTable';
 import type { ProcessoAdm } from '../components/ProcessosAdmTable';
 import { ProcessosAdmFilters } from '../components/ProcessosAdmFilters';
+import { GenericChart } from '../../../shared/components/charts/GenericChart';
+import { processosAdmService } from '../../../core/services/genericService';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 
-const MOCK_DATA: ProcessoAdm[] = [
-  {
-    id: 1,
-    situacao: 'EM_ANDAMENTO',
-    descricaoSituacao: 'Aguardando assinatura do cliente',
-    nomeCliente: 'João da Silva',
-    codigo: 'PROC-A1B2C3D4',
-    valorContrato: 15000.5,
-    dataContrato: '2023-10-27',
-    nf: 'NF-2023-001',
-    condicaoPagamento: '30/60 dias',
-    proximaParcela: '2023-11-27',
-    aReceber: 10000,
-    recebido: 5000.5,
-    custos: 2000
-  },
-  {
-    id: 2,
-    situacao: 'CONCLUIDO',
-    descricaoSituacao: 'Processo finalizado e pago',
-    nomeCliente: 'Maria Oliveira',
-    codigo: 'PROC-X9Y8Z7W6',
-    valorContrato: 8500,
-    dataContrato: '2023-09-15',
-    nf: 'NF-2023-015',
-    condicaoPagamento: 'À vista',
-    proximaParcela: '',
-    aReceber: 0,
-    recebido: 8500,
-    custos: 1200
-  }
-];
-
 export const ProcessosAdmPage: React.FC = () => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProcesso, setEditingProcesso] = useState<ProcessoAdm | null>(null);
-  const [processos, setProcessos] = useState<ProcessoAdm[]>(MOCK_DATA);
+  const [processos, setProcessos] = useState<ProcessoAdm[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const onFinish = (values: any) => {
-    const formattedValues = {
-      ...values,
-      dataContrato: values.dataContrato.format('YYYY-MM-DD'),
-      proximaParcela: values.proximaParcela ? values.proximaParcela.format('YYYY-MM-DD') : '',
-    };
-
-    if (editingProcesso) {
-      setProcessos(prev => prev.map(p => p.id === editingProcesso.id ? { ...p, ...formattedValues } : p));
-      message.success('Processo administrativo atualizado com sucesso');
-    } else {
-      const newProcesso = {
-        ...formattedValues,
-        id: Math.floor(Math.random() * 10000),
-        codigo: `PROC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-      };
-      setProcessos(prev => [newProcesso, ...prev]);
-      message.success('Processo administrativo cadastrado com sucesso');
+  const fetchProcessos = async () => {
+    setLoading(true);
+    try {
+      const data = await processosAdmService.getAll() as any;
+      if (data && data.content) {
+        setProcessos(data.content);
+      } else {
+        setProcessos(Array.isArray(data) ? data : []);
+      }
+    } catch (error: any) {
+      message.error('Erro ao carregar processos: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-    setIsModalOpen(false);
-    setEditingProcesso(null);
-    form.resetFields();
+  };
+
+  useEffect(() => {
+    fetchProcessos();
+  }, []);
+
+  const onFinish = async (values: any) => {
+    try {
+      const formattedValues = {
+        ...values,
+        dataContrato: values.dataContrato.format('YYYY-MM-DD'),
+        proximaParcela: values.proximaParcela ? values.proximaParcela.format('YYYY-MM-DD') : '',
+      };
+
+      if (editingProcesso) {
+        await processosAdmService.update(editingProcesso.id!, formattedValues);
+        message.success('Processos Adm atualizado com sucesso');
+      } else {
+        await processosAdmService.create(formattedValues);
+        message.success('Processos Adm cadastrado com sucesso');
+      }
+      setIsModalOpen(false);
+      setEditingProcesso(null);
+      form.resetFields();
+      fetchProcessos();
+    } catch (error: any) {
+      message.error('Erro ao salvar processo: ' + error.message);
+    }
   };
 
   const handleEdit = (record: ProcessoAdm) => {
@@ -108,9 +99,14 @@ export const ProcessosAdmPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setProcessos(prev => prev.filter(p => p.id !== id));
-    message.success('Processo administrativo excluído com sucesso');
+  const handleDelete = async (id: number) => {
+    try {
+      await processosAdmService.delete(id);
+      message.success('Processo administrativo excluído com sucesso');
+      fetchProcessos();
+    } catch (error: any) {
+      message.error('Erro ao excluir processo: ' + error.message);
+    }
   };
 
   const handleOpenAddModal = () => {
@@ -138,7 +134,7 @@ export const ProcessosAdmPage: React.FC = () => {
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
             Processos Administrativos
           </Title>
@@ -160,6 +156,46 @@ export const ProcessosAdmPage: React.FC = () => {
         onClear={() => console.log('Limpar filtros')} 
       />
 
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Situação dos Processos"
+            subtitle="Distribuição por status atual"
+            loading={loading}
+            data={Object.entries(
+              processos.reduce((acc: Record<string, number>, curr) => {
+                const situacao = curr.situacao || 'PENDENTE';
+                acc[situacao] = (acc[situacao] || 0) + 1;
+                return acc;
+              }, {})
+            ).map(([label, value]) => ({
+              label: label.replace('_', ' '),
+              value,
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+            }))}
+          />
+        </Col>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Volume Financeiro por Status"
+            subtitle="Total em contrato por situação (R$)"
+            loading={loading}
+            valuePrefix="R$"
+            data={Object.entries(
+              processos.reduce((acc: Record<string, number>, curr) => {
+                const situacao = curr.situacao || 'PENDENTE';
+                acc[situacao] = (acc[situacao] || 0) + (curr.valorContrato || 0);
+                return acc;
+              }, {})
+            ).map(([label, value]) => ({
+              label: label.replace('_', ' '),
+              value,
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+            }))}
+          />
+        </Col>
+      </Row>
+
       <Card styles={{ body: { padding: 0 } }} style={{ borderRadius: 8, overflow: 'hidden' }}>
         <ProcessosAdmTable 
           dataSource={processos} 
@@ -176,7 +212,7 @@ export const ProcessosAdmPage: React.FC = () => {
         width={1000}
         footer={null}
         style={{ top: 20 }}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}

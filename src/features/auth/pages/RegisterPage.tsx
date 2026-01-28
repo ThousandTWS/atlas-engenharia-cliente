@@ -1,18 +1,30 @@
-import React from 'react';
-import { Form, Input, Button, Card, Typography, message, Row, Col } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Button, Card, Typography, App, Row, Col } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, PhoneOutlined, UserAddOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
+import { authService } from '../../../core/services/authService';
 
 const { Title, Text } = Typography;
 
 export const RegisterPage: React.FC = () => {
+  const { message } = App.useApp();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const onFinish = (values: any) => {
-    console.log('Register values:', values);
-    message.success('Conta criada com sucesso! Verifique seu e-mail.');
-    // Após registro, o usuário geralmente precisa validar o e-mail
-    navigate('/auth/verify-email', { state: { email: values.email } });
+  const onFinish = async (values: any) => {
+    setLoading(true);
+    try {
+      console.log('Enviando dados de registro:', values);
+      
+      await authService.register(values);
+      message.success('Conta criada com sucesso! Verifique seu e-mail.');
+      // Após registro, o usuário geralmente precisa validar o e-mail
+      navigate('/auth/verify-email', { state: { email: values.email } });
+    } catch (error: any) {
+      message.error('Erro ao realizar cadastro: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,7 +90,7 @@ export const RegisterPage: React.FC = () => {
               </Form.Item>
             </Col>
 
-            <Col span={24}>
+            <Col xs={24} md={12}>
               <Form.Item
                 name="email"
                 label="E-mail"
@@ -88,6 +100,28 @@ export const RegisterPage: React.FC = () => {
                 ]}
               >
                 <Input prefix={<MailOutlined />} placeholder="seu@email.com" />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="confirmarEmail"
+                label="Confirmar E-mail"
+                dependencies={['email']}
+                rules={[
+                  { required: true, message: 'Por favor, confirme seu e-mail!' },
+                  { type: 'email', message: 'Por favor, insira um e-mail válido!' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('email') === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Os e-mails não coincidem!'));
+                    },
+                  }),
+                ]}
+              >
+                <Input prefix={<MailOutlined />} placeholder="Confirme seu e-mail" />
               </Form.Item>
             </Col>
 
@@ -106,7 +140,7 @@ export const RegisterPage: React.FC = () => {
 
             <Col xs={24} md={12}>
               <Form.Item
-                name="confirmPassword"
+                name="confirmarPassword"
                 label="Confirmar Senha"
                 dependencies={['password']}
                 rules={[
@@ -127,7 +161,7 @@ export const RegisterPage: React.FC = () => {
           </Row>
 
           <Form.Item style={{ marginTop: 24 }}>
-            <Button type="primary" htmlType="submit" block icon={<UserAddOutlined />} size="large">
+            <Button type="primary" htmlType="submit" block icon={<UserAddOutlined />} size="large" loading={loading}>
               Criar Conta
             </Button>
           </Form.Item>

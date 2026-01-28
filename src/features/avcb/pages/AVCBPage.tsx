@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Form,
   Input,
@@ -11,10 +11,10 @@ import {
   Col,
   Typography,
   Space,
-  message,
   Breadcrumb,
   Grid,
   Modal,
+  App,
 } from 'antd';
 import {
   SaveOutlined,
@@ -27,67 +27,65 @@ import dayjs from 'dayjs';
 import { AVCBTable } from '../components/AVCBTable';
 import type { AVCB } from '../components/AVCBTable';
 import { AVCBFilters } from '../components/AVCBFilters';
+import { GenericChart } from '../../../shared/components/charts/GenericChart';
+import { avcbService } from '../../../core/services/genericService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 
-const MOCK_DATA: AVCB[] = [
-  {
-    id: 1,
-    situacao: 'EM_ANDAMENTO',
-    descricaoSituacao: 'Aguardando vistoria técnica do corpo de bombeiros',
-    valorContrato: 5000,
-    dataContrato: '2023-10-27',
-    nf: 'NF-001',
-    condicaoPagamento: 'À vista',
-    aReceber: 2500,
-    recebido: 2500,
-    custos: 1000,
-  },
-  {
-    id: 2,
-    situacao: 'CONCLUIDO',
-    descricaoSituacao: 'Certificado emitido e entregue ao cliente',
-    valorContrato: 3200,
-    dataContrato: '2023-09-15',
-    nf: 'NF-088',
-    condicaoPagamento: '30 dias',
-    aReceber: 0,
-    recebido: 3200,
-    custos: 800,
-  }
-];
-
 export const AVCBPage: React.FC = () => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAVCB, setEditingAVCB] = useState<AVCB | null>(null);
-  const [avcbs, setAvcbs] = useState<AVCB[]>(MOCK_DATA);
+  const [avcbs, setAvcbs] = useState<AVCB[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const onFinish = (values: any) => {
-    const formattedValues = {
-      ...values,
-      dataContrato: values.dataContrato.format('YYYY-MM-DD'),
-    };
-
-    if (editingAVCB) {
-      setAvcbs(prev => prev.map(a => a.id === editingAVCB.id ? { ...a, ...formattedValues } : a));
-      message.success('AVCB atualizado com sucesso');
-    } else {
-      const newAVCB = {
-        ...formattedValues,
-        id: Math.floor(Math.random() * 10000),
-      };
-      setAvcbs(prev => [newAVCB, ...prev]);
-      message.success('AVCB cadastrado com sucesso');
+  const fetchAVCBs = async () => {
+    setLoading(true);
+    try {
+      const data = await avcbService.getAll() as any;
+      if (data && data.content) {
+        setAvcbs(data.content);
+      } else {
+        setAvcbs(Array.isArray(data) ? data : []);
+      }
+    } catch (error: any) {
+      message.error('Erro ao carregar AVCBs: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-    setIsModalOpen(false);
-    setEditingAVCB(null);
-    form.resetFields();
+  };
+
+  useEffect(() => {
+    fetchAVCBs();
+  }, []);
+
+  const onFinish = async (values: any) => {
+    try {
+      const formattedValues = {
+        ...values,
+        dataContrato: values.dataContrato.format('YYYY-MM-DD'),
+      };
+
+      if (editingAVCB) {
+        await avcbService.update(editingAVCB.id!, formattedValues);
+        message.success('AVCB atualizado com sucesso');
+      } else {
+        await avcbService.create(formattedValues);
+        message.success('AVCB cadastrado com sucesso');
+      }
+      setIsModalOpen(false);
+      setEditingAVCB(null);
+      form.resetFields();
+      fetchAVCBs();
+    } catch (error: any) {
+      message.error('Erro ao salvar AVCB: ' + error.message);
+    }
   };
 
   const handleEdit = (record: AVCB) => {
@@ -99,9 +97,14 @@ export const AVCBPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setAvcbs(prev => prev.filter(a => a.id !== id));
-    message.success('AVCB excluído com sucesso');
+  const handleDelete = async (id: number) => {
+    try {
+      await avcbService.delete(id);
+      message.success('AVCB excluído com sucesso');
+      fetchAVCBs();
+    } catch (error: any) {
+      message.error('Erro ao excluir AVCB: ' + error.message);
+    }
   };
 
   const handleOpenAddModal = () => {
@@ -129,7 +132,7 @@ export const AVCBPage: React.FC = () => {
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
             Painel AVCB
           </Title>
@@ -151,6 +154,44 @@ export const AVCBPage: React.FC = () => {
         onClear={() => console.log('Limpar filtros')} 
       />
 
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Situação dos AVCBs"
+            subtitle="Distribuição por status atual"
+            loading={loading}
+            data={Object.entries(
+              avcbs.reduce((acc: Record<string, number>, curr) => {
+                acc[curr.situacao] = (acc[curr.situacao] || 0) + 1;
+                return acc;
+              }, {})
+            ).map(([label, value]) => ({
+              label: label.replace('_', ' '),
+              value,
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+            }))}
+          />
+        </Col>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Volume Financeiro por Status"
+            subtitle="Total em contrato por situação (R$)"
+            loading={loading}
+            valuePrefix="R$"
+            data={Object.entries(
+              avcbs.reduce((acc: Record<string, number>, curr) => {
+                acc[curr.situacao] = (acc[curr.situacao] || 0) + (curr.valorContrato || 0);
+                return acc;
+              }, {})
+            ).map(([label, value]) => ({
+              label: label.replace('_', ' '),
+              value,
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+            }))}
+          />
+        </Col>
+      </Row>
+
       <Card styles={{ body: { padding: 0 } }} style={{ borderRadius: 8, overflow: 'hidden' }}>
         <AVCBTable 
           dataSource={avcbs} 
@@ -167,7 +208,7 @@ export const AVCBPage: React.FC = () => {
         width={1000}
         footer={null}
         style={{ top: 20 }}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}

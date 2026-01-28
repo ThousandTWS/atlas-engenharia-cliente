@@ -1,11 +1,12 @@
 import React from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import { Form, Input, Button, Card, Typography, App } from 'antd';
 import { MailOutlined, ArrowLeftOutlined, SendOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
 export const ForgotPasswordPage: React.FC = () => {
+  const { message } = App.useApp();
   const navigate = useNavigate();
 
   const onFinish = (values: any) => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Form,
   Input,
@@ -11,10 +11,10 @@ import {
   Col,
   Typography,
   Space,
-  message,
   Breadcrumb,
   Grid,
   Modal,
+  App,
 } from 'antd';
 import {
   SaveOutlined,
@@ -27,63 +27,101 @@ import dayjs from 'dayjs';
 import { CustosIndiretosTable } from '../components/CustosIndiretosTable';
 import type { CustoIndireto } from '../components/CustosIndiretosTable';
 import { CustosIndiretosFilters } from '../components/CustosIndiretosFilters';
+import { CustosIndiretosChart } from '../components/CustosIndiretosChart';
+import { custosIndiretosService } from '../../../core/services/genericService';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 
-const MOCK_DATA: CustoIndireto[] = [
-  {
-    id: 1,
-    data: '2023-10-27',
-    descricao: 'Aluguel de escritório',
-    valor: 2500,
-    categoria: 'Administrativo',
-  },
-  {
-    id: 2,
-    data: '2023-11-05',
-    descricao: 'Internet e Telefonia',
-    valor: 350,
-    categoria: 'Infraestrutura',
-  },
-  {
-    id: 3,
-    data: '2023-11-10',
-    descricao: 'Software de Engenharia (SaaS)',
-    valor: 1200,
-    categoria: 'Administrativo',
-  }
-];
-
 export const CustosIndiretosPage: React.FC = () => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCusto, setEditingCusto] = useState<CustoIndireto | null>(null);
-  const [custos, setCustos] = useState<CustoIndireto[]>(MOCK_DATA);
+  const [custos, setCustos] = useState<CustoIndireto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const [filters, setFilters] = useState<any>({});
 
-  const onFinish = (values: any) => {
-    const formattedValues = {
-      ...values,
-      data: values.data.format('YYYY-MM-DD'),
-    };
-
-    if (editingCusto) {
-      setCustos(prev => prev.map(c => c.id === editingCusto.id ? { ...c, ...formattedValues } : c));
-      message.success('Custo indireto atualizado com sucesso');
-    } else {
-      const newCusto = {
-        ...formattedValues,
-        id: Math.floor(Math.random() * 10000),
-      };
-      setCustos(prev => [newCusto, ...prev]);
-      message.success('Custo indireto cadastrado com sucesso');
+  const fetchCustos = async (page = pagination.current, pageSize = pagination.pageSize, currentFilters = filters) => {
+    setLoading(true);
+    try {
+      const data = await custosIndiretosService.getAll({
+        page: page - 1,
+        size: pageSize,
+        ...currentFilters,
+      }) as any;
+      
+      if (data && data.content) {
+        setCustos(data.content);
+        setPagination({
+          current: page,
+          pageSize: pageSize,
+          total: data.totalElements,
+        });
+      } else {
+        setCustos(Array.isArray(data) ? data : []);
+      }
+    } catch (error: any) {
+      message.error('Erro ao carregar custos: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-    setIsModalOpen(false);
-    setEditingCusto(null);
-    form.resetFields();
+  };
+
+  useEffect(() => {
+    fetchCustos();
+  }, []);
+
+  const handleTableChange = (newPagination: any) => {
+    fetchCustos(newPagination.current, newPagination.pageSize);
+  };
+
+  const handleSearch = (values: any) => {
+    const formattedFilters: any = { ...values };
+    if (values.dataInicio) {
+      formattedFilters.dataInicio = values.dataInicio.format('YYYY-MM-DD');
+    }
+    if (values.dataFim) {
+      formattedFilters.dataFim = values.dataFim.format('YYYY-MM-DD');
+    }
+    setFilters(formattedFilters);
+    fetchCustos(1, pagination.pageSize, formattedFilters);
+  };
+
+  const handleClear = () => {
+    setFilters({});
+    fetchCustos(1, pagination.pageSize, {});
+  };
+
+  const onFinish = async (values: any) => {
+    try {
+      const formattedValues = {
+        ...values,
+        data: values.data.format('YYYY-MM-DD'),
+      };
+
+      if (editingCusto) {
+        await custosIndiretosService.update(editingCusto.id!, formattedValues);
+        message.success('Custo indireto atualizado com sucesso');
+      } else {
+        await custosIndiretosService.create(formattedValues);
+        message.success('Custo indireto cadastrado com sucesso');
+      }
+      setIsModalOpen(false);
+      setEditingCusto(null);
+      form.resetFields();
+      fetchCustos();
+    } catch (error: any) {
+      message.error('Erro ao salvar custo: ' + error.message);
+    }
   };
 
   const handleEdit = (record: CustoIndireto) => {
@@ -95,9 +133,14 @@ export const CustosIndiretosPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setCustos(prev => prev.filter(c => c.id !== id));
-    message.success('Custo indireto excluído com sucesso');
+  const handleDelete = async (id: number) => {
+    try {
+      await custosIndiretosService.delete(id);
+      message.success('Custo indireto excluído com sucesso');
+      fetchCustos();
+    } catch (error: any) {
+      message.error('Erro ao excluir custo: ' + error.message);
+    }
   };
 
   const handleOpenAddModal = () => {
@@ -125,7 +168,7 @@ export const CustosIndiretosPage: React.FC = () => {
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
             Custos Indiretos
           </Title>
@@ -143,13 +186,21 @@ export const CustosIndiretosPage: React.FC = () => {
       </div>
 
       <CustosIndiretosFilters 
-        onSearch={(values) => console.log('Filtrar:', values)} 
-        onClear={() => console.log('Limpar filtros')} 
+        onSearch={handleSearch} 
+        onClear={handleClear} 
+      />
+
+      <CustosIndiretosChart 
+        data={custos} 
+        loading={loading} 
       />
 
       <Card styles={{ body: { padding: 0 } }} style={{ borderRadius: 8, overflow: 'hidden' }}>
         <CustosIndiretosTable 
           dataSource={custos} 
+          loading={loading}
+          pagination={pagination}
+          onChange={handleTableChange}
           onEdit={handleEdit} 
           onDelete={handleDelete} 
         />
@@ -161,7 +212,7 @@ export const CustosIndiretosPage: React.FC = () => {
         onCancel={() => setIsModalOpen(false)}
         width={600}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}

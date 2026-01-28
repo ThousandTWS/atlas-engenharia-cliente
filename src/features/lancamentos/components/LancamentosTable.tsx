@@ -18,6 +18,7 @@ import type { ColumnsType } from 'antd/es/table';
 const { Text } = Typography;
 
 export type Lancamento = {
+    obra: string;
   id: number;
   codigo: string;
   descricao: string;

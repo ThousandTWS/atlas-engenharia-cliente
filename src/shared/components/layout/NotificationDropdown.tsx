@@ -113,7 +113,7 @@ export const NotificationDropdown: React.FC = () => {
                 </Space>
               }
               description={
-                <Space direction="vertical" size={0}>
+                <Space orientation="vertical" size={0}>
                   <Text type="secondary" style={{ fontSize: '12px' }}>
                     {item.description}
                   </Text>
@@ -145,7 +145,7 @@ export const NotificationDropdown: React.FC = () => {
   );
 
   return (
-    <Dropdown dropdownRender={() => menuContent} trigger={['click']} placement="bottomRight">
+    <Dropdown popupRender={() => menuContent} trigger={['click']} placement="bottomRight">
       <Badge count={mockNotifications.filter(n => !n.read).length} size="small" offset={[-2, 2]}>
         <Button
           type="text"

@@ -10,10 +10,10 @@ import {
   Col,
   Typography,
   Space,
-  message,
   Breadcrumb,
   Grid,
   Modal,
+  App,
 } from 'antd';
 import {
   SaveOutlined,
@@ -26,45 +26,46 @@ import dayjs from 'dayjs';
 import { LancamentosTable } from '../components/LancamentosTable';
 import type { Lancamento } from '../components/LancamentosTable';
 import { LancamentosFilters } from '../components/LancamentosFilters';
+import { GenericChart } from '../../../shared/components/charts/GenericChart';
+import { lancamentosService } from '../../../core/services/genericService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { useBreakpoint } = Grid;
 
-const MOCK_DATA: Lancamento[] = [
-  {
-    id: 1,
-    codigo: 'LANC-A1B2C3D4',
-    descricao: 'Compra de materiais hidráulicos',
-    faturamento: 5000,
-    data: '2023-10-27',
-    custoDireto: 2000,
-    lucro: 3000,
-    observacao: 'Urgente para a obra X'
-  },
-  {
-    id: 2,
-    codigo: 'LANC-X9Y8Z7W6',
-    descricao: 'Serviço de Terraplanagem',
-    faturamento: 12000,
-    data: '2023-11-05',
-    custoDireto: 8500,
-    lucro: 3500,
-    observacao: 'Pagamento via boleto'
-  }
-];
-
 export const LancamentosPage: React.FC = () => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLancamento, setEditingLancamento] = useState<Lancamento | null>(null);
-  const [lancamentos, setLancamentos] = useState<Lancamento[]>(MOCK_DATA);
+  const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Watch fields for profit calculation
   const faturamento = Form.useWatch('faturamento', form);
   const custoDireto = Form.useWatch('custoDireto', form);
+
+  const fetchLancamentos = async () => {
+    setLoading(true);
+    try {
+      const data = await lancamentosService.getAll() as any;
+      if (data && data.content) {
+        setLancamentos(data.content);
+      } else {
+        setLancamentos(Array.isArray(data) ? data : []);
+      }
+    } catch (error: any) {
+      message.error('Erro ao carregar lançamentos: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLancamentos();
+  }, []);
 
   useEffect(() => {
     if (faturamento !== undefined && custoDireto !== undefined) {
@@ -72,27 +73,27 @@ export const LancamentosPage: React.FC = () => {
     }
   }, [faturamento, custoDireto, form]);
 
-  const onFinish = (values: any) => {
-    const formattedValues = {
-      ...values,
-      data: values.data.format('YYYY-MM-DD'),
-    };
-
-    if (editingLancamento) {
-      setLancamentos(prev => prev.map(l => l.id === editingLancamento.id ? { ...l, ...formattedValues } : l));
-      message.success('Lançamento atualizado com sucesso');
-    } else {
-      const newLancamento = {
-        ...formattedValues,
-        id: Math.floor(Math.random() * 10000),
-        codigo: `LANC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+  const onFinish = async (values: any) => {
+    try {
+      const formattedValues = {
+        ...values,
+        data: values.data.format('YYYY-MM-DD'),
       };
-      setLancamentos(prev => [newLancamento, ...prev]);
-      message.success('Lançamento cadastrado com sucesso');
+
+      if (editingLancamento) {
+        await lancamentosService.update(editingLancamento.id!, formattedValues);
+        message.success('Lançamento atualizado com sucesso');
+      } else {
+        await lancamentosService.create(formattedValues);
+        message.success('Lançamento cadastrado com sucesso');
+      }
+      setIsModalOpen(false);
+      setEditingLancamento(null);
+      form.resetFields();
+      fetchLancamentos();
+    } catch (error: any) {
+      message.error('Erro ao salvar lançamento: ' + error.message);
     }
-    setIsModalOpen(false);
-    setEditingLancamento(null);
-    form.resetFields();
   };
 
   const handleEdit = (record: Lancamento) => {
@@ -104,9 +105,14 @@ export const LancamentosPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setLancamentos(prev => prev.filter(l => l.id !== id));
-    message.success('Lançamento excluído com sucesso');
+  const handleDelete = async (id: number) => {
+    try {
+      await lancamentosService.delete(id);
+      message.success('Lançamento excluído com sucesso');
+      fetchLancamentos();
+    } catch (error: any) {
+      message.error('Erro ao excluir lançamento: ' + error.message);
+    }
   };
 
   const handleOpenAddModal = () => {
@@ -134,7 +140,7 @@ export const LancamentosPage: React.FC = () => {
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
             Gestão de Lançamentos
           </Title>
@@ -156,6 +162,37 @@ export const LancamentosPage: React.FC = () => {
         onClear={() => console.log('Limpar filtros')} 
       />
 
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Evolução Mensal"
+            subtitle="Faturamento bruto por mês (R$)"
+            loading={loading}
+            valuePrefix="R$"
+            data={Object.entries(
+              lancamentos.reduce((acc: Record<string, number>, curr) => {
+                const month = dayjs(curr.data).format('MMM/YY');
+                acc[month] = (acc[month] || 0) + (curr.faturamento || 0);
+                return acc;
+              }, {})
+            ).map(([label, value]) => ({ label, value })).slice(-6)}
+          />
+        </Col>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Lucratividade"
+            subtitle="Lucro líquido por lançamento (R$)"
+            loading={loading}
+            valuePrefix="R$"
+            data={lancamentos.slice(-6).map(l => ({
+              label: (l as any).obra || 'S/N',
+              value: (l.lucro || 0),
+              color: (l.lucro || 0) > 0 ? '#52c41a' : '#ff4d4f'
+            }))}
+          />
+        </Col>
+      </Row>
+
       <Card styles={{ body: { padding: 0 } }} style={{ borderRadius: 8, overflow: 'hidden' }}>
         <LancamentosTable 
           dataSource={lancamentos} 
@@ -171,7 +208,7 @@ export const LancamentosPage: React.FC = () => {
         onCancel={() => setIsModalOpen(false)}
         width={800}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}
@@ -227,7 +264,7 @@ export const LancamentosPage: React.FC = () => {
                       <InputNumber
                         style={{ width: '100%' }}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
+                        parser={(value) => value!.replace(/R\$\s?|(,)/g, '')}
                       />
                     </Form.Item>
                   </Col>

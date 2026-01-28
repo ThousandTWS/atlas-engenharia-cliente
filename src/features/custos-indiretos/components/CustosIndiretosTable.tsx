@@ -27,6 +27,12 @@ export type CustoIndireto = {
 interface CustosIndiretosTableProps {
   loading?: boolean;
   dataSource: CustoIndireto[];
+  pagination: {
+    current: number;
+    pageSize: number;
+    total: number;
+  };
+  onChange: (pagination: any) => void;
   onEdit: (record: CustoIndireto) => void;
   onDelete: (id: number) => void;
 }
@@ -34,6 +40,8 @@ interface CustosIndiretosTableProps {
 export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
   loading,
   dataSource,
+  pagination,
+  onChange,
   onEdit,
   onDelete,
 }) => {
@@ -132,10 +140,13 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
       loading={loading}
       scroll={{ x: 800 }}
       pagination={{
-        pageSize: 10,
+        current: pagination.current,
+        pageSize: pagination.pageSize,
+        total: pagination.total,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} registros`,
       }}
+      onChange={onChange}
     />
   );
 };

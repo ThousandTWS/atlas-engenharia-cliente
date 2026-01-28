@@ -1,25 +1,56 @@
-import React from 'react';
-import { Form, Input, Button, Card, Typography, Row, Col, Checkbox, message } from 'antd';
-import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Card, Typography, Button, Form, Input, App } from 'antd';
+import { LoginOutlined, UserOutlined, LockOutlined } from '@ant-design/icons';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { authService } from '../../../core/services/authService';
 
 const { Title, Text } = Typography;
 
 export const LoginPage: React.FC = () => {
+  const { message } = App.useApp();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [loading, setLoading] = useState(false);
 
-  const onFinish = (values: any) => {
-    console.log('Login values:', values);
-    // Simulação de login bem-sucedido
-    message.success('Login realizado com sucesso!');
-    navigate('/');
+  // Redireciona se já estiver autenticado
+  React.useEffect(() => {
+    const isAuth = authService.isAuthenticated();
+    console.log('LoginPage: useEffect check auth', { isAuth });
+    if (isAuth) {
+      console.log('LoginPage: User is authenticated, redirecting to home');
+      navigate('/', { replace: true });
+    }
+  }, [navigate]);
+
+  const onFinish = async (values: any) => {
+    setLoading(true);
+    try {
+      const response = await authService.login({
+        login: values.username,
+        password: values.password
+      });
+      console.log('Login successful, response:', response);
+      message.success('Login realizado com sucesso!');
+      
+      // Pequeno delay para garantir que o localStorage seja propagado se houver concorrência
+      setTimeout(() => {
+        const from = (location.state as any)?.from?.pathname || '/';
+        console.log('Redirecting to:', from);
+        navigate(from, { replace: true });
+      }, 100);
+    } catch (error: any) {
+      console.error('Login error details:', error);
+      message.error(error.message || 'Erro ao realizar login. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
+    <div style={{
+      height: '100vh',
+      display: 'flex',
+      justifyContent: 'center',
       alignItems: 'center',
       background: '#f0f2f5'
     }}>
@@ -28,19 +59,18 @@ export const LoginPage: React.FC = () => {
           <Title level={2} style={{ color: '#1890ff', marginBottom: 0 }}>Atlas</Title>
           <Text type="secondary">Engenharia & Gestão</Text>
         </div>
-        
+
         <Title level={4} style={{ textAlign: 'center', marginBottom: 24 }}>Acessar Sistema</Title>
-        
+
         <Form
-          name="login_form"
-          initialValues={{ remember: true }}
+          name="login"
           onFinish={onFinish}
           layout="vertical"
           size="large"
         >
           <Form.Item
-            name="login"
-            rules={[{ required: true, message: 'Por favor, insira seu usuário ou e-mail!' }]}
+            name="username"
+            rules={[{ required: true, message: 'Por favor, insira seu usuário!' }]}
           >
             <Input prefix={<UserOutlined />} placeholder="Usuário ou E-mail" />
           </Form.Item>
@@ -53,30 +83,26 @@ export const LoginPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item>
-            <Row justify="space-between" align="middle">
-              <Col>
-                <Form.Item name="remember" valuePropName="checked" noStyle>
-                  <Checkbox>Lembrar-me</Checkbox>
-                </Form.Item>
-              </Col>
-              <Col>
-                <Link to="/auth/forgot-password" style={{ fontSize: '14px' }}>
-                  Esqueci minha senha
-                </Link>
-              </Col>
-            </Row>
-          </Form.Item>
-
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block icon={<LoginOutlined />} size="large">
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              icon={<LoginOutlined />}
+              loading={loading}
+            >
               Entrar
             </Button>
           </Form.Item>
-
-          <div style={{ textAlign: 'center' }}>
-            Não tem uma conta? <Link to="/auth/register">Registre-se agora!</Link>
-          </div>
         </Form>
+
+        <div style={{ textAlign: 'center', marginTop: 16 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            Use suas credenciais para acessar o sistema
+          </Text>
+          <div style={{ marginTop: 8 }}>
+            Não tem uma conta? <Link to="/auth/register" style={{ color: '#1890ff' }}>Cadastre-se!</Link>
+          </div>
+        </div>
       </Card>
     </div>
   );

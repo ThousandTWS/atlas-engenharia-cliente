@@ -18,18 +18,24 @@ import type { ColumnsType } from 'antd/es/table';
 const { Text } = Typography;
 
 interface Obra {
-  id: number;
-  codigo: string;
-  nomeCliente: string;
-  servico: string;
-  situacao: 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO' | 'ORCAMENTO' | 'SUSPENSO';
-  valorContrato: number;
-  dataContrato: string;
+  id?: number;
+  codigo?: string;
+  nomeCliente?: string;
+  servico?: string;
+  situacao: 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
+  valorContrato?: number;
+  dataContrato?: string;
 }
 
 interface ObrasTableProps {
   loading?: boolean;
   dataSource: Obra[];
+  pagination: {
+    current: number;
+    pageSize: number;
+    total: number;
+  };
+  onChange: (pagination: any) => void;
   onEdit: (record: Obra) => void;
   onDelete: (id: number) => void;
   onView: (record: Obra) => void;
@@ -38,6 +44,8 @@ interface ObrasTableProps {
 export const ObrasTable: React.FC<ObrasTableProps> = ({
   loading,
   dataSource,
+  pagination,
+  onChange,
   onEdit,
   onDelete,
   onView,
@@ -48,8 +56,6 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
       EM_ANDAMENTO: 'blue',
       CONCLUIDO: 'green',
       CANCELADO: 'red',
-      ORCAMENTO: 'cyan',
-      SUSPENSO: 'default',
     };
     return colors[status] || 'default';
   };
@@ -130,7 +136,7 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
           <Popconfirm
             title="Excluir Obra"
             description="Tem certeza que deseja excluir esta obra?"
-            onConfirm={() => onDelete(record.id)}
+            onConfirm={() => record.id && onDelete(record.id)}
             okText="Sim"
             cancelText="Não"
             okButtonProps={{ danger: true }}
@@ -156,10 +162,13 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
       loading={loading}
       scroll={{ x: 1000 }}
       pagination={{
-        pageSize: 10,
+        current: pagination.current,
+        pageSize: pagination.pageSize,
+        total: pagination.total,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} obras`,
       }}
+      onChange={onChange}
     />
   );
 };

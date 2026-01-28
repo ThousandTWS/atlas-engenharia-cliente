@@ -10,6 +10,8 @@ import {
   MenuFoldOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../../../core/services/authService';
+import type { User } from '../../../core/services/authService';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationDropdown } from './NotificationDropdown';
 
@@ -24,17 +26,33 @@ interface AppHeaderProps {
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed, isMobile }) => {
   const navigate = useNavigate();
+  const [user, setUser] = React.useState<User | null>(authService.getCurrentUser());
   const {
     token: { colorBgContainer },
   } = theme.useToken();
 
-  const handleProfileMenuClick: MenuProps['onClick'] = ({ key }) => {
+  React.useEffect(() => {
+    const handleUserUpdate = () => {
+      const currentUser = authService.getCurrentUser();
+      console.log('AppHeader: Received userUpdated event, current user:', currentUser);
+      setUser(currentUser);
+    };
+
+    window.addEventListener('userUpdated', handleUserUpdate);
+    return () => window.removeEventListener('userUpdated', handleUserUpdate);
+  }, []);
+
+  const handleProfileMenuClick: MenuProps['onClick'] = async ({ key }) => {
     if (key === 'logout') {
+      await authService.logout();
       navigate('/auth/login');
     } else if (key === 'profile') {
       navigate('/profile');
     }
   };
+
+  const userName = user?.nomeCompleto || user?.email || 'Admin';
+  const profilePicture = user?.profilePictureUrl;
 
   const profileMenuItems: MenuProps['items'] = [
     {
@@ -118,8 +136,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed, i
 
         <Dropdown menu={{ items: profileMenuItems, onClick: handleProfileMenuClick }} placement="bottomRight" trigger={['click']}>
           <Space style={{ cursor: 'pointer', marginLeft: isMobile ? 0 : '4px' }}>
-            <Avatar size={isMobile ? 'small' : 'default'} icon={<UserOutlined />} />
-            {!isMobile && <Typography.Text strong>Admin</Typography.Text>}
+            <Avatar 
+              size={isMobile ? 'small' : 'default'} 
+              icon={<UserOutlined />} 
+              src={profilePicture}
+            />
+            {!isMobile && <Typography.Text strong>{userName}</Typography.Text>}
           </Space>
         </Dropdown>
       </Space>

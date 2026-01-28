@@ -1,19 +1,35 @@
 import React from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import { Form, Input, Button, Card, Typography, App } from 'antd';
 import { MailOutlined, SafetyCertificateOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { authService } from '../../../core/services/authService';
 
 const { Title, Text } = Typography;
 
 export const VerifyEmailPage: React.FC = () => {
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const initialEmail = location.state?.email || '';
 
-  const onFinish = (values: any) => {
-    console.log('Verify email values:', values);
-    message.success('E-mail validado com sucesso! Você já pode fazer login.');
-    navigate('/auth/login');
+  const [loading, setLoading] = React.useState(false);
+
+  const onFinish = async (values: any) => {
+    setLoading(true);
+    try {
+      console.log('Verify email values:', values);
+      // O backend espera um objeto com email e code
+      await authService.verifyEmail({
+        email: values.email,
+        code: values.code
+      });
+      message.success('E-mail validado com sucesso! Você já pode fazer login.');
+      navigate('/auth/login');
+    } catch (error: any) {
+      message.error('Erro ao validar e-mail: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,13 +72,16 @@ export const VerifyEmailPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item style={{ marginTop: 24 }}>
-            <Button type="primary" htmlType="submit" block icon={<CheckCircleOutlined />} size="large">
+            <Button type="primary" htmlType="submit" block icon={<CheckCircleOutlined />} size="large" loading={loading}>
               Validar Cadastro
             </Button>
           </Form.Item>
 
           <div style={{ textAlign: 'center', marginTop: 16 }}>
             Não recebeu o código? <Button type="link" style={{ padding: 0 }}>Reenviar e-mail</Button>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 8 }}>
+            <Link to="/auth/login">Voltar para o Login</Link>
           </div>
         </Form>
       </Card>

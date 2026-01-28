@@ -1,0 +1,221 @@
+
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     20:26                assets
+d-----        26/01/2026     19:45                core
+d-----        26/01/2026     23:47                features
+d-----        26/01/2026     15:16                shared
+-a----        26/01/2026     23:02           1745 App.tsx
+-a----        26/01/2026     19:46            282 main.tsx
+    Diretório:
+    C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src\assets
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     20:21                banners
+d-----        26/01/2026     20:26                logos
+d-----        26/01/2026     20:23                lottie
+d-----        26/01/2026     20:23                svgs
+-a----        26/01/2026     14:04           4126 react.svg
+    Diretório:
+    C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src\core
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     19:52                config
+d-----        26/01/2026     19:46                providers
+d-----        26/01/2026     23:47                routes
+d-----        26/01/2026     15:17                styles
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \core\config
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     19:52            338 theme.ts
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \core\providers
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     19:46            579 AppProvider.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \core\routes
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:47           2353 router.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \core\styles
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     15:17            230 global.css
+    Diretório:
+    C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src\features
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     23:37                auth
+d-----        26/01/2026     23:47                avcb
+d-----        26/01/2026     23:44                clcb
+d-----        26/01/2026     23:23                custos-indiretos
+d-----        26/01/2026     19:45                home
+d-----        26/01/2026     23:29                lancamentos
+d-----        26/01/2026     22:59                obras
+d-----        26/01/2026     23:32                processos-adm
+d-----        26/01/2026     23:47                profile
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\auth
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     23:37                components
+d-----        27/01/2026     00:02                pages
+d-----        26/01/2026     23:37                services
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\auth\pages
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        27/01/2026     00:02           2350 ForgotPasswordPage.tsx
+-a----        26/01/2026     23:37           2827 LoginPage.tsx
+-a----        26/01/2026     23:37           5148 RegisterPage.tsx
+-a----        26/01/2026     23:37           3408 ResetPasswordPage.tsx
+-a----        26/01/2026     23:37           2491 VerifyEmailPage.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\avcb
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     23:47                components
+d-----        27/01/2026     00:02                pages
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\avcb\components
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:47           2137 AVCBFilters.tsx
+-a----        26/01/2026     23:47           3763 AVCBTable.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\avcb\pages
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        27/01/2026     00:02          10021 AVCBPage.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\clcb
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     23:44                components
+d-----        26/01/2026     23:45                pages
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\clcb\components
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:44           2550 CLCBFilters.tsx
+-a----        26/01/2026     23:44           4113 CLCBTable.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\clcb\pages
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:45          11162 CLCBPage.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\custos-indiretos
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     23:26                components
+d-----        26/01/2026     23:26                pages
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\custos-indiretos\components
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:23           2462 CustosIndiretosFilters.tsx
+-a----        26/01/2026     23:26           3377 CustosIndiretosTable.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\custos-indiretos\pages
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:26           7388 CustosIndiretosPage.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\home
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     21:01                pages
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\home\pages
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     21:01            542 HomePage.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\lancamentos
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     23:29                components
+d-----        26/01/2026     23:30                pages
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\lancamentos\components
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:29           1845 LancamentosFilters.tsx
+-a----        26/01/2026     23:29           3944 LancamentosTable.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\lancamentos\pages
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:30           9319 LancamentosPage.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\obras
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     23:09                components
+d-----        26/01/2026     23:13                pages
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\obras\components
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:09           2350 ObrasFilters.tsx
+-a----        26/01/2026     23:09           3865 ObrasTable.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\obras\pages
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:13          11786 ObrasPage.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\processos-adm
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     23:33                components
+d-----        27/01/2026     00:02                pages
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\processos-adm\components
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     23:33           2559 ProcessosAdmFilters.tsx
+-a----        26/01/2026     23:33           4291 ProcessosAdmTable.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\processos-adm\pages
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        27/01/2026     00:02          11599 ProcessosAdmPage.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\profile
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        27/01/2026     00:02                pages
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \features\profile\pages
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        27/01/2026     00:02           8692 ProfilePage.tsx
+    Diretório:
+    C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src\shared
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     15:16                assets
+d-----        26/01/2026     19:56                components
+d-----        26/01/2026     15:16                hooks
+d-----        26/01/2026     15:16                utils
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \shared\components
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        26/01/2026     23:47                layout
+-a----        26/01/2026     19:45            450 NotFoundPage.tsx
+    Diretório: C:\Users\TWS\Documents\clientes-tws\atlas-engenharia-cliente\src
+    \shared\components\layout
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        26/01/2026     20:03            361 AppFooter.tsx
+-a----        26/01/2026     23:47           3787 AppHeader.tsx
+-a----        26/01/2026     23:24           3438 AppSider.tsx
+-a----        26/01/2026     23:03           1694 GlobalSearch.tsx
+-a----        26/01/2026     21:03           5214 NotificationDropdown.tsx

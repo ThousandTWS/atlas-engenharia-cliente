@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Form,
   Input,
@@ -11,10 +11,10 @@ import {
   Col,
   Typography,
   Space,
-  message,
   Breadcrumb,
   Grid,
   Modal,
+  App,
 } from 'antd';
 import {
   SaveOutlined,
@@ -28,74 +28,65 @@ import dayjs from 'dayjs';
 import { CLCBTable } from '../components/CLCBTable';
 import type { CLCB } from '../components/CLCBTable';
 import { CLCBFilters } from '../components/CLCBFilters';
+import { GenericChart } from '../../../shared/components/charts/GenericChart';
+import { clcbService } from '../../../core/services/genericService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 
-const MOCK_DATA: CLCB[] = [
-  {
-    id: 1,
-    codigo: 'CLCB-A1B2C3D4',
-    nomeCliente: 'Empresa ABC',
-    endereco: 'Rua das Flores, 123',
-    telefone: '(11) 99999-9999',
-    situacao: 'EM_ANDAMENTO',
-    descricaoSituacao: 'Em análise técnica',
-    valorContrato: 3500,
-    nf: 'NF-100',
-    dataContrato: '2023-10-27',
-    aReceber: 1500,
-    recebido: 2000,
-    custos: 500,
-  },
-  {
-    id: 2,
-    codigo: 'CLCB-Z9Y8X7W6',
-    nomeCliente: 'Condomínio Vista Alegre',
-    endereco: 'Av. Brasil, 500',
-    telefone: '(11) 98888-8888',
-    situacao: 'CONCLUIDO',
-    descricaoSituacao: 'Certificado emitido',
-    valorContrato: 2800,
-    nf: 'NF-098',
-    dataContrato: '2023-09-15',
-    aReceber: 0,
-    recebido: 2800,
-    custos: 400,
-  }
-];
-
 export const CLCBPage: React.FC = () => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCLCB, setEditingCLCB] = useState<CLCB | null>(null);
-  const [clcbs, setClcbs] = useState<CLCB[]>(MOCK_DATA);
+  const [clcbs, setClcbs] = useState<CLCB[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const onFinish = (values: any) => {
-    const formattedValues = {
-      ...values,
-      dataContrato: values.dataContrato.format('YYYY-MM-DD'),
-    };
-
-    if (editingCLCB) {
-      setClcbs(prev => prev.map(c => c.id === editingCLCB.id ? { ...c, ...formattedValues } : c));
-      message.success('CLCB atualizado com sucesso');
-    } else {
-      const newCLCB = {
-        ...formattedValues,
-        id: Math.floor(Math.random() * 10000),
-        codigo: `CLCB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-      };
-      setClcbs(prev => [newCLCB, ...prev]);
-      message.success('CLCB cadastrado com sucesso');
+  const fetchCLCBs = async () => {
+    setLoading(true);
+    try {
+      const data = await clcbService.getAll() as any;
+      if (data && data.content) {
+        setClcbs(data.content);
+      } else {
+        setClcbs(Array.isArray(data) ? data : []);
+      }
+    } catch (error: any) {
+      message.error('Erro ao carregar CLCBs: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-    setIsModalOpen(false);
-    setEditingCLCB(null);
-    form.resetFields();
+  };
+
+  useEffect(() => {
+    fetchCLCBs();
+  }, []);
+
+  const onFinish = async (values: any) => {
+    try {
+      const formattedValues = {
+        ...values,
+        dataContrato: values.dataContrato.format('YYYY-MM-DD'),
+      };
+
+      if (editingCLCB) {
+        await clcbService.update(editingCLCB.id!, formattedValues);
+        message.success('CLCB atualizado com sucesso');
+      } else {
+        await clcbService.create(formattedValues);
+        message.success('CLCB cadastrado com sucesso');
+      }
+      setIsModalOpen(false);
+      setEditingCLCB(null);
+      form.resetFields();
+      fetchCLCBs();
+    } catch (error: any) {
+      message.error('Erro ao salvar CLCB: ' + error.message);
+    }
   };
 
   const handleEdit = (record: CLCB) => {
@@ -107,9 +98,14 @@ export const CLCBPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setClcbs(prev => prev.filter(c => c.id !== id));
-    message.success('CLCB excluído com sucesso');
+  const handleDelete = async (id: number) => {
+    try {
+      await clcbService.delete(id);
+      message.success('CLCB excluído com sucesso');
+      fetchCLCBs();
+    } catch (error: any) {
+      message.error('Erro ao excluir CLCB: ' + error.message);
+    }
   };
 
   const handleOpenAddModal = () => {
@@ -137,7 +133,7 @@ export const CLCBPage: React.FC = () => {
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
             Painel CLCB
           </Title>
@@ -159,6 +155,44 @@ export const CLCBPage: React.FC = () => {
         onClear={() => console.log('Limpar filtros')} 
       />
 
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Situação dos CLCBs"
+            subtitle="Distribuição por status atual"
+            loading={loading}
+            data={Object.entries(
+              clcbs.reduce((acc: Record<string, number>, curr) => {
+                acc[curr.situacao] = (acc[curr.situacao] || 0) + 1;
+                return acc;
+              }, {})
+            ).map(([label, value]) => ({
+              label: label.replace('_', ' '),
+              value,
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+            }))}
+          />
+        </Col>
+        <Col xs={24} lg={12}>
+          <GenericChart
+            title="Volume Financeiro por Status"
+            subtitle="Total em contrato por situação (R$)"
+            loading={loading}
+            valuePrefix="R$"
+            data={Object.entries(
+              clcbs.reduce((acc: Record<string, number>, curr) => {
+                acc[curr.situacao] = (acc[curr.situacao] || 0) + (curr.valorContrato || 0);
+                return acc;
+              }, {})
+            ).map(([label, value]) => ({
+              label: label.replace('_', ' '),
+              value,
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+            }))}
+          />
+        </Col>
+      </Row>
+
       <Card styles={{ body: { padding: 0 } }} style={{ borderRadius: 8, overflow: 'hidden' }}>
         <CLCBTable 
           dataSource={clcbs} 
@@ -175,7 +209,7 @@ export const CLCBPage: React.FC = () => {
         width={1000}
         footer={null}
         style={{ top: 20 }}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}

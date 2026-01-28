@@ -43,7 +43,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
         {
           key: '/processos',
           icon: <AppstoreOutlined />,
-          label: 'Gestão de Processos',
+          label: 'Processos Adm',
         },
       ]
     },
@@ -120,7 +120,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
         onClose={() => setCollapsed(true)}
         open={!collapsed}
         styles={{ body: { padding: 0 } }}
-        width={250}
+        size="default"
       >
         {menuContent}
       </Drawer>
