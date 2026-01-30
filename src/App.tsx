@@ -14,14 +14,13 @@ function App() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
-  // Fecha o menu ao mudar de rota no mobile
   useEffect(() => {
     if (isMobile) {
       setCollapsed(true);
     }
   }, [location.pathname, isMobile]);
 
-  // Sincroniza o estado collapsed com o tamanho da tela
+
   useEffect(() => {
     setCollapsed(isMobile);
   }, [isMobile]);
@@ -38,7 +37,7 @@ function App() {
       <Layout style={{ 
         marginLeft, 
         transition: 'all 0.2s',
-        minWidth: 0 // Importante para flex e overflow
+        minWidth: 0 
       }}>
         <AppHeader 
           collapsed={collapsed} 
