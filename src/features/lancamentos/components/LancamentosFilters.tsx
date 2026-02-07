@@ -10,6 +10,7 @@ import {
   Card,
 } from 'antd';
 import { SearchOutlined, ClearOutlined } from '@ant-design/icons';
+import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
 
 const { RangePicker } = DatePicker;
 
@@ -20,7 +21,7 @@ interface LancamentosFiltersProps {
 
 export const LancamentosFilters: React.FC<LancamentosFiltersProps> = ({ onSearch, onClear }) => {
   const [form] = Form.useForm();
-
+  const {isDarkMode} = useLayout();
   const handleClear = () => {
     form.resetFields();
     onClear();
@@ -28,7 +29,7 @@ export const LancamentosFilters: React.FC<LancamentosFiltersProps> = ({ onSearch
 
   return (
     <Card 
-      style={{ marginBottom: 24, borderRadius: 8 }}
+      style={{ marginBottom: 24, borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1'}}
       styles={{ body: { padding: '16px' } }}
     >
       <Form
@@ -39,23 +40,23 @@ export const LancamentosFilters: React.FC<LancamentosFiltersProps> = ({ onSearch
         <Row gutter={[16, 0]}>
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="codigo" label="Código">
-              <Input placeholder="Buscar por código" allowClear />
+              <Input placeholder="Buscar por código" allowClear style={{padding:7,background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}  />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="descricao" label="Descrição">
-              <Input placeholder="Buscar por descrição" allowClear />
+              <Input placeholder="Buscar por descrição" allowClear style={{padding:7,background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} />
             </Form.Item>
           </Col>
           <Col xs={24} sm={24} md={8}>
             <Form.Item name="periodo" label="Período">
-              <RangePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+              <RangePicker style={{padding:7,background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}  format="DD/MM/YYYY"  />
             </Form.Item>
           </Col>
         </Row>
         <Row justify="end">
           <Space>
-            <Button icon={<ClearOutlined />} onClick={handleClear}>
+            <Button  style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : ''}} icon={<ClearOutlined />} onClick={handleClear}>
               Limpar
             </Button>
             <Button type="primary" icon={<SearchOutlined />} htmlType="submit">

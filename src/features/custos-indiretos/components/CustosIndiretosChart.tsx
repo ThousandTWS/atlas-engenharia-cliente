@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Typography, Space, Tooltip } from 'antd';
 import type { CustoIndireto } from './CustosIndiretosTable';
+import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
 
 const { Title, Text } = Typography;
 
@@ -16,6 +17,7 @@ interface ChartDataItem {
 }
 
 export const CustosIndiretosChart: React.FC<CustosIndiretosChartProps> = ({ data, loading }) => {
+  const {isDarkMode} = useLayout();
   const getCategoriaColor = (categoria: string) => {
     const categories: Record<string, string> = {
       'Administrativo': '#1890ff',
@@ -58,7 +60,8 @@ export const CustosIndiretosChart: React.FC<CustosIndiretosChartProps> = ({ data
         borderRadius: '12px', 
         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
         marginBottom: '24px',
-        height: '350px'
+        height: '350px',
+        background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ?  'none' : '1px solid #5757571A'
       }}
       styles={{ body: { padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' } }}
     >

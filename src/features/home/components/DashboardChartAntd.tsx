@@ -101,7 +101,7 @@ export const DashboardChartAntd: React.FC = () => {
           loading={loading}
           data={custosData}
           valuePrefix="R$"
-          color="#722ed1"
+          color="#F5E947"
         />
       </Col>
     </Row>

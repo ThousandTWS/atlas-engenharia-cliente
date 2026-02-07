@@ -12,7 +12,6 @@ import {
   Typography,
   Space,
   Breadcrumb,
-  Grid,
   Modal,
   App,
 } from 'antd';
@@ -30,16 +29,15 @@ import type { ProcessoAdm } from '../components/ProcessosAdmTable';
 import { ProcessosAdmFilters } from '../components/ProcessosAdmFilters';
 import { GenericChart } from '../../../shared/components/charts/GenericChart';
 import { processosAdmService } from '../../../core/services/genericService';
+import { useLayout } from '../../../shared/components/layout/LayoutContext';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-const { useBreakpoint } = Grid;
 
 export const ProcessosAdmPage: React.FC = () => {
   const { message } = App.useApp();
   const [form] = Form.useForm();
-  const screens = useBreakpoint();
-  const isMobile = !screens.sm;
+  const {isMobile,sideBarWidth, isDarkMode } = useLayout();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProcesso, setEditingProcesso] = useState<ProcessoAdm | null>(null);
   const [processos, setProcessos] = useState<ProcessoAdm[]>([]);
@@ -145,6 +143,7 @@ export const ProcessosAdmPage: React.FC = () => {
           size="large" 
           icon={<PlusOutlined />} 
           onClick={handleOpenAddModal}
+
           style={{ width: isMobile ? '100%' : 'auto' }}
         >
           Novo Processo
@@ -204,14 +203,18 @@ export const ProcessosAdmPage: React.FC = () => {
           onView={(record) => message.info(`Visualizar processo: ${record.codigo}`)}
         />
       </Card>
-
       <Modal
         title={editingProcesso ? `Editar Processo: ${editingProcesso.codigo}` : 'Cadastrar Novo Processo'}
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
-        width={1000}
+        width={isMobile ? '95%' : 1000}
         footer={null}
-        style={{ top: 20 }}
+        style={{
+            top: 20,
+            paddingLeft: isMobile ? 0 : (sideBarWidth / 2 * 2),
+            transition: 'padding-left 0.2s ease',
+
+            }}
         destroyOnHidden
       >
         <Form
@@ -227,7 +230,7 @@ export const ProcessosAdmPage: React.FC = () => {
             <Col xs={24} lg={12}>
               <Card
                 title={<span><UserOutlined /> Identificação e Status</span>}
-                style={{ marginBottom: 24, borderRadius: 8, background: '#fafafa' }}
+                style={{ marginBottom: 24, borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1' }}
               >
                 <Row gutter={16}>
                   <Col span={24}>
@@ -236,7 +239,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       label="Nome do Cliente"
                       rules={[{ required: true, message: 'Insira o nome do cliente' }]}
                     >
-                      <Input placeholder="Ex: João da Silva" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: João da Silva" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
@@ -245,7 +248,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       label="Situação"
                       rules={[{ required: true, message: 'Selecione a situação' }]}
                     >
-                      <Select>
+                      <Select style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}>
                         <Option value="PENDENTE">Pendente</Option>
                         <Option value="EM_ANDAMENTO">Em Andamento</Option>
                         <Option value="CONCLUIDO">Concluído</Option>
@@ -259,7 +262,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       label="Data do Contrato"
                       rules={[{ required: true, message: 'Selecione a data' }]}
                     >
-                      <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                      <DatePicker style={{ width: '100%' ,background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} format="DD/MM/YYYY" />
                     </Form.Item>
                   </Col>
                   <Col span={24}>
@@ -267,7 +270,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       name="descricaoSituacao"
                       label="Descrição da Situação"
                     >
-                      <Input placeholder="Ex: Aguardando assinatura..." />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: Aguardando assinatura..." />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -275,22 +278,22 @@ export const ProcessosAdmPage: React.FC = () => {
 
               <Card
                 title={<span><InfoCircleOutlined /> Documentação e Prazos</span>}
-                style={{ borderRadius: 8, background: '#fafafa' }}
+                style={{ borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1' }}
               >
                 <Row gutter={16}>
                   <Col xs={24} md={12}>
                     <Form.Item name="nf" label="Nota Fiscal (NF)">
-                      <Input placeholder="NF-2023-XXX" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="NF-2023-XXX" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
                     <Form.Item name="proximaParcela" label="Próxima Parcela">
-                      <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                      <DatePicker style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }} format="DD/MM/YYYY" />
                     </Form.Item>
                   </Col>
                   <Col span={24}>
                     <Form.Item name="condicaoPagamento" label="Condição de Pagamento">
-                      <Input placeholder="Ex: 30/60 dias ou À vista" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: 30/60 dias ou À vista" />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -300,7 +303,7 @@ export const ProcessosAdmPage: React.FC = () => {
             <Col xs={24} lg={12}>
               <Card
                 title={<span><DollarOutlined /> Financeiro Administrativo</span>}
-                style={{ marginBottom: 24, borderRadius: 8, background: '#fafafa' }}
+                style={{ marginBottom: 24, borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1' }}
               >
                 <Row gutter={16}>
                   <Col span={24}>
@@ -310,7 +313,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       rules={[{ required: true, message: 'Insira o valor' }]}
                     >
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -319,7 +322,7 @@ export const ProcessosAdmPage: React.FC = () => {
                   <Col span={24}>
                     <Form.Item name="recebido" label="Valor Recebido">
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -328,7 +331,7 @@ export const ProcessosAdmPage: React.FC = () => {
                   <Col span={24}>
                     <Form.Item name="aReceber" label="Valor a Receber">
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -337,7 +340,7 @@ export const ProcessosAdmPage: React.FC = () => {
                   <Col span={24}>
                     <Form.Item name="custos" label="Custos Administrativos">
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -347,7 +350,7 @@ export const ProcessosAdmPage: React.FC = () => {
               </Card>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: 32 }}>
-                <Button onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                <Button style={{background: isDarkMode ? '#171C2A' : '#fff'}} onClick={() => setIsModalOpen(false)}>Cancelar</Button>
                 <Button type="primary" icon={<SaveOutlined />} htmlType="submit">
                   {editingProcesso ? 'Salvar Alterações' : 'Cadastrar Processo'}
                 </Button>

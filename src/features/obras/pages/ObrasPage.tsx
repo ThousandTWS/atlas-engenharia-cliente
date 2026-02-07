@@ -12,7 +12,6 @@ import {
   Typography,
   Space,
   Breadcrumb,
-  Grid,
   Modal,
   App,
 } from 'antd';
@@ -29,17 +28,16 @@ import { ObrasFilters } from '../components/ObrasFilters';
 import { GenericChart } from '../../../shared/components/charts/GenericChart';
 import { obrasService } from '../../../core/services/obrasService';
 import type { Obra } from '../../../core/services/obrasService';
+import { useLayout } from '../../../shared/components/layout/LayoutContext';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
-const { useBreakpoint } = Grid;
 
 export const ObrasPage: React.FC = () => {
   const { message } = App.useApp();
   const [form] = Form.useForm();
-  const screens = useBreakpoint();
-  const isMobile = !screens.sm;
+  const {isMobile,sideBarWidth,isDarkMode } = useLayout();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingObra, setEditingObra] = useState<any>(null);
   const [obras, setObras] = useState<Obra[]>([]);
@@ -241,7 +239,10 @@ export const ObrasPage: React.FC = () => {
         onCancel={() => setIsModalOpen(false)}
         width={1000}
         footer={null}
-        style={{ top: 20 }}
+        style={{ top: 20,
+            paddingLeft: isMobile ? 0 : (sideBarWidth / 2 * 2),
+                        transition: 'padding-left 0.2s ease'
+            }}
         destroyOnHidden
       >
         <Form
@@ -258,7 +259,7 @@ export const ObrasPage: React.FC = () => {
             <Col xs={24} lg={14}>
               <Card
                 title={<span><UserOutlined /> Informações do Cliente e Serviço</span>}
-                style={{ marginBottom: 24, borderRadius: 8, background: '#fafafa' }}
+                style={{ marginBottom: 24, borderRadius: 8 ,  background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1'}}
               >
                 <Row gutter={16}>
                   <Col xs={24} md={12}>
@@ -267,7 +268,7 @@ export const ObrasPage: React.FC = () => {
                       label="Nome do Cliente"
                       rules={[{ required: true, message: 'Por favor, insira o nome do cliente' }]}
                     >
-                      <Input placeholder="Ex: Construtora Rocha" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}  placeholder="Ex: Construtora Rocha" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
@@ -276,7 +277,7 @@ export const ObrasPage: React.FC = () => {
                       label="Telefone de Contato"
                       rules={[{ required: true, message: 'Por favor, insira o telefone' }]}
                     >
-                      <Input placeholder="(00) 00000-0000" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="(00) 00000-0000" />
                     </Form.Item>
                   </Col>
                   <Col xs={24}>
@@ -285,7 +286,7 @@ export const ObrasPage: React.FC = () => {
                       label="Endereço da Obra"
                       rules={[{ required: true, message: 'Por favor, insira o endereço' }]}
                     >
-                      <Input placeholder="Rua, número, bairro, cidade - UF" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Rua, número, bairro, cidade - UF" />
                     </Form.Item>
                   </Col>
                   <Col xs={24}>
@@ -294,7 +295,7 @@ export const ObrasPage: React.FC = () => {
                       label="Tipo de Serviço"
                       rules={[{ required: true, message: 'Por favor, descreva o serviço' }]}
                     >
-                      <Input placeholder="Ex: Reforma estrutural, Pintura, Elétrica" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: Reforma estrutural, Pintura, Elétrica" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
@@ -303,7 +304,7 @@ export const ObrasPage: React.FC = () => {
                       label="Situação Atual"
                       rules={[{ required: true, message: 'Selecione a situação' }]}
                     >
-                      <Select>
+                      <Select style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}>
                         <Option value="ORCAMENTO">Orçamento</Option>
                         <Option value="PENDENTE">Pendente</Option>
                         <Option value="EM_ANDAMENTO">Em Andamento</Option>
@@ -319,7 +320,7 @@ export const ObrasPage: React.FC = () => {
                       label="Data do Contrato"
                       rules={[{ required: true, message: 'Selecione a data' }]}
                     >
-                      <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                      <DatePicker style={{ width: '100%' ,background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} format="DD/MM/YYYY" />
                     </Form.Item>
                   </Col>
                   <Col xs={24}>
@@ -327,7 +328,7 @@ export const ObrasPage: React.FC = () => {
                       name="descricaoSituacao"
                       label="Descrição da Situação / Observações"
                     >
-                      <TextArea rows={3} placeholder="Detalhes sobre o progresso..." />
+                      <TextArea style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} rows={3} placeholder="Detalhes sobre o progresso..." />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -337,12 +338,12 @@ export const ObrasPage: React.FC = () => {
             <Col xs={24} lg={10}>
               <Card
                 title={<span><DollarOutlined /> Financeiro</span>}
-                style={{ marginBottom: 24, borderRadius: 8, background: '#fafafa' }}
+                style={{ marginBottom: 24, borderRadius: 8,  background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1' }}
               >
                 <Row gutter={16}>
                   <Col span={24}>
                     <Form.Item name="nf" label="Nota Fiscal (NF)">
-                      <Input placeholder="NF-000X" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="NF-000X" />
                     </Form.Item>
                   </Col>
                   <Col span={24}>
@@ -352,7 +353,7 @@ export const ObrasPage: React.FC = () => {
                       rules={[{ required: true, message: 'Insira o valor' }]}
                     >
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%',  background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -360,13 +361,13 @@ export const ObrasPage: React.FC = () => {
                   </Col>
                   <Col span={24}>
                     <Form.Item name="condicaoPagamento" label="Condição de Pagamento">
-                      <Input placeholder="Ex: Entrada + 3x" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: Entrada + 3x" />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item name="recebido" label="Valor Recebido">
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%' , background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -375,7 +376,7 @@ export const ObrasPage: React.FC = () => {
                   <Col span={12}>
                     <Form.Item name="aReceber" label="A Receber">
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -384,7 +385,7 @@ export const ObrasPage: React.FC = () => {
                   <Col span={24}>
                     <Form.Item name="custos" label="Custos Estimados">
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -394,7 +395,7 @@ export const ObrasPage: React.FC = () => {
               </Card>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <Button onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                <Button style={{background: isDarkMode ? '#171C2A' : '#fff'}} onClick={() => setIsModalOpen(false)}>Cancelar</Button>
                 <Button type="primary" icon={<SaveOutlined />} htmlType="submit">
                   {editingObra ? 'Salvar Alterações' : 'Cadastrar Obra'}
                 </Button>
