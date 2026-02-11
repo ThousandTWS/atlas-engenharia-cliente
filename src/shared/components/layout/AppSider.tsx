@@ -11,6 +11,11 @@ import {
   BuildOutlined,
   TransactionOutlined,
   WalletOutlined,
+  GoogleOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  TeamOutlined
+
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -91,7 +96,29 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
           label: 'Custos Indiretos',
         },
       ]
+
   },
+      {
+          type: 'divider',
+      },
+      {
+          key: 'gestao-group',
+          type: 'group',
+          label: 'Gestões',
+          children: [
+              {
+                  key: '/gestao-de-clientes',
+                  icon: <  TeamOutlined/>,
+                  label: 'Gestão de Clientes',
+              },
+              {
+                  key: '/gestao-ads',
+                  icon: <GoogleOutlined />,
+                  label: 'Gestão Ads',
+              },
+              ]
+      }
+
   ];
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
@@ -117,7 +144,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
                                 // Cor dos itens
                                 itemColor: isDarkMode ? '#FFFFFF' :'#1E293B' ,
                                 itemSelectedColor:isDarkMode ? '#FFFFFF' : '#1E293B',
-                                itemSelectedBg: isDarkMode ? '#FFFFFF0D' :'#CBD5E155',
+                                itemSelectedBg: isDarkMode ? '#FFFFFF0D' :'#1E1F2112',
                                 itemHoverColor:isDarkMode ? '#FFFFFF' : '#1E293B'
                             }
                     }
@@ -165,6 +192,15 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
       collapsible
       collapsed={collapsed}
       onCollapse={(value) => setCollapsed(value)}
+      trigger={
+          <div style={{
+              color: '#fff',
+              borderRadius: '4px',
+              margin: '0 8px'
+          }}>
+              {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          </div>
+      }
       style={{
         overflow: 'auto',
         height: '100vh',

@@ -17,29 +17,34 @@ function AppLayoutStructure() {
       <ConfigProvider
 
         theme={{
-                algorithm : isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+            algorithm : isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+            token: {colorPrimary: isDarkMode ? '#A67458' : '#1890ff' },
             components: {
+
                 Modal: {
-                    // Altera o fundo do corpo do modal
                     contentBg: isDarkMode ? '#141B2D' : '#ffffff',
-
-                    // Altera o fundo do título/topo
                     headerBg: isDarkMode ? '#141B2D' : '#ffffff',
-
-                    // Cor do texto do título
                     titleColor: isDarkMode ? '#ffffff' : '#000000',
 
-                    // Cor do ícone de fechar (X)
                 },
-                    Table: {
-                        headerBg: isDarkMode ? '#1c2536' : '#FFFFFF',
-                        headerColor: isDarkMode ? '#FFFFFF' : '#1E293B',
+                Table: {
+                    headerBg: isDarkMode ? '#1c2536' : '#FFFFFF',
+                    headerColor: isDarkMode ? '#FFFFFF' : '#1E293B',
+                    colorBgContainer: isDarkMode ? '#0A0F1C' : '#FAFBFC',
+                    colorText: isDarkMode ? '#E2E8F0' : '#334155',
+                    rowHoverBg: isDarkMode ? '#1e293b' : '#F8FAFC',
+                },
+                Button: {
+                    colorPrimary: isDarkMode ? '#A67458' : '#1890ff',
+                },
+                Select: {
+                    selectorBg: isDarkMode ? '#171C2A' : '#ffffff',
 
-                        colorBgContainer: isDarkMode ? '#0A0F1C' : '#FAFBFC',
-                        colorText: isDarkMode ? '#E2E8F0' : '#334155',
+                    optionSelectedBg: isDarkMode ? '#1e293b' : '#e6f4ff',
+                    colorBgElevated: isDarkMode ? '#171C2A' : '#ffffff',
 
-                        rowHoverBg: isDarkMode ? '#1e293b' : '#F8FAFC',},
-
+                    colorBorder: isDarkMode ? '#1E2A47' : '#CBD5E1',
+                },
             },
 
 
@@ -56,7 +61,7 @@ function AppLayoutStructure() {
         marginLeft:sideBarWidth,
         transition: 'all 0.2s',
         minWidth: 0,
-          background: isDarkMode ? '#0A0F1C' : '#FFFFFF'
+          background: isDarkMode ? '#0A0F1C' : '#1E1F2112'
       }}>
         <AppHeader
           collapsed={collapsed}
@@ -71,7 +76,7 @@ function AppLayoutStructure() {
           padding: isMobile ? 12 : 24,
           minHeight: 280,
             color: isDarkMode ? '#fff' : '#1E293B',
-          background: isDarkMode ? 'linear-gradient(145deg, #141B2D 0%, #0A0F1C 100%)' : '#F5F7FA' ,
+          background: isDarkMode ? 'linear-gradient(145deg, #141B2D 0%, #0A0F1C 100%)' : '#FCFCFC' ,
           borderRadius: '8px',
           overflow: 'initial'
 

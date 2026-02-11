@@ -39,8 +39,10 @@ export const GenericChart: React.FC<GenericChartProps> = ({
   };
 
   const defaultColors = [
-    '#1890ff', '#722ed1', '#52c41a', '#eb2f96', '#faad14', 
-    '#f5222d', '#13c2c2', '#2f54eb', '#722ed1', '#fa8c16'
+    '#1890ff', '#722ed1', '#52c41a', '#eb2f96', '#faad14',
+    '#f5222d', '#13c2c2', '#2f54eb', '#722ed1', '#fa8c16',
+      //Cores Marrons
+    '#8B4513', '#8B5E47', '#8B5E47'
   ];
 
 
@@ -53,7 +55,7 @@ export const GenericChart: React.FC<GenericChartProps> = ({
         boxShadow: isDarkMode ?  '0 10px 24px #0000001A' : '0 5px 10px #2E2E2E33',
         marginBottom: '24px',
         height: height,
-        background : isDarkMode ? '#0A0F1C' : '#FAFBFC',
+        background : isDarkMode ? 'linear-gradient(135deg, #2A3A5C 0%, #1E2A47 50%, #141B2D 100%)' : '#FFF',
       }}
       styles={{ body: { padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' } }}
     >

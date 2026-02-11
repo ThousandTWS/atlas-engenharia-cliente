@@ -15,6 +15,8 @@ import { CLCBPage } from '../../features/clcb/pages/CLCBPage';
 import { AVCBPage } from '../../features/avcb/pages/AVCBPage';
 import { ProfilePage } from '../../features/profile/pages/ProfilePage';
 import { NotFoundPage } from '../../shared/components/NotFoundPage';
+import {GestaoClientesPage} from "../../features/gestao-de-clientes/page/GestaoDeClientes.tsx";
+import {GestaoAdsPage} from "../../features/gestao-ads/pages/GestaoAdsPage.tsx";
 
 export const router = createBrowserRouter([
   {
@@ -56,6 +58,14 @@ export const router = createBrowserRouter([
       {
         path: 'lancamentos',
         element: <LancamentosPage />,
+      },
+      {
+        path: 'gestao-de-clientes',
+        element: <GestaoClientesPage />,
+      },
+      {
+        path: 'gestao-ads',
+        element: <GestaoAdsPage />,
       },
       {
         path: '*',

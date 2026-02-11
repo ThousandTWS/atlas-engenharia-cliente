@@ -43,7 +43,7 @@ export const GlobalSearch: React.FC = () => {
     >
       <Input
         size="large"
-        placeholder="Search..."
+        placeholder="Pesquisar..."
         suffix={<SearchOutlined style={{ color:isDarkMode ? '#fff' : 'rgba(0,0,0,0.45)' }} />}
         style={{
           marginTop: isLarge ? 12 : 10,
@@ -51,8 +51,8 @@ export const GlobalSearch: React.FC = () => {
           borderRadius: '8px', 
           height: '40px', 
           width: '100%',
-          backgroundColor: isDarkMode ? '#1c263e' :  '#f5f5f5',
-          border: '1px solid #d9d9d9',
+          backgroundColor: isDarkMode ? '#171C2A' :  '#f5f5f5',
+          border: isDarkMode ? 'solid 1px #1E2A47' :'1px solid #d9d9d9',
         }}
       />
     </AutoComplete>
