@@ -60,6 +60,7 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
     return colors[status] || 'default';
   };
 
+
   const columns: ColumnsType<Obra> = [
     {
       title: 'Código',
@@ -155,6 +156,7 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
   ];
 
   return (
+
     <Table
       columns={columns}
       dataSource={dataSource}
@@ -162,6 +164,7 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
       loading={loading}
       scroll={{ x: 1000 }}
       pagination={{
+        placement :['bottomCenter'],
         current: pagination.current,
         pageSize: pagination.pageSize,
         total: pagination.total,

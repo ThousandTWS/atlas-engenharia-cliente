@@ -8,7 +8,7 @@ import { WelcomeBanner } from '../components/WelcomeBanner';
 
 export const HomePage = () => {
   return (
-    <div style={{ padding: '4px' }}>
+    <div style={{ padding: '4px'}}>
       <Breadcrumb
         items={[
           { title: <HomeOutlined />, href: '/' },

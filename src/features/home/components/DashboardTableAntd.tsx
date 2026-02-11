@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Typography, Input, App } from 'antd';
+import { Card, Table, Tag, Typography, Input, App, ConfigProvider } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { avcbService, clcbService, processosAdmService, lancamentosService, custosIndiretosService } from '../../../core/services/genericService';
 import { obrasService } from '../../../core/services/obrasService';
+import { useLayout } from '../../../shared/components/layout/LayoutContext';
+
 
 const { Title } = Typography;
 
@@ -14,6 +16,7 @@ interface RowData {
   valor: number;
   data: string;
   tipo: string;
+  isDarkMode: boolean;
 }
 
 export const DashboardTableAntd: React.FC = () => {
@@ -21,6 +24,7 @@ export const DashboardTableAntd: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
   const [rowData, setRowData] = useState<RowData[]>([]);
+  const {isDarkMode} = useLayout();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,7 +96,7 @@ export const DashboardTableAntd: React.FC = () => {
       dataIndex: 'tipo',
       key: 'tipo',
       width: 120,
-      render: (tipo: string) => <Tag color="blue">{tipo}</Tag>,
+      render: (tipo: string) => <Tag style={{color:isDarkMode ? '#ffffff' : '#000'}} >{tipo}</Tag>,
       filters: [
         { text: 'AVCB', value: 'AVCB' },
         { text: 'CLCB', value: 'CLCB' },
@@ -167,27 +171,38 @@ export const DashboardTableAntd: React.FC = () => {
       loading={loading}
       style={{ 
         borderRadius: '12px', 
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        marginTop: '24px'
+        boxShadow: '0 5px 8px rgba(0,0,0,0.06)',
+        marginTop: '24px',
+        background: isDarkMode ? 'linear-gradient(180deg, #1E2A47 0%, #141B2D 100%)' : '#fff'
       }}
       styles={{ body: { padding: '24px' } }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
-        <Title level={4} style={{ margin: 0 }}>Atividades Recentes</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px'}}>
+        <Title level={4} style={{ margin: 0}}>Atividades Recentes</Title>
         <Input
           placeholder="Pesquisar..."
           prefix={<SearchOutlined />}
-          style={{ width: 250 }}
+          style={{ width: 250, background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : '1px solid #0000001A'  }}
           allowClear
           onChange={(e) => setSearchText(e.target.value)}
         />
       </div>
-      
-      <Table 
-        dataSource={filteredData} 
+
+      <ConfigProvider
+          theme={{
+            components:{
+              Table:{
+                colorBgContainer: isDarkMode ? '#0A0F1C' : '#fff',
+              }
+            }
+          }}>
+      <Table
+
+        dataSource={filteredData}
         columns={columns} 
         rowKey={(record) => `${record.tipo}-${record.id}`}
         pagination={{
+          placement: ['bottomCenter'],
           pageSize: 10,
           showSizeChanger: true,
           pageSizeOptions: ['10', '20', '50'],
@@ -195,6 +210,7 @@ export const DashboardTableAntd: React.FC = () => {
         }}
         scroll={{ x: 1000 }}
       />
+      </ConfigProvider>
     </Card>
   );
 };

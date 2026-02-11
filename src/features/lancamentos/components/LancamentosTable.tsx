@@ -153,6 +153,7 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       loading={loading}
       scroll={{ x: 1000 }}
       pagination={{
+        placement: ['bottomCenter'],
         pageSize: 10,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} lançamentos`,

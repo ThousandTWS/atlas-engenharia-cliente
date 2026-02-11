@@ -67,6 +67,8 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
     }).format(value);
   };
 
+  // Setar se o tema está escuro
+
   const columns: ColumnsType<ProcessoAdm> = [
     {
       title: 'Código',
@@ -153,6 +155,7 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
   ];
 
   return (
+
     <Table
       columns={columns}
       dataSource={dataSource}
@@ -160,6 +163,7 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
       loading={loading}
       scroll={{ x: 1000 }}
       pagination={{
+        placement:["bottomCenter"],
         pageSize: 10,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} processos`,

@@ -12,7 +12,6 @@ import {
   Typography,
   Space,
   Breadcrumb,
-  Grid,
   Modal,
   App,
 } from 'antd';
@@ -29,17 +28,16 @@ import type { AVCB } from '../components/AVCBTable';
 import { AVCBFilters } from '../components/AVCBFilters';
 import { GenericChart } from '../../../shared/components/charts/GenericChart';
 import { avcbService } from '../../../core/services/genericService';
+  import { useLayout } from '../../../shared/components/layout/LayoutContext';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
-const { useBreakpoint } = Grid;
 
 export const AVCBPage: React.FC = () => {
   const { message } = App.useApp();
   const [form] = Form.useForm();
-  const screens = useBreakpoint();
-  const isMobile = !screens.sm;
+  const {isMobile,sideBarWidth, isDarkMode } = useLayout();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAVCB, setEditingAVCB] = useState<AVCB | null>(null);
   const [avcbs, setAvcbs] = useState<AVCB[]>([]);
@@ -207,7 +205,10 @@ export const AVCBPage: React.FC = () => {
         onCancel={() => setIsModalOpen(false)}
         width={1000}
         footer={null}
-        style={{ top: 20 }}
+        style={{ top: 20,
+            paddingLeft: isMobile ? 0 : (sideBarWidth / 2 * 2),
+            transition: 'padding-left 0.2s ease'
+            }}
         destroyOnHidden
       >
         <Form
@@ -224,7 +225,7 @@ export const AVCBPage: React.FC = () => {
             <Col xs={24} lg={14}>
               <Card
                 title={<span><FireOutlined /> Informações do Processo</span>}
-                style={{ marginBottom: 24, borderRadius: 8, background: '#fafafa' }}
+                style={{ marginBottom: 24, borderRadius: 8,  background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1' }}
               >
                 <Row gutter={16}>
                   <Col xs={24} md={12}>
@@ -233,7 +234,7 @@ export const AVCBPage: React.FC = () => {
                       label="Situação"
                       rules={[{ required: true, message: 'Selecione a situação' }]}
                     >
-                      <Select>
+                      <Select style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}>
                         <Option value="PENDENTE">Pendente</Option>
                         <Option value="EM_ANDAMENTO">Em Andamento</Option>
                         <Option value="CONCLUIDO">Concluído</Option>
@@ -247,7 +248,7 @@ export const AVCBPage: React.FC = () => {
                       label="Data do Contrato"
                       rules={[{ required: true, message: 'Selecione a data' }]}
                     >
-                      <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                      <DatePicker style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }} format="DD/MM/YYYY" />
                     </Form.Item>
                   </Col>
                   <Col xs={24}>
@@ -256,7 +257,7 @@ export const AVCBPage: React.FC = () => {
                       label="Descrição da Situação / Observações"
                       rules={[{ required: true, message: 'Insira uma descrição' }]}
                     >
-                      <TextArea rows={4} placeholder="Detalhes sobre o andamento do AVCB..." />
+                      <TextArea style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} rows={4} placeholder="Detalhes sobre o andamento do AVCB..." />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -266,12 +267,12 @@ export const AVCBPage: React.FC = () => {
             <Col xs={24} lg={10}>
               <Card
                 title={<span><DollarOutlined /> Financeiro e Documentação</span>}
-                style={{ marginBottom: 24, borderRadius: 8, background: '#fafafa' }}
+                style={{ marginBottom: 24, borderRadius: 8,  background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1'}}
               >
                 <Row gutter={16}>
                   <Col span={24}>
                     <Form.Item name="nf" label="Nota Fiscal (NF)">
-                      <Input placeholder="NF-000X" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="NF-000X" />
                     </Form.Item>
                   </Col>
                   <Col span={24}>
@@ -281,7 +282,7 @@ export const AVCBPage: React.FC = () => {
                       rules={[{ required: true, message: 'Insira o valor' }]}
                     >
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -289,13 +290,13 @@ export const AVCBPage: React.FC = () => {
                   </Col>
                   <Col span={24}>
                     <Form.Item name="condicaoPagamento" label="Condição de Pagamento">
-                      <Input placeholder="Ex: À vista, 30/60 dias" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: À vista, 30/60 dias" />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item name="recebido" label="Recebido">
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -304,7 +305,7 @@ export const AVCBPage: React.FC = () => {
                   <Col span={12}>
                     <Form.Item name="aReceber" label="A Receber">
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -313,7 +314,7 @@ export const AVCBPage: React.FC = () => {
                   <Col span={24}>
                     <Form.Item name="custos" label="Custos">
                       <InputNumber
-                        style={{ width: '100%' }}
+                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -323,7 +324,7 @@ export const AVCBPage: React.FC = () => {
               </Card>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <Button onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                <Button style={{background: isDarkMode ? '#171C2A' : '#fff'}} onClick={() => setIsModalOpen(false)}>Cancelar</Button>
                 <Button type="primary" icon={<SaveOutlined />} htmlType="submit">
                   {editingAVCB ? 'Salvar Alterações' : 'Cadastrar AVCB'}
                 </Button>

@@ -2,8 +2,10 @@ import React from 'react';
 import { AutoComplete, Input, Grid } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import {useLayout} from './LayoutContext.tsx'
 
 const { useBreakpoint } = Grid;
+
 
 const searchOptions = [
   { value: 'Insights', path: '/' },
@@ -18,6 +20,8 @@ export const GlobalSearch: React.FC = () => {
   const navigate = useNavigate();
   const screens = useBreakpoint();
   const isLarge = screens.lg;
+  const {isDarkMode} = useLayout();
+
 
   const onSelect = (value: string) => {
     const option = searchOptions.find((opt) => opt.value === value);
@@ -40,13 +44,14 @@ export const GlobalSearch: React.FC = () => {
       <Input
         size="large"
         placeholder="Search..."
-        suffix={<SearchOutlined style={{ color: 'rgba(0,0,0,0.45)' }} />}
+        suffix={<SearchOutlined style={{ color:isDarkMode ? '#fff' : 'rgba(0,0,0,0.45)' }} />}
         style={{
-          marginTop: isLarge ? 12 : 0,
+          marginTop: isLarge ? 12 : 10,
+          marginRight:12,
           borderRadius: '8px', 
           height: '40px', 
           width: '100%',
-          backgroundColor: '#f5f5f5',
+          backgroundColor: isDarkMode ? '#1c263e' :  '#f5f5f5',
           border: '1px solid #d9d9d9',
         }}
       />

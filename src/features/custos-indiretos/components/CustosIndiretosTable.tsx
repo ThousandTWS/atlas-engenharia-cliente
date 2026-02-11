@@ -55,7 +55,6 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
     };
     return categories[categoria] || 'blue';
   };
-
   const columns: ColumnsType<CustoIndireto> = [
     {
       title: 'Data',
@@ -133,6 +132,7 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
   ];
 
   return (
+
     <Table
       columns={columns}
       dataSource={dataSource}
@@ -140,6 +140,7 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
       loading={loading}
       scroll={{ x: 800 }}
       pagination={{
+        placement: ['bottomCenter'],
         current: pagination.current,
         pageSize: pagination.pageSize,
         total: pagination.total,

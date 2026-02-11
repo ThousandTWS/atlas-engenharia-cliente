@@ -55,6 +55,7 @@ export const AVCBTable: React.FC<AVCBTableProps> = ({
     return colors[status] || 'default';
   };
 
+
   const columns: ColumnsType<AVCB> = [
     {
       title: 'NF',
@@ -144,6 +145,7 @@ export const AVCBTable: React.FC<AVCBTableProps> = ({
   ];
 
   return (
+
     <Table
       columns={columns}
       dataSource={dataSource}

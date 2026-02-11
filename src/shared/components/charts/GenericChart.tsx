@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Typography, Space, Tooltip } from 'antd';
+import {useLayout} from "../layout/LayoutContext.tsx";
 
 const { Title, Text } = Typography;
 
@@ -12,6 +13,7 @@ interface GenericChartProps {
   valuePrefix?: string;
   type?: 'bar' | 'pie';
   color?: string;
+  isDarkMode?: boolean;
 }
 
 export const GenericChart: React.FC<GenericChartProps> = ({
@@ -24,7 +26,7 @@ export const GenericChart: React.FC<GenericChartProps> = ({
   color,
 }) => {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
-
+  const {isDarkMode} = useLayout();
   const formatValue = (value: number) => {
     if (valuePrefix === 'R$') {
       return new Intl.NumberFormat('pt-BR', {
@@ -41,15 +43,17 @@ export const GenericChart: React.FC<GenericChartProps> = ({
     '#f5222d', '#13c2c2', '#2f54eb', '#722ed1', '#fa8c16'
   ];
 
+
   return (
     <Card
       variant="borderless"
       loading={loading}
       style={{
         borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        boxShadow: isDarkMode ?  '0 10px 24px #0000001A' : '0 5px 10px #2E2E2E33',
         marginBottom: '24px',
         height: height,
+        background : isDarkMode ? '#0A0F1C' : '#FAFBFC',
       }}
       styles={{ body: { padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' } }}
     >

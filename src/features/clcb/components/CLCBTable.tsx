@@ -58,6 +58,7 @@ export const CLCBTable: React.FC<CLCBTableProps> = ({
     return colors[status] || 'default';
   };
 
+
   const columns: ColumnsType<CLCB> = [
     {
       title: 'Código',
@@ -151,6 +152,7 @@ export const CLCBTable: React.FC<CLCBTableProps> = ({
   ];
 
   return (
+
     <Table
       columns={columns}
       dataSource={dataSource}
@@ -158,6 +160,7 @@ export const CLCBTable: React.FC<CLCBTableProps> = ({
       loading={loading}
       scroll={{ x: 1000 }}
       pagination={{
+        placement:["bottomCenter"],
         pageSize: 10,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} registros`,
