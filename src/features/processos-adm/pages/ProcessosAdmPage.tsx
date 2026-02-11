@@ -170,7 +170,7 @@ export const ProcessosAdmPage: React.FC = () => {
             ).map(([label, value]) => ({
               label: label.replace('_', ' '),
               value,
-              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? (isDarkMode ? '#8B5E47': '#1890ff') : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
             }))}
           />
         </Col>
@@ -189,7 +189,7 @@ export const ProcessosAdmPage: React.FC = () => {
             ).map(([label, value]) => ({
               label: label.replace('_', ' '),
               value,
-              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? (isDarkMode ? '#8B5E47': '#1890ff') : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
             }))}
           />
         </Col>
@@ -213,7 +213,6 @@ export const ProcessosAdmPage: React.FC = () => {
             top: 20,
             paddingLeft: isMobile ? 0 : (sideBarWidth / 2 * 2),
             transition: 'padding-left 0.2s ease',
-
             }}
         destroyOnHidden
       >
@@ -230,7 +229,7 @@ export const ProcessosAdmPage: React.FC = () => {
             <Col xs={24} lg={12}>
               <Card
                 title={<span><UserOutlined /> Identificação e Status</span>}
-                style={{ marginBottom: 24, borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1' }}
+                style={{ marginBottom: 24, borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'solid 1px #1E2A47' : '1px solid #CBD5E1' }}
               >
                 <Row gutter={16}>
                   <Col span={24}>
@@ -239,7 +238,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       label="Nome do Cliente"
                       rules={[{ required: true, message: 'Insira o nome do cliente' }]}
                     >
-                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: João da Silva" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#8e8e8e', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1'}} placeholder="Ex: João da Silva" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
@@ -248,7 +247,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       label="Situação"
                       rules={[{ required: true, message: 'Selecione a situação' }]}
                     >
-                      <Select style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}>
+                      <Select style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1'}}>
                         <Option value="PENDENTE">Pendente</Option>
                         <Option value="EM_ANDAMENTO">Em Andamento</Option>
                         <Option value="CONCLUIDO">Concluído</Option>
@@ -262,7 +261,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       label="Data do Contrato"
                       rules={[{ required: true, message: 'Selecione a data' }]}
                     >
-                      <DatePicker style={{ width: '100%' ,background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} format="DD/MM/YYYY" />
+                      <DatePicker style={{ width: '100%' ,background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1'}} format="DD/MM/YYYY" />
                     </Form.Item>
                   </Col>
                   <Col span={24}>
@@ -270,7 +269,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       name="descricaoSituacao"
                       label="Descrição da Situação"
                     >
-                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: Aguardando assinatura..." />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1'}} placeholder="Ex: Aguardando assinatura..." />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -278,22 +277,22 @@ export const ProcessosAdmPage: React.FC = () => {
 
               <Card
                 title={<span><InfoCircleOutlined /> Documentação e Prazos</span>}
-                style={{ borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1' }}
+                style={{ borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'solid 1px #1E2A47' : '1px solid #CBD5E1' }}
               >
                 <Row gutter={16}>
                   <Col xs={24} md={12}>
                     <Form.Item name="nf" label="Nota Fiscal (NF)">
-                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="NF-2023-XXX" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1'}} placeholder="NF-2023-XXX" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
                     <Form.Item name="proximaParcela" label="Próxima Parcela">
-                      <DatePicker style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }} format="DD/MM/YYYY" />
+                      <DatePicker style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }} format="DD/MM/YYYY" />
                     </Form.Item>
                   </Col>
                   <Col span={24}>
                     <Form.Item name="condicaoPagamento" label="Condição de Pagamento">
-                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: 30/60 dias ou À vista" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1'}} placeholder="Ex: 30/60 dias ou À vista" />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -303,7 +302,7 @@ export const ProcessosAdmPage: React.FC = () => {
             <Col xs={24} lg={12}>
               <Card
                 title={<span><DollarOutlined /> Financeiro Administrativo</span>}
-                style={{ marginBottom: 24, borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1' }}
+                style={{ marginBottom: 24, borderRadius: 8, background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'solid 1px #1E2A47' : '1px solid #CBD5E1' }}
               >
                 <Row gutter={16}>
                   <Col span={24}>
@@ -313,7 +312,7 @@ export const ProcessosAdmPage: React.FC = () => {
                       rules={[{ required: true, message: 'Insira o valor' }]}
                     >
                       <InputNumber
-                        style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }}
+                        style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -322,7 +321,7 @@ export const ProcessosAdmPage: React.FC = () => {
                   <Col span={24}>
                     <Form.Item name="recebido" label="Valor Recebido">
                       <InputNumber
-                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
+                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -331,7 +330,7 @@ export const ProcessosAdmPage: React.FC = () => {
                   <Col span={24}>
                     <Form.Item name="aReceber" label="Valor a Receber">
                       <InputNumber
-                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
+                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />
@@ -340,7 +339,7 @@ export const ProcessosAdmPage: React.FC = () => {
                   <Col span={24}>
                     <Form.Item name="custos" label="Custos Administrativos">
                       <InputNumber
-                        style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}
+                        style={{ width: '100%',background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1'}}
                         formatter={(value) => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={(value) => value!.replace(/R\$\s?|(\,)/g, '')}
                       />

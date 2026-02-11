@@ -14,6 +14,7 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
 
 const { Text } = Typography;
 
@@ -57,6 +58,8 @@ export const CLCBTable: React.FC<CLCBTableProps> = ({
     };
     return colors[status] || 'default';
   };
+
+  const {isDarkMode} = useLayout();
 
 
   const columns: ColumnsType<CLCB> = [
@@ -164,6 +167,12 @@ export const CLCBTable: React.FC<CLCBTableProps> = ({
         pageSize: 10,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} registros`,
+        style: {
+        backgroundColor: isDarkMode ? '#0A0F1C' : '#FAFBFC',
+        margin: 0,
+        padding: '16px',
+        borderRadius: '0 0 8px 8px'
+      }
       }}
     />
   );

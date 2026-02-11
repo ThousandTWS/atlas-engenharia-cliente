@@ -14,6 +14,8 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
+
 
 const { Text } = Typography;
 
@@ -59,6 +61,8 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
     };
     return colors[status] || 'default';
   };
+
+  const {isDarkMode} = useLayout();
 
 
   const columns: ColumnsType<Obra> = [
@@ -170,6 +174,12 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
         total: pagination.total,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} obras`,
+        style: {
+          backgroundColor: isDarkMode ? '#0A0F1C' : '#FAFBFC',
+          margin: 0,
+          padding: '16px',
+          borderRadius: '0 0 8px 8px'
+        }
       }}
       onChange={onChange}
     />
