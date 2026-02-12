@@ -7,7 +7,7 @@ export const GestaoAdsPage: React.FC = () => {
     return (
         <>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'   }}>
-                <img src={isDarkMode ? "/svg's/PageInConstruction.svg" : "/svg's/PageInConstructionLight.svg"} width={"500px"} style={{marginBottom:0}} alt="" />
+                <img src={isDarkMode ? "/svg's/PageInConstructionDark.svg" : "/svg's/PageInConstructionLight.svg"} width={"500px"} style={{marginBottom:0}} alt="" />
                 <Result
                     icon={false}
                     subTitle="Desculpe, a Gestão ADS está em construção..."

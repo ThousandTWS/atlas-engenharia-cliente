@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'https://backend-atlas-engenharia-production-326c.up.railway.app/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,

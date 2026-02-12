@@ -185,7 +185,7 @@ export const CLCBPage: React.FC = () => {
             ).map(([label, value]) => ({
               label: label.replace('_', ' '),
               value,
-              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? '#1890ff' : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
+              color: label === 'CONCLUIDO' ? '#52c41a' : label === 'EM_ANDAMENTO' ? (isDarkMode ? '#8B5E47': '#1890ff') : label === 'PENDENTE' ? '#faad14' : '#ff4d4f'
             }))}
           />
         </Col>
