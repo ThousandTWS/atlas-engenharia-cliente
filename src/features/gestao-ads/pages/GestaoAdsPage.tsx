@@ -22,14 +22,13 @@ export const GestaoAdsPage: React.FC = () => {
       <Space direction="vertical" size={4} style={{ marginBottom: 20 }}>
         <Space align="center">
           <Tag icon={<GoogleOutlined />} color="blue" style={{ borderRadius: 8 }}>
-            Google Ads-like
+            Google Ads
           </Tag>
           <Tag icon={<ThunderboltOutlined />} color="gold" style={{ borderRadius: 8 }}>
             ROI em tempo real
           </Tag>
         </Space>
         <Title level={2} style={{ margin: 0 }}>Dashboard Interativo de Tráfego Pago</Title>
-       
       </Space>
 
       <Row gutter={[24, 24]}>
