@@ -1,3 +1,5 @@
+﻿/* eslint-disable no-useless-escape */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import {
   Form,
@@ -98,7 +100,7 @@ export const AVCBPage: React.FC = () => {
   const handleDelete = async (id: number) => {
     try {
       await avcbService.delete(id);
-      message.success('AVCB excluído com sucesso');
+      message.success('AVCB excluÃ­do com sucesso');
       fetchAVCBs();
     } catch (error: any) {
       message.error('Erro ao excluir AVCB: ' + error.message);
@@ -155,6 +157,7 @@ export const AVCBPage: React.FC = () => {
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
           <GenericChart
+            type="pie"
             title="Situação dos AVCBs"
             subtitle="Distribuição por status atual"
             loading={loading}
@@ -173,7 +176,7 @@ export const AVCBPage: React.FC = () => {
         <Col xs={24} lg={12}>
           <GenericChart
             title="Volume Financeiro por Status"
-            subtitle="Total em contrato por situação (R$)"
+            subtitle="Total em contrato por situaÃ§Ã£o (R$)"
             loading={loading}
             valuePrefix="R$"
             data={Object.entries(
@@ -231,13 +234,13 @@ export const AVCBPage: React.FC = () => {
                   <Col xs={24} md={12}>
                     <Form.Item
                       name="situacao"
-                      label="Situação"
-                      rules={[{ required: true, message: 'Selecione a situação' }]}
+                      label="Situação Atual"
+                      rules={[{ required: true, message: 'Selecione a situação atual' }]}
                     >
                       <Select style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}}>
                         <Option value="PENDENTE">Pendente</Option>
                         <Option value="EM_ANDAMENTO">Em Andamento</Option>
-                        <Option value="CONCLUIDO">Concluído</Option>
+                        <Option value="CONCLUIDO">ConcluÃ­do</Option>
                         <Option value="CANCELADO">Cancelado</Option>
                       </Select>
                     </Form.Item>
@@ -253,7 +256,7 @@ export const AVCBPage: React.FC = () => {
                   </Col>
                   <Col xs={24}>
                     <Form.Item
-                      name="descricaoSituacao"
+                      name="descricao Situacao"
                       label="Descrição da Situação / Observações"
                       rules={[{ required: true, message: 'Insira uma descrição' }]}
                     >
@@ -266,7 +269,7 @@ export const AVCBPage: React.FC = () => {
 
             <Col xs={24} lg={10}>
               <Card
-                title={<span><DollarOutlined /> Financeiro e Documentação</span>}
+                title={<span><DollarOutlined /> Informações Financeiras</span>}
                 style={{ marginBottom: 24, borderRadius: 8,  background: isDarkMode ? '#0A0F1C' : '#FAFBFC', border: isDarkMode ? 'none' : '1px solid #CBD5E1'}}
               >
                 <Row gutter={16}>
@@ -290,7 +293,7 @@ export const AVCBPage: React.FC = () => {
                   </Col>
                   <Col span={24}>
                     <Form.Item name="condicaoPagamento" label="Condição de Pagamento">
-                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: À vista, 30/60 dias" />
+                      <Input style={{background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1'}} placeholder="Ex: Ã€ vista, 30/60 dias" />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
@@ -336,3 +339,7 @@ export const AVCBPage: React.FC = () => {
     </div>
   );
 };
+
+
+
+
