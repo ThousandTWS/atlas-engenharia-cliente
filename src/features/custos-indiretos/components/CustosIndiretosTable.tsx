@@ -13,7 +13,9 @@ import {
   DeleteOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { TablePaginationConfig } from 'antd/es/table/interface';
 import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
+import { htmlToPlainText } from '../../../core/utils/text';
 
 const { Text } = Typography;
 
@@ -33,7 +35,7 @@ interface CustosIndiretosTableProps {
     pageSize: number;
     total: number;
   };
-  onChange: (pagination: any) => void;
+  onChange: (pagination: TablePaginationConfig) => void;
   onEdit: (record: CustoIndireto) => void;
   onDelete: (id: number) => void;
 }
@@ -72,6 +74,14 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
       dataIndex: 'descricao',
       key: 'descricao',
       ellipsis: true,
+      render: (descricao: string) => {
+        const plainText = htmlToPlainText(descricao);
+        return (
+          <Tooltip title={plainText}>
+            <Text>{plainText || '-'}</Text>
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Categoria',

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Typography, Input, App, ConfigProvider } from 'antd';
+import { Card, Table, Tag, Typography, Input, App, type TableProps } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { avcbService, clcbService, processosAdmService, lancamentosService, custosIndiretosService } from '../../../core/services/genericService';
 import { obrasService } from '../../../core/services/obrasService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
+import { htmlToPlainText } from '../../../core/utils/text';
 
 
 const { Title } = Typography;
@@ -16,8 +17,26 @@ interface RowData {
   valor: number;
   data: string;
   tipo: string;
-  isDarkMode: boolean;
 }
+
+interface GenericItem {
+  id?: string | number;
+  codigo?: string | number;
+  nomeCliente?: string;
+  servico?: string;
+  projeto?: string;
+  descricaoSituacao?: string;
+  descricao?: string;
+  situacao?: string;
+  status?: string;
+  valorContrato?: number;
+  faturamento?: number;
+  valor?: number;
+  dataContrato?: string;
+  data?: string;
+}
+
+type ApiListResponse = GenericItem[] | { content?: GenericItem[] };
 
 export const DashboardTableAntd: React.FC = () => {
   const { message } = App.useApp();
@@ -39,16 +58,28 @@ export const DashboardTableAntd: React.FC = () => {
           custosIndiretosService.getAll(),
         ]);
 
-        const formatItems = (items: any, tipo: string) => {
-          const list = Array.isArray(items) ? items : (items as any).content || [];
-          return list.map((item: any) => ({
-            id: String(item.id || item.codigo || ''),
-            cliente: item.nomeCliente || 'N/A',
-            projeto: item.servico || item.projeto || item.descricaoSituacao || item.descricao || tipo,
-            status: item.situacao || item.status || (tipo === 'Custo' ? 'PAGO' : 'PENDENTE'),
-            valor: item.valorContrato || item.faturamento || item.valor || 0,
-            data: item.dataContrato || item.data || new Date().toISOString(),
-            tipo: tipo
+        const formatItems = (items: ApiListResponse, tipo: string): RowData[] => {
+          const list = Array.isArray(items) ? items : items.content ?? [];
+          return list.map((item) => ({
+            id: String(item.id ?? item.codigo ?? ''),
+            cliente: typeof item.nomeCliente === 'string' ? item.nomeCliente : 'N/A',
+            projeto:
+              (typeof item.servico === 'string' && item.servico) ||
+              (typeof item.projeto === 'string' && item.projeto) ||
+              (typeof item.descricaoSituacao === 'string' && htmlToPlainText(item.descricaoSituacao)) ||
+              (typeof item.descricao === 'string' && htmlToPlainText(item.descricao)) ||
+              tipo,
+            status:
+              (typeof item.situacao === 'string' && item.situacao) ||
+              (typeof item.status === 'string' && item.status) ||
+              (tipo === 'Custo' ? 'PAGO' : 'PENDENTE'),
+            valor:
+              (typeof item.valorContrato === 'number' && item.valorContrato) ||
+              (typeof item.faturamento === 'number' && item.faturamento) ||
+              (typeof item.valor === 'number' && item.valor) ||
+              0,
+            data: typeof item.dataContrato === 'string' ? item.dataContrato : typeof item.data === 'string' ? item.data : new Date().toISOString(),
+            tipo,
           }));
         };
 
@@ -65,8 +96,9 @@ export const DashboardTableAntd: React.FC = () => {
         allItems.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
 
         setRowData(allItems);
-      } catch (error: any) {
-        message.error('Erro ao carregar atividades recentes: ' + error.message);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+        message.error('Erro ao carregar atividades recentes: ' + errorMessage);
       } finally {
         setLoading(false);
       }
@@ -83,7 +115,7 @@ export const DashboardTableAntd: React.FC = () => {
     item.tipo.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const columns = [
+  const columns: TableProps<RowData>['columns'] = [
     {
       title: 'Código/ID',
       dataIndex: 'id',
@@ -105,7 +137,7 @@ export const DashboardTableAntd: React.FC = () => {
         { text: 'Lançamento', value: 'Lançamento' },
         { text: 'Custo', value: 'Custo' },
       ],
-      onFilter: (value: any, record: RowData) => record.tipo === value,
+      onFilter: (value, record) => record.tipo === String(value),
     },
     {
       title: 'Cliente',
@@ -127,7 +159,7 @@ export const DashboardTableAntd: React.FC = () => {
       key: 'status',
       width: 140,
       render: (status: string) => {
-        const colors: any = {
+        const colors: Record<string, string> = {
           'APROVADO': 'success',
           'CONCLUIDO': 'success',
           'EM_ANDAMENTO': 'warning',
@@ -142,7 +174,7 @@ export const DashboardTableAntd: React.FC = () => {
         };
         return <Tag color={colors[status] || 'default'}>{status.replace('_', ' ')}</Tag>;
       },
-      onFilter: (value: any, record: RowData) => record.status === value,
+      onFilter: (value, record) => record.status === String(value),
     },
     {
       title: 'Valor',
@@ -166,7 +198,8 @@ export const DashboardTableAntd: React.FC = () => {
   ];
 
   return (
-    <Card 
+    <Card
+      className="recent-activities-card"
       variant="borderless" 
       loading={loading}
       style={{ 
@@ -180,24 +213,17 @@ export const DashboardTableAntd: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px'}}>
         <Title level={4} style={{ margin: 0}}>Atividades Recentes</Title>
         <Input
+          className="recent-activities-search"
           placeholder="Pesquisar..."
           prefix={<SearchOutlined />}
-          style={{ width: 250, background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : '1px solid #0000001A'  }}
+          style={{ width: 250, background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? '1px solid #1E2A47' : '1px solid #CBD5E1'  }}
           allowClear
           onChange={(e) => setSearchText(e.target.value)}
         />
       </div>
 
-      <ConfigProvider
-          theme={{
-            components:{
-              Table:{
-                colorBgContainer: isDarkMode ? '#0A0F1C' : '#fff',
-              }
-            }
-          }}>
       <Table
-
+        className="recent-activities-table"
         dataSource={filteredData}
         columns={columns} 
         rowKey={(record) => `${record.tipo}-${record.id}`}
@@ -210,7 +236,6 @@ export const DashboardTableAntd: React.FC = () => {
         }}
         scroll={{ x: 1000 }}
       />
-      </ConfigProvider>
     </Card>
   );
 };

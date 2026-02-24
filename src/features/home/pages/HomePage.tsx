@@ -1,7 +1,6 @@
 import { Breadcrumb, Row, Col } from 'antd';
 import { HomeOutlined } from '@ant-design/icons';
-import { DashboardChartAntd } from '../components/DashboardChartAntd';
-import { DashboardBarChartAntd } from '../components/DashboardBarChartAntd';
+import { DashboardAreaCards } from '../components/DashboardAreaCards';
 import { DashboardTableAntd } from '../components/DashboardTableAntd';
 import { WelcomeBanner } from '../components/WelcomeBanner';
 
@@ -25,11 +24,7 @@ export const HomePage = () => {
       </Row>
       
       <div style={{ marginTop: '24px' }}>
-        <DashboardChartAntd />
-      </div>
-      
-      <div style={{ marginTop: '24px' }}>
-        <DashboardBarChartAntd />
+        <DashboardAreaCards />
       </div>
 
       <DashboardTableAntd />

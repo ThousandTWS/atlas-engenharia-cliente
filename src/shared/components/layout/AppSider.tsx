@@ -1,6 +1,4 @@
 import React from 'react';
-  ConfigProvider
-  ConfigProvider
 import { Divider, Layout, Menu, Drawer, ConfigProvider } from 'antd';
 import type { MenuProps } from 'antd';
 import {
@@ -33,6 +31,26 @@ interface AppSiderProps {
 export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isMobile, isDarkMode }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const selectedMenuKey = React.useMemo(() => {
+    const rootKeys = [
+      '/processos',
+      '/clcb',
+      '/avcb',
+      '/obras',
+      '/lancamentos',
+      '/custos-indiretos',
+      '/gestao-de-clientes',
+      '/gestao-ads',
+      '/profile',
+    ];
+
+    const matched = rootKeys.find((key) => location.pathname.startsWith(key));
+    if (matched) {
+      return matched;
+    }
+
+    return location.pathname === '/' ? '/' : location.pathname;
+  }, [location.pathname]);
 
   const menuItems: MenuItem[] = [
     {
@@ -152,7 +170,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
        >
       <Menu
         mode="inline"
-        selectedKeys={[location.pathname]}
+        selectedKeys={[selectedMenuKey]}
         items={menuItems}
         style={{background: isDarkMode ? "#141B2D" : '#F8FAFC',
             borderRight:'none',

@@ -1,6 +1,19 @@
-import React from 'react';
-import { Card, Typography, Space, Tooltip } from 'antd';
-import {useLayout} from "../layout/LayoutContext.tsx";
+﻿import React from 'react';
+import { Card, Typography } from 'antd';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip as RTooltip,
+  XAxis,
+  YAxis,
+  Cell,
+} from 'recharts';
+import { useLayout } from '../layout/LayoutContext.tsx';
 
 const { Title, Text } = Typography;
 
@@ -13,7 +26,6 @@ interface GenericChartProps {
   valuePrefix?: string;
   type?: 'bar' | 'pie';
   color?: string;
-  isDarkMode?: boolean;
 }
 
 export const GenericChart: React.FC<GenericChartProps> = ({
@@ -23,10 +35,24 @@ export const GenericChart: React.FC<GenericChartProps> = ({
   loading,
   height = 350,
   valuePrefix = '',
+  type = 'bar',
   color,
 }) => {
-  const maxValue = Math.max(...data.map((d) => d.value), 1);
-  const {isDarkMode} = useLayout();
+  const { isDarkMode } = useLayout();
+  const defaultColors = [
+    '#1890ff',
+    '#722ed1',
+    '#52c41a',
+    '#eb2f96',
+    '#faad14',
+    '#f5222d',
+    '#13c2c2',
+    '#2f54eb',
+    '#fa8c16',
+    '#8B4513',
+    '#8B5E47',
+  ];
+
   const formatValue = (value: number) => {
     if (valuePrefix === 'R$') {
       return new Intl.NumberFormat('pt-BR', {
@@ -35,113 +61,93 @@ export const GenericChart: React.FC<GenericChartProps> = ({
         maximumFractionDigits: 0,
       }).format(value);
     }
-    return value.toString();
+    return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(value);
   };
 
-  const defaultColors = [
-    '#1890ff', '#722ed1', '#52c41a', '#eb2f96', '#faad14',
-    '#f5222d', '#13c2c2', '#2f54eb', '#722ed1', '#fa8c16',
-      //Cores Marrons
-    '#8B4513', '#8B5E47', '#8B5E47'
-  ];
+  const renderContent = () => {
+    if (!data.length) {
+      return (
+        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Text type="secondary">Nenhum dado disponível</Text>
+        </div>
+      );
+    }
 
+    if (type === 'pie') {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <RTooltip formatter={(v: number) => formatValue(Number(v))} />
+            <Legend />
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="label"
+              cx="50%"
+              cy="50%"
+              outerRadius="70%"
+              label={({ name }) => name}
+            >
+              {data.map((entry, index) => (
+                <Cell
+                  key={entry.label}
+                  fill={entry.color || color || defaultColors[index % defaultColors.length]}
+                />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      );
+    }
+
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#1f2937' : '#E5E7EB'} />
+          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+          <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatValue(Number(v))} />
+          <RTooltip formatter={(v: number) => formatValue(Number(v))} />
+          <Legend />
+          <Bar
+            dataKey="value"
+            radius={[6, 6, 0, 0]}
+            fill={color || defaultColors[0]}
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={entry.label}
+                fill={entry.color || color || defaultColors[index % defaultColors.length]}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  };
 
   return (
     <Card
       variant="borderless"
       loading={loading}
       style={{
-        borderRadius: '12px',
-        boxShadow: isDarkMode ?  '0 10px 24px #0000001A' : '0 5px 10px #2E2E2E33',
-        marginBottom: '24px',
-        height: height,
-        background : isDarkMode ? 'linear-gradient(135deg, #2A3A5C 0%, #1E2A47 50%, #141B2D 100%)' : '#FFF',
+        borderRadius: 12,
+        boxShadow: isDarkMode ? '0 10px 24px #0000001A' : '0 5px 10px #2E2E2E33',
+        marginBottom: 24,
+        height,
+        background: isDarkMode
+          ? 'linear-gradient(135deg, #2A3A5C 0%, #1E2A47 50%, #141B2D 100%)'
+          : '#FFF',
       }}
-      styles={{ body: { padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' } }}
+      styles={{ body: { padding: 24, height: '100%', display: 'flex', flexDirection: 'column' } }}
     >
-      <div style={{ marginBottom: '16px' }}>
-        <Title level={4} style={{ margin: 0 }}>{title}</Title>
+      <div style={{ marginBottom: 16 }}>
+        <Title level={4} style={{ margin: 0 }}>
+          {title}
+        </Title>
         {subtitle && <Text type="secondary">{subtitle}</Text>}
       </div>
 
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'space-around',
-        paddingTop: '20px',
-        borderBottom: '1px solid #f0f0f0',
-        paddingBottom: '8px',
-        overflowX: 'auto',
-      }}>
-        {data.length > 0 ? (
-          data.map((item, index) => (
-            <div
-              key={index}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: `${100 / data.length}%`,
-                height: '100%',
-                justifyContent: 'flex-end',
-                minWidth: '60px',
-                maxWidth: '120px',
-              }}
-            >
-              <Tooltip title={`${item.label}: ${formatValue(item.value)}`}>
-                <div
-                  style={{
-                    width: '60%',
-                    height: `${(item.value / maxValue) * 100}%`,
-                    backgroundColor: item.color || color || defaultColors[index % defaultColors.length],
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'height 0.3s ease, background-color 0.3s',
-                    cursor: 'pointer',
-                    minHeight: '2px',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.8')}
-                  onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-                />
-              </Tooltip>
-              <Text
-                type="secondary"
-                style={{
-                  fontSize: '11px',
-                  marginTop: '8px',
-                  textAlign: 'center',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  width: '100%',
-                }}
-              >
-                {item.label}
-              </Text>
-            </div>
-          ))
-        ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Text type="secondary">Nenhum dado disponível</Text>
-          </div>
-        )}
-      </div>
-
-      <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '8px' }}>
-        {data.map((item, index) => (
-          <Space key={index} size={4}>
-            <div
-              style={{
-                width: '8px',
-                height: '8px',
-                backgroundColor: item.color || color || defaultColors[index % defaultColors.length],
-                borderRadius: '50%',
-              }}
-            />
-            <Text style={{ fontSize: '10px' }}>{item.label}</Text>
-          </Space>
-        ))}
-      </div>
+      <div style={{ flex: 1, minHeight: 200 }}>{renderContent()}</div>
     </Card>
   );
 };

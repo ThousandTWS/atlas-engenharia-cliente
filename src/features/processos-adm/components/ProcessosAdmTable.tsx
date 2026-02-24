@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
+import { htmlToPlainText } from '../../../core/utils/text';
 
 const { Text } = Typography;
 
@@ -92,7 +93,7 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
       key: 'situacao',
       width: 150,
       render: (situacao: SituacaoProcesso, record) => (
-        <Tooltip title={record.descricaoSituacao}>
+        <Tooltip title={htmlToPlainText(record.descricaoSituacao)}>
           <Tag color={getSituacaoColor(situacao)}>
             {situacao.replace('_', ' ')}
           </Tag>

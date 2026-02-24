@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import {
   Form,
@@ -25,9 +26,10 @@ import {
   HomeOutlined,
 } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
-import apiClient, { API_URL } from '../../../core/api/apiClient';
 import { authService } from '../../../core/services/authService';
 import type { User } from '../../../core/services/authService';
+import apiClient from '../../../core/api/apiClient';
+import { API_BASE_URL } from '../../../core/api/apiClient';
 
 const { Title, Text } = Typography;
 
@@ -48,8 +50,6 @@ export const ProfilePage: React.FC = () => {
         personalForm.setFieldsValue(data);
         setUser(data);
         
-        // Se por algum motivo o user no localStorage for nulo (não deveria estar aqui se for nulo), 
-        // ou se quisermos garantir que os dados da API sobrescrevam tudo
         const currentLocalUser = authService.getCurrentUser();
         if (!currentLocalUser) {
            console.log('ProfilePage: No local user found, saving API data as initial user');
@@ -96,7 +96,7 @@ export const ProfilePage: React.FC = () => {
 
   const uploadProps: UploadProps = {
     name: 'file',
-    action: `${API_URL}/profile/photo`,
+    action: `${API_BASE_URL || ''}/profile/photo`,
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
       'X-Requested-With': null as any,
@@ -110,11 +110,8 @@ export const ProfilePage: React.FC = () => {
       if (info.file.status === 'done') {
         message.success('Foto de perfil atualizada com sucesso!');
         setLoading(false);
-        // O backend retorna a URL da imagem no body da resposta como uma string (conforme swagger sugerido)
-        // Ou podemos recarregar o perfil
         let imageUrl = info.file.response;
         
-        // Se a resposta for um objeto com campo url (comum em APIs reais)
         if (imageUrl && typeof imageUrl === 'object' && imageUrl.url) {
           imageUrl = imageUrl.url;
         }
