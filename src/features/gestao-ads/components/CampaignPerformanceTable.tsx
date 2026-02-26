@@ -1,11 +1,13 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
-import { App, Card, Input, Space, Table, Tag, Tooltip, Typography } from 'antd';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { App, Button, Card, Input, Space, Table, Tag, Tooltip, Typography } from 'antd';
 import {
   AimOutlined,
   AppstoreOutlined,
   ThunderboltOutlined,
   VideoCameraOutlined,
   SearchOutlined,
+  UploadOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { CampaignPerformance } from '../services/adsDataService';
@@ -14,6 +16,9 @@ import {
   fetchCampaignPerformance,
 } from '../services/adsDataService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
+import { useCsvExport, useCsvImport } from '../../../core/import-export/hooks';
+import { toNumber } from '../../../core/import-export/csv';
+import { useNotificationCenter } from '../../../core/notifications/NotificationCenterContext';
 
 const { Text, Title } = Typography;
 
@@ -54,9 +59,11 @@ const percent = (value: number) => `${value.toFixed(2)}%`;
 export const CampaignPerformanceTable: React.FC = () => {
   const { message } = App.useApp();
   const { isDarkMode } = useLayout();
+  const { open } = useNotificationCenter();
   const [data, setData] = useState<CampaignRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -81,6 +88,63 @@ export const CampaignPerformanceTable: React.FC = () => {
       `${item.nome} ${item.tipo}`.toLowerCase().includes(search.toLowerCase())
     );
   }, [data, search]);
+
+  const normalizeStatus = (value: string): CampaignPerformance['status'] => {
+    const normalized = value.toLowerCase();
+    if (normalized.includes('ativa')) return 'Ativa';
+    if (normalized.includes('limit')) return 'Limitada';
+    return 'Pausada';
+  };
+
+  const normalizeType = (value: string): CampaignPerformance['tipo'] => {
+    const normalized = value.toLowerCase();
+    if (normalized.includes('display')) return 'Display';
+    if (normalized.includes('video') || normalized.includes('vídeo')) return 'Vídeo';
+    if (normalized.includes('max') || normalized.includes('pmax') || normalized.includes('performance')) return 'PMax';
+    return 'Pesquisa';
+  };
+
+  const { exportRows, exporting } = useCsvExport<CampaignRow>({
+    filename: 'ads-campanhas-performance',
+    mapData: (item) => ({
+      id: item.id,
+      nome: item.nome,
+      tipo: item.tipo,
+      status: item.status,
+      orcamento: item.orcamento,
+      cliques: item.cliques,
+      impressoes: item.impressoes,
+      custo: item.custo,
+      conversoes: item.conversoes,
+      ctr: item.ctr.toFixed(2),
+      cpc: item.cpc.toFixed(2),
+      taxaConversao: item.taxaConversao.toFixed(2),
+      roas: item.roas.toFixed(2),
+    }),
+  });
+
+  const { importFile, importing } = useCsvImport<CampaignPerformance>({
+    mapRecord: (row, index) => ({
+      id: String(row.id || `import-${index + 1}`),
+      nome: row.nome || `Campanha ${index + 1}`,
+      tipo: normalizeType(String(row.tipo || 'Pesquisa')),
+      status: normalizeStatus(String(row.status || 'Ativa')),
+      orcamento: toNumber(String(row.orcamento ?? 0)),
+      cliques: toNumber(String(row.cliques ?? 0)),
+      impressoes: toNumber(String(row.impressoes ?? 0)),
+      custo: toNumber(String(row.custo ?? 0)),
+      conversoes: toNumber(String(row.conversoes ?? 0)),
+    }),
+    onImported: async (rows) => {
+      const enriched = enrichCampaignMetrics(rows);
+      setData(enriched);
+      open({
+        title: 'Importação concluída',
+        description: `${rows.length} campanha(s) importada(s) via CSV.`,
+        type: 'success',
+      });
+    },
+  });
 
   const columns: ColumnsType<CampaignRow> = [
     {
@@ -204,15 +268,64 @@ export const CampaignPerformanceTable: React.FC = () => {
         </Space>
       }
       extra={
-        <Input
-          className="atlas-form-input"
-          allowClear
-          placeholder="Buscar campanha ou tipo"
-          prefix={<SearchOutlined />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ width: 260 }}
-        />
+        <Space wrap>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            style={{ display: 'none' }}
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              try {
+                await importFile(file);
+              } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Falha ao importar CSV.';
+                message.error(errorMessage);
+                open({
+                  title: 'Erro na importação',
+                  description: errorMessage,
+                  type: 'error',
+                });
+              } finally {
+                event.target.value = '';
+              }
+            }}
+          />
+          <Button
+            className="ads-refresh-button"
+            icon={<UploadOutlined />}
+            loading={importing}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Importar CSV
+          </Button>
+          <Button
+            className="ads-refresh-button"
+            icon={<DownloadOutlined />}
+            loading={exporting}
+            onClick={() => {
+              exportRows(filteredData);
+              open({
+                title: 'Exportação concluída',
+                description: `${filteredData.length} campanha(s) exportada(s).`,
+                type: 'info',
+                showToast: false,
+              });
+            }}
+          >
+            Exportar CSV
+          </Button>
+          <Input
+            className="atlas-form-input"
+            allowClear
+            placeholder="Buscar campanha ou tipo"
+            prefix={<SearchOutlined />}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 260 }}
+          />
+        </Space>
       }
       style={{
         borderRadius: 16,

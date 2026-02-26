@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Button,
   Card,
@@ -11,14 +11,18 @@ import {
 import {
   HomeOutlined,
   PlusOutlined,
+  DollarCircleOutlined,
+  FileTextOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { CustosIndiretosTable } from '../components/CustosIndiretosTable';
 import type { CustoIndireto } from '../components/CustosIndiretosTable';
 import { CustosIndiretosFilters } from '../components/CustosIndiretosFilters';
-import { CustosIndiretosChart } from '../components/CustosIndiretosChart';
+import { MetricTrendCards, type MetricTrendCardDefinition } from '../../../shared/components/charts/MetricTrendCards';
 import { custosIndiretosService } from '../../../core/services/genericService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
+import { buildMonthlySeries, pickNumericValue, toSeriesRecords } from '../../../shared/utils/metricSeries';
 
 const { Title, Text } = Typography;
 
@@ -35,6 +39,45 @@ export const CustosIndiretosPage: React.FC = () => {
     total: 0,
   });
   const [filters, setFilters] = useState<any>({});
+
+  const trendCards = useMemo<MetricTrendCardDefinition[]>(() => {
+    const records = toSeriesRecords(custos);
+
+    return [
+      {
+        id: 'custos-indiretos-entradas',
+        title: 'Entradas de Custos',
+        subtitle: 'Lançamentos mensais registrados',
+        valueType: 'number',
+        series: buildMonthlySeries(records, ['data', 'dataContrato'], () => 1),
+        color: '#3B82F6',
+        icon: <FileTextOutlined />,
+      },
+      {
+        id: 'custos-indiretos-total',
+        title: 'Custos Totais',
+        subtitle: 'Saídas mensais consolidadas',
+        valueType: 'currency',
+        series: buildMonthlySeries(records, ['data', 'dataContrato'], (record) => pickNumericValue(record, ['valor', 'custos'])),
+        color: '#F59E0B',
+        icon: <WalletOutlined />,
+        inverseTrend: true,
+      },
+      {
+        id: 'custos-indiretos-admin',
+        title: 'Custos Administrativos',
+        subtitle: 'Despesas administrativas por mês',
+        valueType: 'currency',
+        series: buildMonthlySeries(records, ['data', 'dataContrato'], (record) => {
+          const categoria = String(record.categoria ?? '').toLowerCase();
+          return categoria.includes('administr') ? pickNumericValue(record, ['valor', 'custos']) : 0;
+        }),
+        color: '#10B981',
+        icon: <DollarCircleOutlined />,
+        inverseTrend: true,
+      },
+    ];
+  }, [custos]);
 
   const fetchCustos = useCallback(async (page = 1, pageSize = DEFAULT_PAGE_SIZE, currentFilters: any = {}) => {
     setLoading(true);
@@ -106,11 +149,11 @@ export const CustosIndiretosPage: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
       <Breadcrumb
         items={[
           { title: <HomeOutlined />, href: '/' },
-          { title: 'Painéis e Gestão' },
+          { title: 'Financeiro' },
           { title: 'Custos Indiretos' },
         ]}
         style={{ marginBottom: 16 }}
@@ -142,16 +185,16 @@ export const CustosIndiretosPage: React.FC = () => {
           Novo Custo
         </Button>
       </div>
-
+  
       <CustosIndiretosFilters
         onSearch={handleSearch}
         onClear={handleClear}
       />
 
-      <CustosIndiretosChart
-        data={custos}
-        loading={loading}
-      />
+      <div className="mb-5">
+        <MetricTrendCards cards={trendCards} loading={loading} />
+      </div>
+
 
       <Card styles={{ body: { padding: 0 } }} style={{ borderRadius: 8, overflow: 'hidden' }}>
         <CustosIndiretosTable

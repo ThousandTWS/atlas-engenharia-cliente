@@ -6,6 +6,7 @@ import {
   LogoutOutlined,
   SettingOutlined,
   QuestionCircleOutlined,
+  RobotOutlined,
   MenuUnfoldOutlined,
   MenuFoldOutlined,
   MoonOutlined,
@@ -16,6 +17,7 @@ import { authService } from '../../../core/services/authService';
 import type { User } from '../../../core/services/authService';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationDropdown } from './NotificationDropdown';
+import { useGlobalAiDrawer } from '../../../features/ai/context/GlobalAiDrawerContext';
 
 const { Header } = Layout;
 const { Title } = Typography;
@@ -24,12 +26,21 @@ interface AppHeaderProps {
   collapsed: boolean;
   setCollapsed?: (collapsed: boolean) => void;
   isMobile?: boolean;
+  sideBarWidth: number;
   isDarkMode: boolean;
   toggleTheme: ( ) => void;
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed, isMobile, isDarkMode, toggleTheme }) => {
+export const AppHeader: React.FC<AppHeaderProps> = ({
+  collapsed,
+  setCollapsed,
+  isMobile,
+  sideBarWidth,
+  isDarkMode,
+  toggleTheme,
+}) => {
   const navigate = useNavigate();
+  const { toggleDrawer } = useGlobalAiDrawer();
   const [user, setUser] = React.useState<User | null>(authService.getCurrentUser());
 
 
@@ -78,7 +89,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed, i
     },
   ];
 
-  const headerWidth = isMobile ? '100%' : `calc(100% - ${collapsed ? 80 : 200}px)`;
+  const headerWidth = isMobile ? '100%' : `calc(100% - ${sideBarWidth}px)`;
 
   return (
     <Header
@@ -131,6 +142,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed, i
             />
           </Tooltip>
         )}
+
+        <Tooltip title="Atlas AI Global">
+          <Button
+            type="text"
+            icon={<RobotOutlined style={{ fontSize: '18px', color: '#4285F4' }} />}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={toggleDrawer}
+          />
+        </Tooltip>
 
         <Tooltip title="Notificações">
           <NotificationDropdown />

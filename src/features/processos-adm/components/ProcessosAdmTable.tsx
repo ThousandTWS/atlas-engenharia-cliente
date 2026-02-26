@@ -52,14 +52,14 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
   onDelete,
   onView,
 }) => {
-  const getSituacaoColor = (situacao: SituacaoProcesso) => {
-    const colors: Record<SituacaoProcesso, string> = {
-      PENDENTE: 'orange',
-      EM_ANDAMENTO: 'blue',
-      CONCLUIDO: 'green',
-      CANCELADO: 'red',
+  const getSituacaoBadgeClass = (situacao: SituacaoProcesso) => {
+    const classes: Record<SituacaoProcesso, string> = {
+      PENDENTE: 'atlas-status-badge-warning',
+      EM_ANDAMENTO: 'atlas-status-badge-info',
+      CONCLUIDO: 'atlas-status-badge-success',
+      CANCELADO: 'atlas-status-badge-danger',
     };
-    return colors[situacao] || 'default';
+    return classes[situacao] || 'atlas-status-badge-neutral';
   };
 
   const{isDarkMode} = useLayout();
@@ -94,7 +94,11 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
       width: 150,
       render: (situacao: SituacaoProcesso, record) => (
         <Tooltip title={htmlToPlainText(record.descricaoSituacao)}>
-          <Tag color={getSituacaoColor(situacao)}>
+          <Tag
+            bordered={false}
+            className={`atlas-status-badge ${getSituacaoBadgeClass(situacao)}`}
+          >
+            <span className="atlas-status-badge-dot" />
             {situacao.replace('_', ' ')}
           </Tag>
         </Tooltip>

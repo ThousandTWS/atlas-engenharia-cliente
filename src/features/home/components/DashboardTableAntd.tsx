@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Card, Table, Tag, Typography, Input, App, type TableProps } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { avcbService, clcbService, processosAdmService, lancamentosService, custosIndiretosService } from '../../../core/services/genericService';
 import { obrasService } from '../../../core/services/obrasService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { htmlToPlainText } from '../../../core/utils/text';
+import { useLiveSubscription } from '../../../core/realtime/liveProvider';
 
 
 const { Title } = Typography;
@@ -38,6 +39,36 @@ interface GenericItem {
 
 type ApiListResponse = GenericItem[] | { content?: GenericItem[] };
 
+const normalizeStatusKey = (status: string) =>
+  status
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '_');
+
+const getStatusBadgeClass = (status: string) => {
+  const normalized = normalizeStatusKey(status);
+
+  if (['APROVADO', 'CONCLUIDO', 'PAGO', 'RECEBIDO', 'ATIVA', 'ATIVO'].includes(normalized)) {
+    return 'atlas-status-badge-success';
+  }
+
+  if (['EM_ANDAMENTO', 'PROCESSANDO', 'EM_EXECUCAO'].includes(normalized)) {
+    return 'atlas-status-badge-info';
+  }
+
+  if (['PENDENTE', 'EM_ANALISE', 'EM_ANALISE_TECNICA', 'AGUARDANDO'].includes(normalized)) {
+    return 'atlas-status-badge-warning';
+  }
+
+  if (['REPROVADO', 'CANCELADO', 'FALHA', 'NEGADO'].includes(normalized)) {
+    return 'atlas-status-badge-danger';
+  }
+
+  return 'atlas-status-badge-neutral';
+};
+
 export const DashboardTableAntd: React.FC = () => {
   const { message } = App.useApp();
   const [searchText, setSearchText] = useState('');
@@ -45,18 +76,17 @@ export const DashboardTableAntd: React.FC = () => {
   const [rowData, setRowData] = useState<RowData[]>([]);
   const {isDarkMode} = useLayout();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [avcbs, clcbs, obras, processos, lancamentos, custos] = await Promise.all([
-          avcbService.getAll(),
-          clcbService.getAll(),
-          obrasService.getAll(),
-          processosAdmService.getAll(),
-          lancamentosService.getAll(),
-          custosIndiretosService.getAll(),
-        ]);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [avcbs, clcbs, obras, processos, lancamentos, custos] = await Promise.all([
+        avcbService.getAll(),
+        clcbService.getAll(),
+        obrasService.getAll(),
+        processosAdmService.getAll(),
+        lancamentosService.getAll(),
+        custosIndiretosService.getAll(),
+      ]);
 
         const formatItems = (items: ApiListResponse, tipo: string): RowData[] => {
           const list = Array.isArray(items) ? items : items.content ?? [];
@@ -83,29 +113,38 @@ export const DashboardTableAntd: React.FC = () => {
           }));
         };
 
-        const allItems: RowData[] = [
-          ...formatItems(avcbs, 'AVCB'),
-          ...formatItems(clcbs, 'CLCB'),
-          ...formatItems(obras, 'Obra'),
-          ...formatItems(processos, 'Processo Adm'),
-          ...formatItems(lancamentos, 'Lançamento'),
-          ...formatItems(custos, 'Custo'),
-        ];
+      const allItems: RowData[] = [
+        ...formatItems(avcbs, 'AVCB'),
+        ...formatItems(clcbs, 'CLCB'),
+        ...formatItems(obras, 'Obra'),
+        ...formatItems(processos, 'Processo Adm'),
+        ...formatItems(lancamentos, 'Lançamento'),
+        ...formatItems(custos, 'Custo'),
+      ];
 
-        // Ordenar por data (mais recentes primeiro)
-        allItems.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+      // Ordenar por data (mais recentes primeiro)
+      allItems.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
 
-        setRowData(allItems);
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-        message.error('Erro ao carregar atividades recentes: ' + errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+      setRowData(allItems);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      message.error('Erro ao carregar atividades recentes: ' + errorMessage);
+    } finally {
+      setLoading(false);
+    }
   }, [message]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useLiveSubscription({
+    channel: 'resources.*',
+    types: ['created', 'updated', 'deleted'],
+    callback: () => {
+      fetchData();
+    },
+  });
 
   const filteredData = rowData.filter(item => 
     item.cliente.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -158,22 +197,16 @@ export const DashboardTableAntd: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       width: 140,
-      render: (status: string) => {
-        const colors: Record<string, string> = {
-          'APROVADO': 'success',
-          'CONCLUIDO': 'success',
-          'EM_ANDAMENTO': 'warning',
-          'EM_ANÁLISE': 'warning',
-          'PENDENTE': 'processing',
-          'REPROVADO': 'error',
-          'CANCELADO': 'error',
-          'Aprovado': 'success',
-          'Em Análise': 'warning',
-          'Pendente': 'processing',
-          'Reprovado': 'error'
-        };
-        return <Tag color={colors[status] || 'default'}>{status.replace('_', ' ')}</Tag>;
-      },
+      render: (status: string) => (
+        <Tag
+          bordered={false}
+          className={`atlas-status-badge ${getStatusBadgeClass(status)}`}
+          style={{ marginInlineEnd: 0 }}
+        >
+          <span className="atlas-status-badge-dot" />
+          {status.replace(/_/g, ' ')}
+        </Tag>
+      ),
       onFilter: (value, record) => record.status === String(value),
     },
     {

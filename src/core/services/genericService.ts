@@ -1,4 +1,5 @@
 import apiClient from '../api/apiClient';
+import { publishResourceEvent } from '../realtime/liveProvider';
 
 export interface BaseModule {
   id?: number | string;
@@ -31,10 +32,11 @@ export interface GenericFilters {
   page?: number;
   size?: number;
   sort?: string[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const createGenericService = <T extends BaseModule>(endpoint: string) => ({
+  resourceKey: endpoint.replace(/^\//, '').replace(/-/g, '_'),
   getAll: async (filters?: GenericFilters) => {
     // Se o endpoint for um dos que agora suportam paginação no backend
     const response = await apiClient.get<PaginatedResponse<T> | T[]>(endpoint, {
@@ -48,14 +50,17 @@ export const createGenericService = <T extends BaseModule>(endpoint: string) => 
   },
   create: async (item: T) => {
     const response = await apiClient.post<T>(endpoint, item);
+    publishResourceEvent(endpoint.replace(/^\//, '').replace(/-/g, '_'), 'created', response.data);
     return response.data;
   },
   update: async (id: string | number, item: Partial<T>) => {
     const response = await apiClient.put<T>(`${endpoint}/${id}`, item);
+    publishResourceEvent(endpoint.replace(/^\//, '').replace(/-/g, '_'), 'updated', response.data);
     return response.data;
   },
   delete: async (id: string | number) => {
     await apiClient.delete(`${endpoint}/${id}`);
+    publishResourceEvent(endpoint.replace(/^\//, '').replace(/-/g, '_'), 'deleted', { id });
   },
 });
 

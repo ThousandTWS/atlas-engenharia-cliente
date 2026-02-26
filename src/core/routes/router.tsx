@@ -24,6 +24,7 @@ import { NotFoundPage } from '../../shared/components/NotFoundPage';
 import {GestaoClientesPage} from "../../features/gestao-de-clientes/page/GestaoDeClientes.tsx";
 import { ClienteFormPage } from "../../features/gestao-de-clientes/page/ClienteFormPage.tsx";
 import {GestaoAdsPage} from "../../features/gestao-ads/pages/GestaoAdsPage.tsx";
+import { GeminiChatPage } from '../../features/gestao-ads/pages/GeminiChatPage';
 
 export const router = createBrowserRouter([
   {
@@ -129,6 +130,10 @@ export const router = createBrowserRouter([
       {
         path: 'gestao-ads',
         element: <GestaoAdsPage />,
+      },
+      {
+        path: 'gestao-ads/chat',
+        element: <GeminiChatPage />,
       },
       {
         path: '*',

@@ -159,7 +159,7 @@ export const CLCBFormPage: React.FC = () => {
           </Title>
           <Text type="secondary">Gerencie Certificados de Licença do Corpo de Bombeiros.</Text>
         </Space>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/clcb')} style={{ width: isMobile ? '100%' : 'auto' }}>
+        <Button className="atlas-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/clcb')} style={{ width: isMobile ? '100%' : 'auto' }}>
           Voltar
         </Button>
       </div>

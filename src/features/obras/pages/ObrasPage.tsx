@@ -1,26 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Button,
-  Card,
-  Row,
-  Col,
-  Typography,
-  Space,
-  Breadcrumb,
-  App,
-} from 'antd';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Button, Card, Typography, Space, Breadcrumb, App } from "antd";
 import {
   HomeOutlined,
   PlusOutlined,
-} from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { ObrasTable } from '../components/ObrasTable';
-import { ObrasFilters } from '../components/ObrasFilters';
-import { GenericChart } from '../../../shared/components/charts/GenericChart';
-import { obrasService } from '../../../core/services/obrasService';
-import type { Obra } from '../../../core/services/obrasService';
-import { useLayout } from '../../../shared/components/layout/LayoutContext';
+  DollarCircleOutlined,
+  FileTextOutlined,
+  WalletOutlined,
+} from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { ObrasTable } from "../components/ObrasTable";
+import { ObrasFilters } from "../components/ObrasFilters";
+import {
+  MetricTrendCards,
+  type MetricTrendCardDefinition,
+} from "../../../shared/components/charts/MetricTrendCards";
+import { obrasService } from "../../../core/services/obrasService";
+import type { Obra } from "../../../core/services/obrasService";
+import { useLayout } from "../../../shared/components/layout/LayoutContext";
+import {
+  buildMonthlySeries,
+  pickNumericValue,
+  toSeriesRecords,
+} from "../../../shared/utils/metricSeries";
 
 const { Title, Text } = Typography;
 
@@ -28,7 +30,7 @@ export const ObrasPage: React.FC = () => {
   const DEFAULT_PAGE_SIZE = 10;
   const { message } = App.useApp();
   const navigate = useNavigate();
-  const { isMobile, isDarkMode } = useLayout();
+  const { isMobile } = useLayout();
   const [obras, setObras] = useState<Obra[]>([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -38,26 +40,76 @@ export const ObrasPage: React.FC = () => {
   });
   const [filters, setFilters] = useState<any>({});
 
-  const fetchObras = useCallback(async (page = 1, pageSize = DEFAULT_PAGE_SIZE, currentFilters: any = {}) => {
-    setLoading(true);
-    try {
-      const data = await obrasService.getAll({
-        page: page - 1,
-        size: pageSize,
-        ...currentFilters,
-      });
-      setObras(data.content);
-      setPagination({
-        current: page,
-        pageSize,
-        total: data.totalElements,
-      });
-    } catch (error: any) {
-      message.error('Erro ao carregar obras: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [message]);
+  const trendCards = useMemo<MetricTrendCardDefinition[]>(() => {
+    const records = toSeriesRecords(obras);
+
+    return [
+      {
+        id: "obras-processos",
+        title: "Entradas de Obras",
+        subtitle: "Novos contratos por mês",
+        valueType: "number",
+        series: buildMonthlySeries(records, ["dataContrato", "data"], () => 1),
+        color: "#3B82F6",
+        icon: <FileTextOutlined />,
+      },
+      {
+        id: "obras-faturamento",
+        title: "Volume Contratado",
+        subtitle: "Total mensal em contratos",
+        valueType: "currency",
+        series: buildMonthlySeries(
+          records,
+          ["dataContrato", "data"],
+          (record) => pickNumericValue(record, ["valorContrato", "valor"]),
+        ),
+        color: "#10B981",
+        icon: <DollarCircleOutlined />,
+      },
+      {
+        id: "obras-custos",
+        title: "Custos de Obras",
+        subtitle: "Custos mensais consolidados",
+        valueType: "currency",
+        series: buildMonthlySeries(
+          records,
+          ["dataContrato", "data"],
+          (record) => pickNumericValue(record, ["custos", "valor"]),
+        ),
+        color: "#F59E0B",
+        icon: <WalletOutlined />,
+        inverseTrend: true,
+      },
+    ];
+  }, [obras]);
+
+  const fetchObras = useCallback(
+    async (
+      page = 1,
+      pageSize = DEFAULT_PAGE_SIZE,
+      currentFilters: any = {},
+    ) => {
+      setLoading(true);
+      try {
+        const data = await obrasService.getAll({
+          page: page - 1,
+          size: pageSize,
+          ...currentFilters,
+        });
+        setObras(data.content);
+        setPagination({
+          current: page,
+          pageSize,
+          total: data.totalElements,
+        });
+      } catch (error: any) {
+        message.error("Erro ao carregar obras: " + error.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [message],
+  );
 
   useEffect(() => {
     fetchObras(1, DEFAULT_PAGE_SIZE, {});
@@ -70,8 +122,9 @@ export const ObrasPage: React.FC = () => {
   const handleSearch = (values: any) => {
     const formattedFilters: any = { ...values };
     if (values.periodo && values.periodo.length === 2) {
-      formattedFilters.dataContratoInicio = values.periodo[0].format('YYYY-MM-DD');
-      formattedFilters.dataContratoFim = values.periodo[1].format('YYYY-MM-DD');
+      formattedFilters.dataContratoInicio =
+        values.periodo[0].format("YYYY-MM-DD");
+      formattedFilters.dataContratoFim = values.periodo[1].format("YYYY-MM-DD");
       delete formattedFilters.periodo;
     }
     setFilters(formattedFilters);
@@ -86,32 +139,32 @@ export const ObrasPage: React.FC = () => {
   const handleDelete = async (id: number) => {
     try {
       await obrasService.delete(id);
-      message.success('Obra excluída com sucesso');
+      message.success("Obra excluída com sucesso");
       fetchObras(pagination.current, pagination.pageSize, filters);
     } catch (error: any) {
-      message.error('Erro ao excluir obra: ' + error.message);
+      message.error("Erro ao excluir obra: " + error.message);
     }
   };
 
   const handleOpenAddPage = () => {
-    navigate('/obras/novo');
+    navigate("/obras/novo");
   };
 
   const handleEdit = (record: any) => {
     if (!record?.id) {
-      message.warning('Obra inválida para edição.');
+      message.warning("Obra inválida para edição.");
       return;
     }
     navigate(`/obras/${record.id}/editar`);
   };
 
   return (
-    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <Breadcrumb
         items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Painéis e Gestão' },
-          { title: 'Painel de Obras' },
+          { title: <HomeOutlined />, href: "/" },
+          { title: "Painéis e Gestão" },
+          { title: "Painel de Obras" },
         ]}
         style={{ marginBottom: 16 }}
       />
@@ -119,80 +172,42 @@ export const ObrasPage: React.FC = () => {
       <div
         style={{
           marginBottom: 24,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px",
         }}
       >
         <Space orientation="vertical" size={0}>
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
             Painel de Obras
           </Title>
-          <Text type="secondary">Gerencie todas as obras, contratos e financeiro em um só lugar.</Text>
+          <Text type="secondary">
+            Gerencie todas as obras, contratos e financeiro em um só lugar.
+          </Text>
         </Space>
         <Button
           type="primary"
           size="large"
           icon={<PlusOutlined />}
           onClick={handleOpenAddPage}
-          style={{ width: isMobile ? '100%' : 'auto' }}
+          style={{ width: isMobile ? "100%" : "auto" }}
         >
           Nova Obra
         </Button>
       </div>
 
-      <ObrasFilters
-        onSearch={handleSearch}
-        onClear={handleClear}
-      />
+      <ObrasFilters onSearch={handleSearch} onClear={handleClear} />
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <GenericChart
-            title="Situação das Obras"
-            subtitle="Distribuição por status atual"
-            loading={loading}
-            data={Object.entries(
-              obras.reduce((acc: Record<string, number>, curr) => {
-                acc[curr.situacao] = (acc[curr.situacao] || 0) + 1;
-                return acc;
-              }, {}),
-            ).map(([label, value]) => ({
-              label: label.replace('_', ' '),
-              value,
-              color: label === 'CONCLUIDO'
-                ? '#52c41a'
-                : label === 'EM_ANDAMENTO'
-                  ? (isDarkMode ? '#8B5E47' : '#1890ff')
-                  : label === 'PENDENTE'
-                    ? '#faad14'
-                    : '#ff4d4f',
-            }))}
-          />
-        </Col>
-        <Col xs={24} lg={12}>
-          <GenericChart
-            title="Volume por Cliente"
-            subtitle="Total em contrato por cliente (R$)"
-            loading={loading}
-            valuePrefix="R$"
-            data={Object.entries(
-              obras.reduce((acc: Record<string, number>, curr) => {
-                const cliente = curr.nomeCliente || 'Não informado';
-                acc[cliente] = (acc[cliente] || 0) + (curr.valorContrato || 0);
-                return acc;
-              }, {}),
-            ).map(([label, value]) => ({
-              label,
-              value,
-            })).sort((a, b) => b.value - a.value).slice(0, 5)}
-          />
-        </Col>
-      </Row>
+      <div className="mb-5">
+        <MetricTrendCards cards={trendCards} loading={loading} />
+      </div>
 
-      <Card styles={{ body: { padding: 0 } }} style={{ borderRadius: 8, overflow: 'hidden' }}>
+      <Card
+        styles={{ body: { padding: 0 } }}
+        style={{ borderRadius: 8, overflow: "hidden" }}
+      >
         <ObrasTable
           dataSource={obras}
           loading={loading}

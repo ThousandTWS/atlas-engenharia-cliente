@@ -1,47 +1,92 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Button,
-  Card,
-  Row,
-  Col,
-  Typography,
-  Space,
-  Breadcrumb,
-  App,
-} from 'antd';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Button, Card, Typography, Space, Breadcrumb, App } from "antd";
 import {
   HomeOutlined,
   PlusOutlined,
-} from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { CLCBTable } from '../components/CLCBTable';
-import type { CLCB } from '../components/CLCBTable';
-import { CLCBFilters } from '../components/CLCBFilters';
-import { GenericChart } from '../../../shared/components/charts/GenericChart';
-import { clcbService } from '../../../core/services/genericService';
-import { useLayout } from '../../../shared/components/layout/LayoutContext';
+  DollarCircleOutlined,
+  FileTextOutlined,
+  WalletOutlined,
+} from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { CLCBTable } from "../components/CLCBTable";
+import type { CLCB } from "../components/CLCBTable";
+import { CLCBFilters } from "../components/CLCBFilters";
+import {
+  MetricTrendCards,
+  type MetricTrendCardDefinition,
+} from "../../../shared/components/charts/MetricTrendCards";
+import { clcbService } from "../../../core/services/genericService";
+import { useLayout } from "../../../shared/components/layout/LayoutContext";
+import {
+  buildMonthlySeries,
+  pickNumericValue,
+  toSeriesRecords,
+} from "../../../shared/utils/metricSeries";
 
 const { Title, Text } = Typography;
 
 export const CLCBPage: React.FC = () => {
   const { message } = App.useApp();
   const navigate = useNavigate();
-  const { isMobile, isDarkMode } = useLayout();
+  const { isMobile } = useLayout();
   const [clcbs, setClcbs] = useState<CLCB[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const trendCards = useMemo<MetricTrendCardDefinition[]>(() => {
+    const records = toSeriesRecords(clcbs);
+
+    return [
+      {
+        id: "clcb-processos",
+        title: "Entradas CLCB",
+        subtitle: "Novos processos por mês",
+        valueType: "number",
+        series: buildMonthlySeries(records, ["dataContrato", "data"], () => 1),
+        color: "#3B82F6",
+        icon: <FileTextOutlined />,
+      },
+      {
+        id: "clcb-faturamento",
+        title: "Volume Contratado",
+        subtitle: "Total mensal em contratos",
+        valueType: "currency",
+        series: buildMonthlySeries(
+          records,
+          ["dataContrato", "data"],
+          (record) => pickNumericValue(record, ["valorContrato", "valor"]),
+        ),
+        color: "#10B981",
+        icon: <DollarCircleOutlined />,
+      },
+      {
+        id: "clcb-custos",
+        title: "Custos Operacionais",
+        subtitle: "Custos mensais por processo",
+        valueType: "currency",
+        series: buildMonthlySeries(
+          records,
+          ["dataContrato", "data"],
+          (record) => pickNumericValue(record, ["custos", "valor"]),
+        ),
+        color: "#F59E0B",
+        icon: <WalletOutlined />,
+        inverseTrend: true,
+      },
+    ];
+  }, [clcbs]);
 
   const fetchCLCBs = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await clcbService.getAll() as any;
+      const data = (await clcbService.getAll()) as any;
       if (data && data.content) {
         setClcbs(data.content);
       } else {
         setClcbs(Array.isArray(data) ? data : []);
       }
     } catch (error: any) {
-      message.error('Erro ao carregar CLCBs: ' + error.message);
+      message.error("Erro ao carregar CLCBs: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -54,15 +99,15 @@ export const CLCBPage: React.FC = () => {
   const handleDelete = async (id: number) => {
     try {
       await clcbService.delete(id);
-      message.success('CLCB excluído com sucesso');
+      message.success("CLCB excluído com sucesso");
       fetchCLCBs();
     } catch (error: any) {
-      message.error('Erro ao excluir CLCB: ' + error.message);
+      message.error("Erro ao excluir CLCB: " + error.message);
     }
   };
 
   const handleOpenAddPage = () => {
-    navigate('/clcb/novo');
+    navigate("/clcb/novo");
   };
 
   const handleEdit = (record: CLCB) => {
@@ -70,12 +115,12 @@ export const CLCBPage: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <Breadcrumb
         items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Painéis e Gestão' },
-          { title: 'Painel CLCB' },
+          { title: <HomeOutlined />, href: "/" },
+          { title: "Painéis e Gestão" },
+          { title: "Painel CLCB" },
         ]}
         style={{ marginBottom: 16 }}
       />
@@ -83,86 +128,45 @@ export const CLCBPage: React.FC = () => {
       <div
         style={{
           marginBottom: 24,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px",
         }}
       >
         <Space orientation="vertical" size={0}>
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
             Painel CLCB
           </Title>
-          <Text type="secondary">Gerencie Certificados de Licença do Corpo de Bombeiros.</Text>
+          <Text type="secondary">
+            Gerencie Certificados de Licença do Corpo de Bombeiros.
+          </Text>
         </Space>
         <Button
           type="primary"
           size="large"
           icon={<PlusOutlined />}
           onClick={handleOpenAddPage}
-          style={{ width: isMobile ? '100%' : 'auto' }}
+          style={{ width: isMobile ? "100%" : "auto" }}
         >
           Novo CLCB
         </Button>
       </div>
 
       <CLCBFilters
-        onSearch={(values) => console.log('Filtrar:', values)}
-        onClear={() => console.log('Limpar filtros')}
+        onSearch={(values) => console.log("Filtrar:", values)}
+        onClear={() => console.log("Limpar filtros")}
       />
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <GenericChart
-            title="Situação dos CLCBs"
-            subtitle="Distribuição por status atual"
-            loading={loading}
-            data={Object.entries(
-              clcbs.reduce((acc: Record<string, number>, curr) => {
-                acc[curr.situacao] = (acc[curr.situacao] || 0) + 1;
-                return acc;
-              }, {}),
-            ).map(([label, value]) => ({
-              label: label.replace('_', ' '),
-              value,
-              color: label === 'CONCLUIDO'
-                ? '#52c41a'
-                : label === 'EM_ANDAMENTO'
-                  ? '#1890ff'
-                  : label === 'PENDENTE'
-                    ? '#faad14'
-                    : '#ff4d4f',
-            }))}
-          />
-        </Col>
-        <Col xs={24} lg={12}>
-          <GenericChart
-            title="Volume Financeiro por Status"
-            subtitle="Total em contrato por situação (R$)"
-            loading={loading}
-            valuePrefix="R$"
-            data={Object.entries(
-              clcbs.reduce((acc: Record<string, number>, curr) => {
-                acc[curr.situacao] = (acc[curr.situacao] || 0) + (curr.valorContrato || 0);
-                return acc;
-              }, {}),
-            ).map(([label, value]) => ({
-              label: label.replace('_', ' '),
-              value,
-              color: label === 'CONCLUIDO'
-                ? '#52c41a'
-                : label === 'EM_ANDAMENTO'
-                  ? (isDarkMode ? '#8B5E47' : '#1890ff')
-                  : label === 'PENDENTE'
-                    ? '#faad14'
-                    : '#ff4d4f',
-            }))}
-          />
-        </Col>
-      </Row>
+      <div className="mb-5">
+        <MetricTrendCards cards={trendCards} loading={loading} />
+      </div>
 
-      <Card styles={{ body: { padding: 0 } }} style={{ borderRadius: 8, overflow: 'hidden' }}>
+      <Card
+        styles={{ body: { padding: 0 } }}
+        style={{ borderRadius: 8, overflow: "hidden" }}
+      >
         <CLCBTable
           dataSource={clcbs}
           onEdit={handleEdit}

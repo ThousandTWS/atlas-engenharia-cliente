@@ -27,11 +27,13 @@ export interface RegisterDTO {
   confirmarEmail: string;
   password: string;
   confirmarPassword: string;
+  recaptchaToken?: string;
 }
 
 export interface LoginDTO {
   login: string;
   password: string;
+  recaptchaToken?: string;
 }
 
 export interface VerifyEmailDTO {

@@ -1,0 +1,217 @@
+{
+  "name": "Atlas ADS - Webhooks API",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "google-ads/performance",
+        "httpMethod": "GET",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b8b3e8a1-4ecf-4d88-95dd-a4b091f6cb4a",
+      "name": "Webhook Performance",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        -240
+      ],
+      "webhookId": "atlas-ads-performance"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = ($json && $json.query) ? $json.query : {};\nconst requested = String(query.period || '30d');\nconst validPeriods = { '7d': 7, '30d': 30, '90d': 90 };\nconst days = validPeriods[requested] || 30;\nconst today = new Date();\nconst rows = [];\n\nfor (let i = days - 1; i >= 0; i -= 1) {\n  const date = new Date(today);\n  date.setDate(today.getDate() - i);\n\n  const weekDay = date.getDay();\n  const weekendFactor = (weekDay === 0 || weekDay === 6) ? 0.72 : 1;\n  const trendFactor = 1 + ((days - i) / days) * 0.22;\n  const noiseFactor = 0.9 + ((i % 5) * 0.04);\n\n  const cliques = Math.round(100 * weekendFactor * trendFactor * noiseFactor);\n  const impressoes = Math.round(cliques * (12 + (i % 4)));\n  const custo = Number((cliques * (2.15 + (i % 3) * 0.18)).toFixed(2));\n  const conversoes = Math.round(cliques * (0.08 + (i % 6) * 0.003));\n\n  rows.push({\n    data: date.toISOString().slice(0, 10),\n    cliques,\n    impressoes,\n    custo,\n    conversoes\n  });\n}\n\nreturn [{ json: rows }];"
+      },
+      "id": "2f9dfb31-73b2-4d3f-a5fe-fafebf6a4ba0",
+      "name": "Build Performance Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -730,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "88bfb3eb-8d37-4b02-bc85-433ba8ca5883",
+      "name": "Response Performance",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -470,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "path": "google-ads/campaigns",
+        "httpMethod": "GET",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9d7a317e-8f29-4bbd-9a73-56ea548afeb0",
+      "name": "Webhook Campaigns",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        20
+      ],
+      "webhookId": "atlas-ads-campaigns"
+    },
+    {
+      "parameters": {
+        "jsCode": "const campaigns = [\n  {\n    id: 'camp-001',\n    nome: 'Pesquisa - Seguro Empresarial',\n    tipo: 'Pesquisa',\n    status: 'Ativa',\n    orcamento: 320,\n    cliques: 1260,\n    impressoes: 23400,\n    custo: 2860,\n    conversoes: 124\n  },\n  {\n    id: 'camp-002',\n    nome: 'Display - Remarketing Institucional',\n    tipo: 'Display',\n    status: 'Limitada',\n    orcamento: 210,\n    cliques: 760,\n    impressoes: 45100,\n    custo: 1745,\n    conversoes: 63\n  },\n  {\n    id: 'camp-003',\n    nome: 'Video - Construcoes Industriais',\n    tipo: 'Video',\n    status: 'Pausada',\n    orcamento: 180,\n    cliques: 320,\n    impressoes: 18700,\n    custo: 980,\n    conversoes: 21\n  },\n  {\n    id: 'camp-004',\n    nome: 'PMax - Captacao Regional',\n    tipo: 'PMax',\n    status: 'Ativa',\n    orcamento: 450,\n    cliques: 1430,\n    impressoes: 37900,\n    custo: 3310,\n    conversoes: 176\n  }\n];\n\nreturn [{ json: campaigns }];"
+      },
+      "id": "4c8e0e5a-8b93-4e5f-a68e-32536a721cf3",
+      "name": "Build Campaigns Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -730,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "b52c2277-b308-4b7d-a665-b9d7f407f2cc",
+      "name": "Response Campaigns",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -470,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "path": "google-ads/insights",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a47906c9-faf6-44ec-af20-f5b06588a8db",
+      "name": "Webhook Insights",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        280
+      ],
+      "webhookId": "atlas-ads-insights"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = ($json && $json.body && typeof $json.body === 'object') ? $json.body : {};\nconst campaigns = Array.isArray(body.campaigns) ? body.campaigns : [];\nconst performance = Array.isArray(body.performance) ? body.performance : [];\n\nconst totalClicks = performance.reduce((acc, item) => acc + Number(item.cliques || 0), 0);\nconst totalConversions = performance.reduce((acc, item) => acc + Number(item.conversoes || 0), 0);\nconst totalCost = performance.reduce((acc, item) => acc + Number(item.custo || 0), 0);\nconst conversionRate = totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;\n\nconst pausedCampaigns = campaigns.filter((item) => String(item.status || '').toLowerCase() === 'pausada');\nconst lowVolumeCampaigns = campaigns.filter((item) => Number(item.cliques || 0) < 300);\n\nconst insights = [];\n\nif (conversionRate < 5) {\n  insights.push({\n    id: 'ins-1',\n    titulo: 'Conversao abaixo da meta',\n    recomendacao: 'Ajuste termos de pesquisa e inclua extensoes de chamada para aumentar intencao de clique qualificado.',\n    impacto: 'ROI',\n    prioridade: 'alta'\n  });\n}\n\nif (totalCost > 4000) {\n  insights.push({\n    id: 'ins-2',\n    titulo: 'Custo elevado no periodo',\n    recomendacao: 'Redistribua orcamento para campanhas com maior taxa de conversao e reduza grupos com CPC acima da media.',\n    impacto: 'Orcamento',\n    prioridade: 'media'\n  });\n}\n\nif (pausedCampaigns.length > 0) {\n  insights.push({\n    id: 'ins-3',\n    titulo: 'Campanhas pausadas detectadas',\n    recomendacao: `Revise ${pausedCampaigns.length} campanha(s) pausada(s) para recuperar volume sem comprometer CPA.`,\n    impacto: 'Lances',\n    prioridade: 'media'\n  });\n}\n\nif (lowVolumeCampaigns.length > 0) {\n  insights.push({\n    id: 'ins-4',\n    titulo: 'Baixo volume de cliques em parte das campanhas',\n    recomendacao: 'Teste novos criativos e variacoes de publico para ampliar alcance em campanhas de baixo volume.',\n    impacto: 'Criativos',\n    prioridade: 'baixa'\n  });\n}\n\nif (insights.length === 0) {\n  insights.push({\n    id: 'ins-default',\n    titulo: 'Performance estavel',\n    recomendacao: 'Mantenha a estrategia atual e monitore variacoes de CPC e conversao semanalmente.',\n    impacto: 'ROI',\n    prioridade: 'baixa'\n  });\n}\n\nreturn [{ json: insights }];"
+      },
+      "id": "8f693f6f-d79f-499f-9b25-4f2e5e884cf8",
+      "name": "Build Insights Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -730,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "167f58d3-e31b-4d6d-9b13-2f6f4f266af8",
+      "name": "Response Insights",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -470,
+        280
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Performance": {
+      "main": [
+        [
+          {
+            "node": "Build Performance Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Performance Payload": {
+      "main": [
+        [
+          {
+            "node": "Response Performance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Campaigns": {
+      "main": [
+        [
+          {
+            "node": "Build Campaigns Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Campaigns Payload": {
+      "main": [
+        [
+          {
+            "node": "Response Campaigns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Insights": {
+      "main": [
+        [
+          {
+            "node": "Build Insights Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Insights Payload": {
+      "main": [
+        [
+          {
+            "node": "Response Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f99ed2ec-7f0e-4f63-9536-554038818281",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "pinData": {}
+}

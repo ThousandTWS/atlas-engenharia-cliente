@@ -1,6 +1,5 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
-import dayjs from 'dayjs';
-import { apiRequest } from '../../../core/api/apiClient';
+﻿import dayjs from 'dayjs';
+import { extractArrayPayload, requestAdsEndpoint } from './adsIntegrationClient';
 
 export type MetricKey = 'cliques' | 'impressoes' | 'custo' | 'conversoes';
 
@@ -30,30 +29,133 @@ export interface AdsDashboardData {
   campaigns: CampaignPerformance[];
 }
 
-const normalizePerformance = (list: any[]): PerformancePoint[] =>
-  list.map((item) => ({
-    data: item.data
-      ? dayjs(item.data).format('DD/MM')
-      : item.date
-        ? dayjs(item.date).format('DD/MM')
-        : '',
-    cliques: Number(item.cliques ?? 0),
-    impressoes: Number(item.impressoes ?? 0),
-    custo: Number(item.custo ?? 0),
-    conversoes: Number(item.conversoes ?? 0),
-  }));
+const asRecord = (value: unknown): Record<string, unknown> =>
+  (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
+
+const toNumber = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^\d,.-]/g, '');
+    const normalized = cleaned.includes(',') ? cleaned.replace(/\./g, '').replace(',', '.') : cleaned;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+};
+
+const pickNumber = (record: Record<string, unknown>, keys: string[]): number => {
+  for (const key of keys) {
+    if (key in record) {
+      return toNumber(record[key]);
+    }
+  }
+
+  return 0;
+};
+
+const pickMicrosAsCurrency = (record: Record<string, unknown>, keys: string[]): number => {
+  for (const key of keys) {
+    if (key in record) {
+      return toNumber(record[key]) / 1_000_000;
+    }
+  }
+
+  return 0;
+};
+
+const normalizeDate = (record: Record<string, unknown>): string => {
+  const rawValue = record.data ?? record.date ?? record.day ?? record.segmentDate ?? record.segments_date;
+  if (rawValue === undefined || rawValue === null) {
+    return '';
+  }
+
+  const parsed = dayjs(String(rawValue));
+  return parsed.isValid() ? parsed.format('DD/MM') : '';
+};
+
+const normalizeStatus = (value: unknown): CampaignPerformance['status'] => {
+  const normalized = String(value ?? '').trim().toLowerCase();
+
+  if (['ativa', 'active', 'enabled'].includes(normalized)) {
+    return 'Ativa';
+  }
+
+  if (['limitada', 'limited'].includes(normalized)) {
+    return 'Limitada';
+  }
+
+  return 'Pausada';
+};
+
+const normalizeType = (value: unknown): CampaignPerformance['tipo'] => {
+  const normalized = String(value ?? '').trim().toLowerCase();
+
+  if (normalized.includes('display')) {
+    return 'Display';
+  }
+
+  if (normalized.includes('video') || normalized.includes('vídeo')) {
+    return 'Vídeo';
+  }
+
+  if (normalized.includes('max') || normalized.includes('pmax') || normalized.includes('performance')) {
+    return 'PMax';
+  }
+
+  return 'Pesquisa';
+};
+
+const normalizePerformance = (list: unknown[]): PerformancePoint[] =>
+  list.map((entry) => {
+    const item = asRecord(entry);
+
+    const cost = pickNumber(item, ['custo', 'cost']) || pickMicrosAsCurrency(item, ['costMicros', 'custoMicros']);
+
+    return {
+      data: normalizeDate(item),
+      cliques: pickNumber(item, ['cliques', 'clicks']),
+      impressoes: pickNumber(item, ['impressoes', 'impressions']),
+      custo: Number(cost.toFixed(2)),
+      conversoes: pickNumber(item, ['conversoes', 'conversions']),
+    };
+  });
+
+const normalizeCampaigns = (list: unknown[]): CampaignPerformance[] =>
+  list.map((entry, index) => {
+    const item = asRecord(entry);
+
+    const budget = pickNumber(item, ['orcamento', 'budget', 'dailyBudget']) || pickMicrosAsCurrency(item, ['budgetAmountMicros', 'orcamentoMicros']);
+    const cost = pickNumber(item, ['custo', 'cost']) || pickMicrosAsCurrency(item, ['costMicros', 'custoMicros']);
+
+    const id = String(item.id ?? item.campaignId ?? item.campaign_id ?? item.resourceName ?? `campaign-${index}`);
+    const nome = String(item.nome ?? item.name ?? item.campaignName ?? item.campaign_name ?? `Campanha ${index + 1}`);
+
+    return {
+      id,
+      nome,
+      tipo: normalizeType(item.tipo ?? item.type ?? item.channelType ?? item.advertisingChannelType),
+      status: normalizeStatus(item.status ?? item.state),
+      orcamento: Number(budget.toFixed(2)),
+      cliques: pickNumber(item, ['cliques', 'clicks']),
+      impressoes: pickNumber(item, ['impressoes', 'impressions']),
+      custo: Number(cost.toFixed(2)),
+      conversoes: pickNumber(item, ['conversoes', 'conversions']),
+    };
+  });
 
 export async function fetchPerformanceTimeseries(period: '7d' | '30d' | '90d'): Promise<PerformancePoint[]> {
   try {
-    const response = await apiRequest<PerformancePoint[] | any[]>({
-      url: '/ads/performance',
+    const response = await requestAdsEndpoint<unknown>('performance', {
       method: 'GET',
       params: { period },
     });
 
-    if (Array.isArray(response)) {
-      return normalizePerformance(response);
-    }
+    const list = extractArrayPayload(response, ['performance', 'timeseries', 'serie']);
+    return normalizePerformance(list);
   } catch (error) {
     console.error('Dashboard ADS: falha ao obter série temporal', error);
   }
@@ -63,14 +165,12 @@ export async function fetchPerformanceTimeseries(period: '7d' | '30d' | '90d'): 
 
 export async function fetchCampaignPerformance(): Promise<CampaignPerformance[]> {
   try {
-    const response = await apiRequest<CampaignPerformance[] | any[]>({
-      url: '/ads/campaigns',
+    const response = await requestAdsEndpoint<unknown>('campaigns', {
       method: 'GET',
     });
 
-    if (Array.isArray(response)) {
-      return response as CampaignPerformance[];
-    }
+    const list = extractArrayPayload(response, ['campaigns']);
+    return normalizeCampaigns(list);
   } catch (error) {
     console.error('Dashboard ADS: falha ao obter campanhas', error);
   }

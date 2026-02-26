@@ -102,13 +102,7 @@ export const AdsPerformanceChart: React.FC = () => {
       }
       extra={
         <Segmented
-          className="ads-period-segmented"
-          style={{
-            background: isDarkMode ? '#1E2A47' : '#F1F5F9',
-            border: `1px solid ${isDarkMode ? '#2A3A5C' : '#CBD5E1'}`,
-            padding: 2,
-            borderRadius: 10,
-          }}
+          className="atlas-segmented-control"
           value={period}
           options={[
             { label: '7 dias', value: '7d' },
@@ -152,12 +146,12 @@ export const AdsPerformanceChart: React.FC = () => {
         </Col>
         <Col xs={24} sm={12}>
           <Space size={12} wrap style={{ justifyContent: 'flex-end', width: '100%' }}>
-            <Tag className="ads-metric-chip ads-metric-chip-primary" bordered={false}>
-              <span className="ads-metric-chip-dot" />
+            <Tag className="atlas-status-badge atlas-status-badge-primary" bordered={false}>
+              <span className="atlas-status-badge-dot" />
               {getMetricLabel(primaryMetric)}
             </Tag>
-            <Tag className="ads-metric-chip ads-metric-chip-secondary" bordered={false}>
-              <span className="ads-metric-chip-dot" />
+            <Tag className="atlas-status-badge atlas-status-badge-secondary" bordered={false}>
+              <span className="atlas-status-badge-dot" />
               {getMetricLabel(secondaryMetric)}
             </Tag>
           </Space>

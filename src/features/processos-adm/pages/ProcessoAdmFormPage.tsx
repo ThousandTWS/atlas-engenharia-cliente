@@ -15,6 +15,7 @@ import {
   Breadcrumb,
   Divider,
   Statistic,
+  Tag,
   theme,
   App,
   Spin,
@@ -96,6 +97,7 @@ export const ProcessoAdmFormPage: React.FC = () => {
   const recebido = Number(Form.useWatch('recebido', form) || 0);
   const custos = Number(Form.useWatch('custos', form) || 0);
   const aReceber = Number(Form.useWatch('aReceber', form) || 0);
+  const saldoLiquido = valorContrato - recebido - custos;
 
   const sectionCardStyle = useMemo(
     () => ({
@@ -215,7 +217,7 @@ export const ProcessoAdmFormPage: React.FC = () => {
           </Title>
           <Text type="secondary">Cadastro de dados contratuais, documentação e controle financeiro.</Text>
         </Space>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/processos')} style={{ width: isMobile ? '100%' : 'auto' }}>
+        <Button className="atlas-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/processos')} style={{ width: isMobile ? '100%' : 'auto' }}>
           Voltar
         </Button>
       </div>
@@ -438,33 +440,55 @@ export const ProcessoAdmFormPage: React.FC = () => {
               >
                 <Row gutter={[16, 16]}>
                   <Col span={24}>
-                    <Statistic
-                      title="Total em Contrato"
-                      value={formatCurrencyValue(valorContrato)}
-                      valueStyle={{ fontSize: 20 }}
-                    />
+                    <Space size={[12, 10]} wrap>
+                      <div>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>Contrato</Text>
+                        <Tag bordered={false} className="atlas-status-badge atlas-status-badge-info" style={{ marginInlineEnd: 0 }}>
+                          <span className="atlas-status-badge-dot" />
+                          {formatCurrencyValue(valorContrato)}
+                        </Tag>
+                      </div>
+                      <div>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>Custos</Text>
+                        <Tag bordered={false} className="atlas-status-badge atlas-status-badge-danger" style={{ marginInlineEnd: 0 }}>
+                          <span className="atlas-status-badge-dot" />
+                          {formatCurrencyValue(custos)}
+                        </Tag>
+                      </div>
+                      <div>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>Saldo Líquido</Text>
+                        <Tag
+                          bordered={false}
+                          className={`atlas-status-badge ${saldoLiquido < 0 ? 'atlas-status-badge-danger' : 'atlas-status-badge-success'}`}
+                          style={{ marginInlineEnd: 0 }}
+                        >
+                          <span className="atlas-status-badge-dot" />
+                          {formatCurrencyValue(saldoLiquido)}
+                        </Tag>
+                      </div>
+                    </Space>
                   </Col>
                   <Col span={12}>
                     <Statistic
                       title="Recebido"
                       value={formatCurrencyValue(recebido)}
-                      valueStyle={{ fontSize: 16, color: '#52c41a' }}
+                      valueStyle={{ fontSize: 16, color: token.colorText }}
                     />
                   </Col>
                   <Col span={12}>
                     <Statistic
                       title="A Receber"
                       value={formatCurrencyValue(aReceber)}
-                      valueStyle={{ fontSize: 16, color: token.colorPrimary }}
+                      valueStyle={{ fontSize: 16, color: token.colorText }}
                     />
                   </Col>
                   <Col span={24}>
                     <Statistic
                       title="Saldo Líquido (Contrato - Recebido - Custos)"
-                      value={formatCurrencyValue(valorContrato - recebido - custos)}
+                      value={formatCurrencyValue(saldoLiquido)}
                       valueStyle={{
                         fontSize: 16,
-                        color: valorContrato - recebido - custos < 0 ? '#ff4d4f' : token.colorText,
+                        color: token.colorText,
                       }}
                     />
                   </Col>

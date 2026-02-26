@@ -158,7 +158,7 @@ export const LancamentoFormPage: React.FC = () => {
           </Title>
           <Text type="secondary">Acompanhe faturamentos, custos e lucratividade dos seus projetos.</Text>
         </Space>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/lancamentos')} style={{ width: isMobile ? '100%' : 'auto' }}>
+        <Button className="atlas-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/lancamentos')} style={{ width: isMobile ? '100%' : 'auto' }}>
           Voltar
         </Button>
       </div>

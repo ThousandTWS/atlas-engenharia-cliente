@@ -160,7 +160,7 @@ export const ObraFormPage: React.FC = () => {
           </Title>
           <Text type="secondary">Gerencie informações de cliente, serviço e financeiro.</Text>
         </Space>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/obras')} style={{ width: isMobile ? '100%' : 'auto' }}>
+        <Button className="atlas-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/obras')} style={{ width: isMobile ? '100%' : 'auto' }}>
           Voltar
         </Button>
       </div>

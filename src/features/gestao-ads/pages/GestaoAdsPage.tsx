@@ -20,7 +20,6 @@ import {
 } from '@ant-design/icons';
 import { AdsPerformanceChart } from '../components/AdsPerformanceChart';
 import { CampaignPerformanceTable } from '../components/CampaignPerformanceTable';
-import { GeminiInsights } from '../components/GeminiInsights';
 import {
   computeTotals,
   enrichCampaignMetrics,
@@ -163,11 +162,8 @@ export const GestaoAdsPage: React.FC = () => {
       </Row>
 
       <Row gutter={[16, 16]}>
-        <Col xs={24} xl={16}>
+        <Col span={24}>
           <AdsPerformanceChart key={`ads-chart-${refreshToken}`} />
-        </Col>
-        <Col xs={24} xl={8}>
-          <GeminiInsights key={`ads-insights-${refreshToken}`} />
         </Col>
       </Row>
 

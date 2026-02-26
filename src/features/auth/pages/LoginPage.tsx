@@ -1,109 +1,127 @@
 import React, { useState } from 'react';
-import { Card, Typography, Button, Form, Input, App } from 'antd';
+import { Typography, Button, Form, Input, App } from 'antd';
 import { LoginOutlined, UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authService } from '../../../core/services/authService';
+import { AuthShell } from '../components/AuthShell';
+import { GoogleRecaptcha, type GoogleRecaptchaHandle } from '../components/GoogleRecaptcha';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
+
+interface LoginFormValues {
+  username: string;
+  password: string;
+}
 
 export const LoginPage: React.FC = () => {
   const { message } = App.useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = React.useRef<GoogleRecaptchaHandle>(null);
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() ?? '6LcZCHgsAAAAADyLoe3Gc8X2DEJBWk1l_HMKEohX';
+  const isRecaptchaConfigured = Boolean(recaptchaSiteKey);
+  const handleCaptchaChange = React.useCallback((token: string | null) => {
+    setCaptchaToken(token);
+  }, []);
 
-  // Redireciona se já estiver autenticado
   React.useEffect(() => {
     const isAuth = authService.isAuthenticated();
-    console.log('LoginPage: useEffect check auth', { isAuth });
     if (isAuth) {
-      console.log('LoginPage: User is authenticated, redirecting to home');
       navigate('/', { replace: true });
     }
   }, [navigate]);
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: LoginFormValues) => {
+    if (!isRecaptchaConfigured) {
+      message.error('reCAPTCHA nao configurado. Defina VITE_RECAPTCHA_SITE_KEY.');
+      return;
+    }
+
+    if (!captchaToken) {
+      message.warning('Confirme o reCAPTCHA para continuar.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await authService.login({
+      await authService.login({
         login: values.username,
-        password: values.password
+        password: values.password,
+        recaptchaToken: captchaToken,
       });
-      console.log('Login successful, response:', response);
       message.success('Login realizado com sucesso!');
-      
-      // Pequeno delay para garantir que o localStorage seja propagado se houver concorrência
+
       setTimeout(() => {
-        const from = (location.state as any)?.from?.pathname || '/';
-        console.log('Redirecting to:', from);
+        const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
         navigate(from, { replace: true });
       }, 100);
-    } catch (error: any) {
-      console.error('Login error details:', error);
-      message.error(error.message || 'Erro ao realizar login. Tente novamente.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao realizar login. Tente novamente.';
+      message.error(errorMessage);
+      recaptchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{
-      height: '100vh',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      background: '#f0f2f5'
-    }}>
-      <Card style={{ width: 400, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Title level={2} style={{ color: '#1890ff', marginBottom: 0 }}>Atlas</Title>
-          <Text type="secondary">Engenharia & Gestão</Text>
-        </div>
-
-        <Title level={4} style={{ textAlign: 'center', marginBottom: 24 }}>Acessar Sistema</Title>
-
-        <Form
-          name="login"
-          onFinish={onFinish}
-          layout="vertical"
-          size="large"
-        >
-          <Form.Item
-            name="username"
-            rules={[{ required: true, message: 'Por favor, insira seu usuário!' }]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="Usuário ou E-mail" />
-          </Form.Item>
-
-          <Form.Item
-            name="password"
-            rules={[{ required: true, message: 'Por favor, insira sua senha!' }]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="Senha" />
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              icon={<LoginOutlined />}
-              loading={loading}
-            >
-              Entrar
-            </Button>
-          </Form.Item>
-        </Form>
-
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            Use suas credenciais para acessar o sistema
-          </Text>
-          <div style={{ marginTop: 8 }}>
-            Não tem uma conta? <Link to="/auth/register" style={{ color: '#1890ff' }}>Cadastre-se!</Link>
+    <AuthShell
+      contextLabel="Autenticacao"
+      title="Acessar Plataforma"
+      subtitle="Entre com suas credenciais corporativas para continuar."
+      footer={(
+        <>
+          <div className="atlas-auth-inline-actions">
+            <Text className="atlas-auth-footer-text">Nao possui conta?</Text>
+            <Link to="/auth/register" className="atlas-auth-link">Criar conta</Link>
           </div>
-        </div>
-      </Card>
-    </div>
+          <div className="atlas-auth-inline-actions">
+            <Link to="/auth/forgot-password" className="atlas-auth-link">Esqueci minha senha</Link>
+          </div>
+        </>
+      )}
+    >
+      <Form name="login" onFinish={onFinish} layout="vertical" size="large">
+        <Form.Item
+          name="username"
+          label="Usuario ou E-mail"
+          rules={[{ required: true, message: 'Por favor, insira seu usuario ou e-mail.' }]}
+        >
+          <Input className="atlas-form-input" prefix={<UserOutlined />} placeholder="usuario@empresa.com" />
+        </Form.Item>
+
+        <Form.Item
+          name="password"
+          label="Senha"
+          rules={[{ required: true, message: 'Por favor, insira sua senha.' }]}
+        >
+          <Input.Password className="atlas-form-input" prefix={<LockOutlined />} placeholder="Sua senha de acesso" />
+        </Form.Item>
+
+        <GoogleRecaptcha
+          ref={recaptchaRef}
+          siteKey={recaptchaSiteKey}
+          onTokenChange={handleCaptchaChange}
+          theme="light"
+        />
+
+        <Form.Item style={{ marginTop: 24, marginBottom: 8 }}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            icon={<LoginOutlined />}
+            loading={loading}
+            disabled={!isRecaptchaConfigured || !captchaToken}
+            size="large"
+            style={{ height: 44, borderRadius: 8, fontWeight: 600 }}
+          >
+            Entrar
+          </Button>
+        </Form.Item>
+      </Form>
+    </AuthShell>
   );
 };
