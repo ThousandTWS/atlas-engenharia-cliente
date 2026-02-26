@@ -1,69 +1,81 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import axios from 'axios';
+/* eslint-disable no-useless-catch */
 
-export const API_URL = import.meta.env.VITE_API_URL || 'https://backend-atlas-engenharia-production-326c.up.railway.app/api';
+import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 
-const apiClient = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+export const API_BASE_URL = 'https://backend-atlas-engenharia-production-326c.up.railway.app/api';
 
-export const setAuthToken = (token: string | null) => {
-  if (token) {
-    apiClient.defaults.headers.common['Authorization'] = 'Bearer ' + token;
-  } else {
-    delete apiClient.defaults.headers.common['Authorization'];
-  }
-};
+class ApiClient {
+  private static instance: AxiosInstance;
 
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = 'Bearer ' + token;
+  private constructor() {}
+
+  public static getInstance(): AxiosInstance {
+    if (!ApiClient.instance) {
+      ApiClient.instance = axios.create({
+        baseURL: API_BASE_URL,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 15000, 
+      });
+
+      this.setupInterceptors();
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+    return ApiClient.instance;
+  }
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  private static setupInterceptors(): void {
+    ApiClient.instance.interceptors.request.use(
+      (config: InternalAxiosRequestConfig) => {
+        const token = localStorage.getItem('token');
+        if (token && config.headers) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
 
-    if (error.response?.status === 401) {
-      console.error('Token expirado ou inv�lido. Redirecionando para login...');
-      
-      if (!window.location.pathname.includes('/auth/login')) {
-        window.location.href = '/auth/login';
+    ApiClient.instance.interceptors.response.use(
+      (response: AxiosResponse) => response,
+      async (error) => {
+        const { response } = error;
+
+        if (response?.status === 401) {
+          console.warn('Authentication expired. Redirecting to login.');
+          localStorage.removeItem('token');
+          if (!window.location.hash.includes('/login')) {
+             window.location.hash = '/login';
+          }
+        }
+
+        if (response?.status === 403) {
+          console.error('Permission denied: Insufficient privileges.');
+        }
+
+        const errorMessage = 
+          response?.data?.message || 
+          response?.data?.error || 
+          error.message || 
+          'An unexpected communication error occurred';
+
+        return Promise.reject(new Error(errorMessage));
       }
-    }
-
-    if (error.response?.status === 403) {
-      console.error('Erro 403: Acesso negado. Verifique as permiss�es do usu�rio.');
-    }
-
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Erro na requisi��o';
-    return Promise.reject(new Error(message));
+    );
   }
-);
+}
 
-export default apiClient;
+const apiClient = ApiClient.getInstance();
 
 export async function apiRequest<T>(
-  endpoint: string,
-  options: any = {}
+  config: AxiosRequestConfig
 ): Promise<T> {
-  const { method = 'GET', body, ...rest } = options;
-
-  const response = await apiClient.request({
-    url: endpoint,
-    method,
-    data: body ? JSON.parse(body) : undefined,
-    ...rest,
-  });
-
-  return response.data;
+  try {
+    const response = await apiClient.request<T>(config);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
+
+export default apiClient;

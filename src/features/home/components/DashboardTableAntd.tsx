@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Typography, Input, App, ConfigProvider } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Card, Table, Tag, Typography, Input, App, type TableProps } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { avcbService, clcbService, processosAdmService, lancamentosService, custosIndiretosService } from '../../../core/services/genericService';
 import { obrasService } from '../../../core/services/obrasService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
+import { htmlToPlainText } from '../../../core/utils/text';
+import { useLiveSubscription } from '../../../core/realtime/liveProvider';
 
 
 const { Title } = Typography;
@@ -16,8 +18,56 @@ interface RowData {
   valor: number;
   data: string;
   tipo: string;
-  isDarkMode: boolean;
 }
+
+interface GenericItem {
+  id?: string | number;
+  codigo?: string | number;
+  nomeCliente?: string;
+  servico?: string;
+  projeto?: string;
+  descricaoSituacao?: string;
+  descricao?: string;
+  situacao?: string;
+  status?: string;
+  valorContrato?: number;
+  faturamento?: number;
+  valor?: number;
+  dataContrato?: string;
+  data?: string;
+}
+
+type ApiListResponse = GenericItem[] | { content?: GenericItem[] };
+
+const normalizeStatusKey = (status: string) =>
+  status
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '_');
+
+const getStatusBadgeClass = (status: string) => {
+  const normalized = normalizeStatusKey(status);
+
+  if (['APROVADO', 'CONCLUIDO', 'PAGO', 'RECEBIDO', 'ATIVA', 'ATIVO'].includes(normalized)) {
+    return 'atlas-status-badge-success';
+  }
+
+  if (['EM_ANDAMENTO', 'PROCESSANDO', 'EM_EXECUCAO'].includes(normalized)) {
+    return 'atlas-status-badge-info';
+  }
+
+  if (['PENDENTE', 'EM_ANALISE', 'EM_ANALISE_TECNICA', 'AGUARDANDO'].includes(normalized)) {
+    return 'atlas-status-badge-warning';
+  }
+
+  if (['REPROVADO', 'CANCELADO', 'FALHA', 'NEGADO'].includes(normalized)) {
+    return 'atlas-status-badge-danger';
+  }
+
+  return 'atlas-status-badge-neutral';
+};
 
 export const DashboardTableAntd: React.FC = () => {
   const { message } = App.useApp();
@@ -26,54 +76,75 @@ export const DashboardTableAntd: React.FC = () => {
   const [rowData, setRowData] = useState<RowData[]>([]);
   const {isDarkMode} = useLayout();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [avcbs, clcbs, obras, processos, lancamentos, custos] = await Promise.all([
-          avcbService.getAll(),
-          clcbService.getAll(),
-          obrasService.getAll(),
-          processosAdmService.getAll(),
-          lancamentosService.getAll(),
-          custosIndiretosService.getAll(),
-        ]);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [avcbs, clcbs, obras, processos, lancamentos, custos] = await Promise.all([
+        avcbService.getAll(),
+        clcbService.getAll(),
+        obrasService.getAll(),
+        processosAdmService.getAll(),
+        lancamentosService.getAll(),
+        custosIndiretosService.getAll(),
+      ]);
 
-        const formatItems = (items: any, tipo: string) => {
-          const list = Array.isArray(items) ? items : (items as any).content || [];
-          return list.map((item: any) => ({
-            id: String(item.id || item.codigo || ''),
-            cliente: item.nomeCliente || 'N/A',
-            projeto: item.servico || item.projeto || item.descricaoSituacao || item.descricao || tipo,
-            status: item.situacao || item.status || (tipo === 'Custo' ? 'PAGO' : 'PENDENTE'),
-            valor: item.valorContrato || item.faturamento || item.valor || 0,
-            data: item.dataContrato || item.data || new Date().toISOString(),
-            tipo: tipo
+        const formatItems = (items: ApiListResponse, tipo: string): RowData[] => {
+          const list = Array.isArray(items) ? items : items.content ?? [];
+          return list.map((item) => ({
+            id: String(item.id ?? item.codigo ?? ''),
+            cliente: typeof item.nomeCliente === 'string' ? item.nomeCliente : 'N/A',
+            projeto:
+              (typeof item.servico === 'string' && item.servico) ||
+              (typeof item.projeto === 'string' && item.projeto) ||
+              (typeof item.descricaoSituacao === 'string' && htmlToPlainText(item.descricaoSituacao)) ||
+              (typeof item.descricao === 'string' && htmlToPlainText(item.descricao)) ||
+              tipo,
+            status:
+              (typeof item.situacao === 'string' && item.situacao) ||
+              (typeof item.status === 'string' && item.status) ||
+              (tipo === 'Custo' ? 'PAGO' : 'PENDENTE'),
+            valor:
+              (typeof item.valorContrato === 'number' && item.valorContrato) ||
+              (typeof item.faturamento === 'number' && item.faturamento) ||
+              (typeof item.valor === 'number' && item.valor) ||
+              0,
+            data: typeof item.dataContrato === 'string' ? item.dataContrato : typeof item.data === 'string' ? item.data : new Date().toISOString(),
+            tipo,
           }));
         };
 
-        const allItems: RowData[] = [
-          ...formatItems(avcbs, 'AVCB'),
-          ...formatItems(clcbs, 'CLCB'),
-          ...formatItems(obras, 'Obra'),
-          ...formatItems(processos, 'Processo Adm'),
-          ...formatItems(lancamentos, 'Lançamento'),
-          ...formatItems(custos, 'Custo'),
-        ];
+      const allItems: RowData[] = [
+        ...formatItems(avcbs, 'AVCB'),
+        ...formatItems(clcbs, 'CLCB'),
+        ...formatItems(obras, 'Obra'),
+        ...formatItems(processos, 'Processo Adm'),
+        ...formatItems(lancamentos, 'Lançamento'),
+        ...formatItems(custos, 'Custo'),
+      ];
 
-        // Ordenar por data (mais recentes primeiro)
-        allItems.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+      // Ordenar por data (mais recentes primeiro)
+      allItems.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
 
-        setRowData(allItems);
-      } catch (error: any) {
-        message.error('Erro ao carregar atividades recentes: ' + error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+      setRowData(allItems);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      message.error('Erro ao carregar atividades recentes: ' + errorMessage);
+    } finally {
+      setLoading(false);
+    }
   }, [message]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useLiveSubscription({
+    channel: 'resources.*',
+    types: ['created', 'updated', 'deleted'],
+    callback: () => {
+      fetchData();
+    },
+  });
 
   const filteredData = rowData.filter(item => 
     item.cliente.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -83,7 +154,7 @@ export const DashboardTableAntd: React.FC = () => {
     item.tipo.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const columns = [
+  const columns: TableProps<RowData>['columns'] = [
     {
       title: 'Código/ID',
       dataIndex: 'id',
@@ -105,7 +176,7 @@ export const DashboardTableAntd: React.FC = () => {
         { text: 'Lançamento', value: 'Lançamento' },
         { text: 'Custo', value: 'Custo' },
       ],
-      onFilter: (value: any, record: RowData) => record.tipo === value,
+      onFilter: (value, record) => record.tipo === String(value),
     },
     {
       title: 'Cliente',
@@ -126,23 +197,17 @@ export const DashboardTableAntd: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       width: 140,
-      render: (status: string) => {
-        const colors: any = {
-          'APROVADO': 'success',
-          'CONCLUIDO': 'success',
-          'EM_ANDAMENTO': 'warning',
-          'EM_ANÁLISE': 'warning',
-          'PENDENTE': 'processing',
-          'REPROVADO': 'error',
-          'CANCELADO': 'error',
-          'Aprovado': 'success',
-          'Em Análise': 'warning',
-          'Pendente': 'processing',
-          'Reprovado': 'error'
-        };
-        return <Tag color={colors[status] || 'default'}>{status.replace('_', ' ')}</Tag>;
-      },
-      onFilter: (value: any, record: RowData) => record.status === value,
+      render: (status: string) => (
+        <Tag
+          bordered={false}
+          className={`atlas-status-badge ${getStatusBadgeClass(status)}`}
+          style={{ marginInlineEnd: 0 }}
+        >
+          <span className="atlas-status-badge-dot" />
+          {status.replace(/_/g, ' ')}
+        </Tag>
+      ),
+      onFilter: (value, record) => record.status === String(value),
     },
     {
       title: 'Valor',
@@ -166,7 +231,8 @@ export const DashboardTableAntd: React.FC = () => {
   ];
 
   return (
-    <Card 
+    <Card
+      className="recent-activities-card"
       variant="borderless" 
       loading={loading}
       style={{ 
@@ -180,24 +246,17 @@ export const DashboardTableAntd: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px'}}>
         <Title level={4} style={{ margin: 0}}>Atividades Recentes</Title>
         <Input
+          className="recent-activities-search"
           placeholder="Pesquisar..."
           prefix={<SearchOutlined />}
-          style={{ width: 250, background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : '1px solid #0000001A'  }}
+          style={{ width: 250, background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? '1px solid #1E2A47' : '1px solid #CBD5E1'  }}
           allowClear
           onChange={(e) => setSearchText(e.target.value)}
         />
       </div>
 
-      <ConfigProvider
-          theme={{
-            components:{
-              Table:{
-                colorBgContainer: isDarkMode ? '#0A0F1C' : '#fff',
-              }
-            }
-          }}>
       <Table
-
+        className="recent-activities-table"
         dataSource={filteredData}
         columns={columns} 
         rowKey={(record) => `${record.tipo}-${record.id}`}
@@ -210,7 +269,6 @@ export const DashboardTableAntd: React.FC = () => {
         }}
         scroll={{ x: 1000 }}
       />
-      </ConfigProvider>
     </Card>
   );
 };

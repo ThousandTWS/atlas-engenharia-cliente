@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
+import { htmlToPlainText } from '../../../core/utils/text';
 
 const { Text } = Typography;
 
@@ -83,6 +84,14 @@ export const AVCBTable: React.FC<AVCBTableProps> = ({
       dataIndex: 'descricaoSituacao',
       key: 'descricaoSituacao',
       ellipsis: true,
+      render: (descricao: string) => {
+        const plainText = htmlToPlainText(descricao);
+        return (
+          <Tooltip title={plainText}>
+            <Text>{plainText || '-'}</Text>
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Valor Contrato',

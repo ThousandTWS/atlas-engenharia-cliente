@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom';
 import { themeConfig } from '../config/theme';
 import ptBR from 'antd/locale/pt_BR';
 import { router } from '../routes/router';
+import { NotificationCenterProvider } from '../notifications/NotificationCenterContext';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -55,7 +56,9 @@ export const AppProvider: React.FC<AppProviderProps> = () => {
     <ErrorBoundary>
       <ConfigProvider locale={ptBR} theme={themeConfig}>
         <AntdApp>
-          <RouterProvider router={router} />
+          <NotificationCenterProvider>
+            <RouterProvider router={router} />
+          </NotificationCenterProvider>
         </AntdApp>
       </ConfigProvider>
     </ErrorBoundary>

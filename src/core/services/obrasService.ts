@@ -1,4 +1,5 @@
 import apiClient from '../api/apiClient';
+import { publishResourceEvent } from '../realtime/liveProvider';
 
 export interface Obra {
   id?: number;
@@ -53,13 +54,16 @@ export const obrasService = {
   },
   create: async (obra: Obra) => {
     const response = await apiClient.post<Obra>('/obras', obra);
+    publishResourceEvent('obras', 'created', response.data);
     return response.data;
   },
   update: async (id: string | number, obra: Partial<Obra>) => {
     const response = await apiClient.put<Obra>(`/obras/${id}`, obra);
+    publishResourceEvent('obras', 'updated', response.data);
     return response.data;
   },
   delete: async (id: string | number) => {
     await apiClient.delete(`/obras/${id}`);
+    publishResourceEvent('obras', 'deleted', { id });
   },
 };

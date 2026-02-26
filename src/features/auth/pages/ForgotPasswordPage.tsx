@@ -1,71 +1,73 @@
 import React from 'react';
-import { Form, Input, Button, Card, Typography, App } from 'antd';
-import { MailOutlined, ArrowLeftOutlined, SendOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { Form, Input, Button, Typography, App } from 'antd';
+import { MailOutlined, SendOutlined } from '@ant-design/icons';
+import { useNavigate, Link } from 'react-router-dom';
+import { authService } from '../../../core/services/authService';
+import { AuthShell } from '../components/AuthShell';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
+
+interface ForgotPasswordFormValues {
+  email: string;
+}
 
 export const ForgotPasswordPage: React.FC = () => {
   const { message } = App.useApp();
   const navigate = useNavigate();
+  const [loading, setLoading] = React.useState(false);
 
-  const onFinish = (values: any) => {
-    console.log('Forgot password values:', values);
-    message.success('Se o e-mail estiver cadastrado, você receberá um código de recuperação.');
-    navigate('/auth/reset-password', { state: { email: values.email } });
+  const onFinish = async (values: ForgotPasswordFormValues) => {
+    setLoading(true);
+    try {
+      await authService.forgotPassword(values.email);
+      message.success('Se o e-mail estiver cadastrado, enviaremos um codigo de recuperacao.');
+      navigate('/auth/reset-password', { state: { email: values.email } });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao solicitar recuperacao.';
+      message.error(`Erro ao solicitar recuperacao: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center',
-      background: '#f0f2f5'
-    }}>
-      <Card style={{ width: 400, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-        <div style={{ marginBottom: 24 }}>
-          <Button 
-            type="link" 
-            icon={<ArrowLeftOutlined />} 
-            onClick={() => navigate('/auth/login')}
-            style={{ padding: 0 }}
-          >
-            Voltar para o login
-          </Button>
+    <AuthShell
+      contextLabel="Recuperacao"
+      title="Recuperar Senha"
+      subtitle="Informe seu e-mail corporativo para receber o codigo de redefinicao."
+      footer={(
+        <div className="atlas-auth-inline-actions">
+          <Text className="atlas-auth-footer-text">Lembrou a senha?</Text>
+          <Link to="/auth/login" className="atlas-auth-link">Acessar plataforma</Link>
         </div>
-
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Title level={3} style={{ marginBottom: 8 }}>Recuperar Senha</Title>
-          <Text type="secondary">
-            Insira seu e-mail para receber as instruções de recuperação.
-          </Text>
-        </div>
-        
-        <Form
-          name="forgot_password_form"
-          onFinish={onFinish}
-          layout="vertical"
-          size="large"
+      )}
+    >
+      <Form name="forgot_password_form" onFinish={onFinish} layout="vertical" size="large">
+        <Form.Item
+          name="email"
+          label="E-mail"
+          rules={[
+            { required: true, message: 'Por favor, insira seu e-mail.' },
+            { type: 'email', message: 'Por favor, insira um e-mail valido.' },
+          ]}
         >
-          <Form.Item
-            name="email"
-            label="E-mail"
-            rules={[
-              { required: true, message: 'Por favor, insira seu e-mail!' },
-              { type: 'email', message: 'Por favor, insira um e-mail válido!' }
-            ]}
-          >
-            <Input prefix={<MailOutlined />} placeholder="seu@email.com" />
-          </Form.Item>
+          <Input className="atlas-form-input" prefix={<MailOutlined />} placeholder="seu@email.com" />
+        </Form.Item>
 
-          <Form.Item style={{ marginTop: 24 }}>
-            <Button type="primary" htmlType="submit" block icon={<SendOutlined />} size="large">
-              Enviar Instruções
-            </Button>
-          </Form.Item>
-        </Form>
-      </Card>
-    </div>
+        <Form.Item style={{ marginTop: 24, marginBottom: 8 }}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            icon={<SendOutlined />}
+            size="large"
+            loading={loading}
+            style={{ height: 44, borderRadius: 8, fontWeight: 600 }}
+          >
+            Enviar Codigo
+          </Button>
+        </Form.Item>
+      </Form>
+    </AuthShell>
   );
 };

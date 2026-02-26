@@ -1,56 +1,49 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { List, Avatar, Typography, Badge, Button, Dropdown, Space, theme } from 'antd';
-import { BellOutlined, ClockCircleOutlined, CheckCircleOutlined, InfoCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import {
+  BellOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  InfoCircleOutlined,
+  ExclamationCircleOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
+import { useNotificationCenter, type NotificationItem } from '../../../core/notifications/NotificationCenterContext';
 
 const { Text } = Typography;
 
-interface NotificationItem {
-  id: string;
-  title: string;
-  description: string;
-  time: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  read: boolean;
-}
+const relativeTime = (isoDate: string) => {
+  const now = Date.now();
+  const timestamp = new Date(isoDate).getTime();
+  const diffMinutes = Math.round((timestamp - now) / 60000);
+  const formatter = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' });
 
-const mockNotifications: NotificationItem[] = [
-  {
-    id: '1',
-    title: 'Novo Processo Criado',
-    description: 'O processo #1234 foi criado com sucesso.',
-    time: '5 min atrás',
-    type: 'success',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Vencimento de CLCB',
-    description: 'O CLCB da unidade Centro vence em 30 dias.',
-    time: '2 horas atrás',
-    type: 'warning',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Atualização de Obra',
-    description: 'A obra "Residencial Park" teve seu status alterado.',
-    time: '1 dia atrás',
-    type: 'info',
-    read: true,
-  },
-  {
-    id: '4',
-    title: 'Erro de Sincronização',
-    description: 'Não foi possível sincronizar os dados com o servidor.',
-    time: '2 dias atrás',
-    type: 'error',
-    read: true,
-  },
-];
+  if (Math.abs(diffMinutes) < 60) {
+    return formatter.format(diffMinutes, 'minute');
+  }
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (Math.abs(diffHours) < 24) {
+    return formatter.format(diffHours, 'hour');
+  }
+
+  const diffDays = Math.round(diffHours / 24);
+  return formatter.format(diffDays, 'day');
+};
 
 export const NotificationDropdown: React.FC = () => {
   const { useToken } = theme;
   const { token } = useToken();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    remove,
+    clear,
+  } = useNotificationCenter();
+
+  const topNotifications = useMemo(() => notifications.slice(0, 30), [notifications]);
 
   const getIcon = (type: NotificationItem['type']) => {
     switch (type) {
@@ -71,7 +64,7 @@ export const NotificationDropdown: React.FC = () => {
         backgroundColor: token.colorBgContainer,
         borderRadius: token.borderRadiusLG,
         boxShadow: token.boxShadowSecondary,
-        width: 350,
+        width: 360,
         overflow: 'hidden',
       }}
     >
@@ -87,12 +80,25 @@ export const NotificationDropdown: React.FC = () => {
         <Typography.Title level={5} style={{ margin: 0 }}>
           Notificações
         </Typography.Title>
-        <Badge count={mockNotifications.filter(n => !n.read).length} color={token.colorPrimary} />
+        <Space size={8}>
+          {unreadCount > 0 && (
+            <Button type="link" size="small" onClick={markAllAsRead}>
+              Marcar lidas
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <Button type="link" size="small" danger onClick={clear}>
+              Limpar
+            </Button>
+          )}
+          <Badge count={unreadCount} color={token.colorPrimary} />
+        </Space>
       </div>
 
       <List
-        dataSource={mockNotifications}
-        style={{ maxHeight: 400, overflowY: 'auto' }}
+        dataSource={topNotifications}
+        locale={{ emptyText: 'Nenhuma notificação por enquanto.' }}
+        style={{ maxHeight: 420, overflowY: 'auto' }}
         renderItem={(item) => (
           <List.Item
             style={{
@@ -101,8 +107,19 @@ export const NotificationDropdown: React.FC = () => {
               transition: 'background-color 0.3s',
               backgroundColor: item.read ? 'transparent' : token.colorFillAlter,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = token.colorFillSecondary)}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = item.read ? 'transparent' : token.colorFillAlter)}
+            onClick={() => markAsRead(item.id)}
+            actions={[
+              <Button
+                key={`remove-${item.id}`}
+                type="text"
+                icon={<DeleteOutlined />}
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  remove(item.id);
+                }}
+              />,
+            ]}
           >
             <List.Item.Meta
               avatar={<Avatar icon={getIcon(item.type)} style={{ backgroundColor: 'transparent' }} />}
@@ -113,14 +130,14 @@ export const NotificationDropdown: React.FC = () => {
                 </Space>
               }
               description={
-                <Space orientation="vertical" size={0}>
-                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                <Space direction="vertical" size={2}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
                     {item.description}
                   </Text>
-                  <Space size={4} style={{ marginTop: 4 }}>
-                    <ClockCircleOutlined style={{ fontSize: '11px', color: token.colorTextDescription }} />
-                    <Text type="secondary" style={{ fontSize: '11px' }}>
-                      {item.time}
+                  <Space size={4}>
+                    <ClockCircleOutlined style={{ fontSize: 11, color: token.colorTextDescription }} />
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                      {relativeTime(item.timestamp)}
                     </Text>
                   </Space>
                 </Space>
@@ -129,24 +146,12 @@ export const NotificationDropdown: React.FC = () => {
           </List.Item>
         )}
       />
-
-      <div
-        style={{
-          padding: '8px',
-          borderTop: `1px solid ${token.colorBorderSecondary}`,
-          textAlign: 'center',
-        }}
-      >
-        <Button type="link" size="small" block>
-          Ver todas as notificações
-        </Button>
-      </div>
     </div>
   );
 
   return (
     <Dropdown popupRender={() => menuContent} trigger={['click']} placement="bottomRight">
-      <Badge count={mockNotifications.filter(n => !n.read).length} size="small" offset={[-2, 2]}>
+      <Badge count={unreadCount} size="small" offset={[-2, 2]}>
         <Button
           type="text"
           icon={<BellOutlined style={{ fontSize: '18px' }} />}
