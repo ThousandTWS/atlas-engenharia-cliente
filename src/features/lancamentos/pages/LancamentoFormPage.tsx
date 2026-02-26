@@ -27,42 +27,10 @@ import dayjs from 'dayjs';
 import { lancamentosService } from '../../../core/services/genericService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { RichTextEditor } from '../../../shared/components/forms/RichTextEditor';
+import { formatCurrencyInput, parseCurrencyInput } from '../../../shared/utils/currencyInput';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
-
-const formatCurrencyInput = (value?: string | number) => {
-  if (value === undefined || value === null || value === '') {
-    return '';
-  }
-
-  const numericValue = Number(value);
-  if (Number.isNaN(numericValue)) {
-    return '';
-  }
-
-  return `R$ ${numericValue.toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
-
-const parseCurrencyInput = (value?: string) => {
-  if (!value) {
-    return 0;
-  }
-
-  const parsedValue = Number(
-    value
-      .replace(/\s/g, '')
-      .replace('R$', '')
-      .replace(/\./g, '')
-      .replace(',', '.')
-      .replace(/[^\d.-]/g, ''),
-  );
-
-  return Number.isFinite(parsedValue) ? parsedValue : 0;
-};
 
 export const LancamentoFormPage: React.FC = () => {
   const { message } = App.useApp();
