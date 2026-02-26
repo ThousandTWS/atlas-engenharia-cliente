@@ -1,90 +1,111 @@
 import React from 'react';
-import { Form, Input, Button, Card, Typography, App } from 'antd';
-import { MailOutlined, SafetyCertificateOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Typography, App } from 'antd';
+import { MailOutlined, SafetyCertificateOutlined, CheckCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authService } from '../../../core/services/authService';
+import { AuthShell } from '../components/AuthShell';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
+
+interface VerifyEmailFormValues {
+  email: string;
+  code: string;
+}
 
 export const VerifyEmailPage: React.FC = () => {
   const { message } = App.useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const initialEmail = location.state?.email || '';
+  const initialEmail = (location.state as { email?: string } | null)?.email || '';
 
+  const [form] = Form.useForm<VerifyEmailFormValues>();
   const [loading, setLoading] = React.useState(false);
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: VerifyEmailFormValues) => {
     setLoading(true);
     try {
-      console.log('Verify email values:', values);
-      // O backend espera um objeto com email e code
       await authService.verifyEmail({
         email: values.email,
-        code: values.code
+        code: values.code,
       });
-      message.success('E-mail validado com sucesso! Você já pode fazer login.');
+      message.success('E-mail validado com sucesso! Voce ja pode fazer login.');
       navigate('/auth/login');
-    } catch (error: any) {
-      message.error('Erro ao validar e-mail: ' + error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao validar e-mail.';
+      message.error(`Erro ao validar e-mail: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleResend = () => {
+    message.info('Para reenviar o codigo de validacao, realize um novo cadastro com o mesmo e-mail.');
+  };
+
   return (
-    <div style={{ 
-      height: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center',
-      background: '#f0f2f5'
-    }}>
-      <Card style={{ width: 400, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Title level={3} style={{ marginBottom: 8 }}>Validar E-mail</Title>
-          <Text type="secondary">
-            Insira o código de verificação que enviamos para o seu e-mail.
-          </Text>
+    <AuthShell
+      contextLabel="Validacao"
+      title="Validar E-mail"
+      subtitle="Digite o codigo recebido para concluir a ativacao da conta."
+      footer={(
+        <div className="atlas-auth-inline-actions">
+          <Text className="atlas-auth-footer-text">Ja validou sua conta?</Text>
+          <Link to="/auth/login" className="atlas-auth-link">Ir para login</Link>
         </div>
-        
-        <Form
-          name="verify_email_form"
-          onFinish={onFinish}
-          layout="vertical"
-          size="large"
-          initialValues={{ email: initialEmail }}
+      )}
+    >
+      <Form
+        form={form}
+        name="verify_email_form"
+        onFinish={onFinish}
+        layout="vertical"
+        size="large"
+        initialValues={{ email: initialEmail }}
+      >
+        <Form.Item
+          name="email"
+          label="E-mail"
+          rules={[
+            { required: true, message: 'Por favor, insira seu e-mail.' },
+            { type: 'email', message: 'Por favor, insira um e-mail valido.' },
+          ]}
         >
-          <Form.Item
-            name="email"
-            label="E-mail"
-            rules={[{ required: true, type: 'email' }]}
+          <Input className="atlas-form-input" prefix={<MailOutlined />} placeholder="seu@email.com" />
+        </Form.Item>
+
+        <Form.Item
+          name="code"
+          label="Codigo de Verificacao"
+          rules={[{ required: true, message: 'Por favor, insira o codigo.' }]}
+        >
+          <Input className="atlas-form-input" prefix={<SafetyCertificateOutlined />} placeholder="Ex: 123456" />
+        </Form.Item>
+
+        <Form.Item style={{ marginTop: 24, marginBottom: 8 }}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            icon={<CheckCircleOutlined />}
+            size="large"
+            loading={loading}
+            style={{ height: 44, borderRadius: 8, fontWeight: 600 }}
           >
-            <Input prefix={<MailOutlined />} placeholder="seu@email.com" />
-          </Form.Item>
+            Validar Cadastro
+          </Button>
+        </Form.Item>
 
-          <Form.Item
-            name="code"
-            label="Código de Verificação"
-            rules={[{ required: true, message: 'Por favor, insira o código!' }]}
+        <Form.Item style={{ marginBottom: 0 }}>
+          <Button
+            type="text"
+            icon={<ReloadOutlined />}
+            onClick={handleResend}
+            className="atlas-auth-secondary-action"
           >
-            <Input prefix={<SafetyCertificateOutlined />} placeholder="Ex: 123456" />
-          </Form.Item>
-
-          <Form.Item style={{ marginTop: 24 }}>
-            <Button type="primary" htmlType="submit" block icon={<CheckCircleOutlined />} size="large" loading={loading}>
-              Validar Cadastro
-            </Button>
-          </Form.Item>
-
-          <div style={{ textAlign: 'center', marginTop: 16 }}>
-            Não recebeu o código? <Button type="link" style={{ padding: 0 }}>Reenviar e-mail</Button>
-          </div>
-          <div style={{ textAlign: 'center', marginTop: 8 }}>
-            <Link to="/auth/login">Voltar para o Login</Link>
-          </div>
-        </Form>
-      </Card>
-    </div>
+            Reenviar codigo
+          </Button>
+        </Form.Item>
+      </Form>
+    </AuthShell>
   );
 };

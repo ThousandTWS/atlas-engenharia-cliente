@@ -48,7 +48,7 @@ export const GeminiInsights: React.FC = () => {
         </Space>
       }
       extra={
-        <Button icon={<ReloadOutlined />} onClick={loadInsights} loading={loading}>
+        <Button className="ads-refresh-button" icon={<ReloadOutlined />} onClick={loadInsights} loading={loading}>
           Atualizar
         </Button>
       }
@@ -90,4 +90,3 @@ export const GeminiInsights: React.FC = () => {
     </Card>
   );
 };
-

@@ -1,4 +1,4 @@
-﻿import { apiRequest } from '../../../core/api/apiClient';
+﻿import { extractArrayPayload, requestAdsEndpoint } from './adsIntegrationClient';
 import type { CampaignPerformance, PerformancePoint } from './adsDataService';
 
 export interface GeminiInsight {
@@ -14,71 +14,64 @@ interface InsightPayload {
   performance: PerformancePoint[];
 }
 
-type GenericRecord = Record<string, unknown>;
+const asRecord = (value: unknown): Record<string, unknown> =>
+  (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
 
-const isRecord = (value: unknown): value is GenericRecord =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
+const normalizeImpact = (value: unknown): GeminiInsight['impacto'] => {
+  const normalized = String(value ?? '').trim().toLowerCase();
 
-const toImpact = (value: unknown): GeminiInsight['impacto'] => {
-  const normalized = String(value ?? '').toUpperCase();
+  if (normalized.includes('orc')) {
+    return 'Orçamento';
+  }
 
-  if (normalized.includes('BID') || normalized.includes('LANCE')) return 'Lances';
-  if (normalized.includes('BUDGET') || normalized.includes('ORÇAMENTO') || normalized.includes('ORCAMENTO')) return 'Orçamento';
-  if (normalized.includes('CREATIVE') || normalized.includes('CRIATIVO')) return 'Criativos';
+  if (normalized.includes('lance') || normalized.includes('bid')) {
+    return 'Lances';
+  }
+
+  if (normalized.includes('criativo') || normalized.includes('creative')) {
+    return 'Criativos';
+  }
 
   return 'ROI';
 };
 
-const toPriority = (value: unknown): GeminiInsight['prioridade'] => {
-  const normalized = String(value ?? '').toUpperCase();
+const normalizePriority = (value: unknown): GeminiInsight['prioridade'] => {
+  const normalized = String(value ?? '').trim().toLowerCase();
 
-  if (normalized.includes('HIGH') || normalized.includes('ALTA')) return 'alta';
-  if (normalized.includes('MEDIUM') || normalized.includes('MEDIA') || normalized.includes('MÉDIA')) return 'media';
+  if (normalized === 'alta' || normalized === 'high') {
+    return 'alta';
+  }
 
-  return 'baixa';
+  if (normalized === 'baixa' || normalized === 'low') {
+    return 'baixa';
+  }
+
+  return 'media';
 };
 
-const normalizeInsight = (item: GenericRecord, index: number): GeminiInsight => ({
-  id: String(item.id ?? item.insightId ?? `insight-${index + 1}`),
-  titulo: String(item.titulo ?? item.title ?? `Insight ${index + 1}`),
-  recomendacao: String(item.recomendacao ?? item.recommendation ?? item.description ?? ''),
-  impacto: toImpact(item.impacto ?? item.impact ?? item.category),
-  prioridade: toPriority(item.prioridade ?? item.priority),
-});
+const normalizeInsights = (items: unknown[]): GeminiInsight[] =>
+  items.map((entry, index) => {
+    const item = asRecord(entry);
+    const titulo = String(item.titulo ?? item.title ?? item.headline ?? `Insight ${index + 1}`);
 
-const extractInsightList = (payload: unknown): GeminiInsight[] => {
-  if (Array.isArray(payload)) {
-    return payload
-      .filter((item): item is GenericRecord => isRecord(item))
-      .map((item, index) => normalizeInsight(item, index));
-  }
-
-  if (!isRecord(payload)) {
-    return [];
-  }
-
-  const candidates = [payload.insights, payload.recommendations, payload.data, payload.items];
-
-  for (const candidate of candidates) {
-    if (Array.isArray(candidate)) {
-      return candidate
-        .filter((item): item is GenericRecord => isRecord(item))
-        .map((item, index) => normalizeInsight(item, index));
-    }
-  }
-
-  return [];
-};
+    return {
+      id: String(item.id ?? item.key ?? `insight-${index}`),
+      titulo,
+      recomendacao: String(item.recomendacao ?? item.recommendation ?? item.text ?? ''),
+      impacto: normalizeImpact(item.impacto ?? item.impact),
+      prioridade: normalizePriority(item.prioridade ?? item.priority),
+    };
+  }).filter((item) => item.recomendacao.trim().length > 0);
 
 export async function fetchGeminiInsights(payload: InsightPayload): Promise<GeminiInsight[]> {
   try {
-    const response = await apiRequest<unknown>({
-      url: '/ads/insights',
+    const response = await requestAdsEndpoint<unknown>('insights', {
       method: 'POST',
       data: payload,
     });
 
-    return extractInsightList(response);
+    const list = extractArrayPayload(response, ['insights', 'recommendations']);
+    return normalizeInsights(list);
   } catch (error) {
     console.error('Dashboard ADS: falha ao obter insights Gemini', error);
   }

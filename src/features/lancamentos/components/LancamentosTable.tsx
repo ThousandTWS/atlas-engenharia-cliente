@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
+import { htmlToPlainText } from '../../../core/utils/text';
 
 const { Text } = Typography;
 
@@ -75,6 +76,14 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       dataIndex: 'descricao',
       key: 'descricao',
       ellipsis: true,
+      render: (descricao: string) => {
+        const plainText = htmlToPlainText(descricao);
+        return (
+          <Tooltip title={plainText}>
+            <Text>{plainText || '-'}</Text>
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Faturamento',
@@ -82,7 +91,16 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       key: 'faturamento',
       width: 140,
       align: 'right',
-      render: (val: number) => <Text>{formatCurrency(val)}</Text>,
+      render: (val: number) => (
+        <Tag
+          bordered={false}
+          className="atlas-status-badge atlas-status-badge-info"
+          style={{ marginInlineEnd: 0 }}
+        >
+          <span className="atlas-status-badge-dot" />
+          {formatCurrency(val)}
+        </Tag>
+      ),
       sorter: (a, b) => a.faturamento - b.faturamento,
     },
     {
@@ -91,7 +109,16 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       key: 'custoDireto',
       width: 140,
       align: 'right',
-      render: (val: number) => <Text type="danger">{formatCurrency(val)}</Text>,
+      render: (val: number) => (
+        <Tag
+          bordered={false}
+          className="atlas-status-badge atlas-status-badge-danger"
+          style={{ marginInlineEnd: 0 }}
+        >
+          <span className="atlas-status-badge-dot" />
+          {formatCurrency(val)}
+        </Tag>
+      ),
     },
     {
       title: 'Lucro',
@@ -100,7 +127,14 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       width: 140,
       align: 'right',
       render: (val: number) => (
-        <Tag color={val >= 0 ? 'success' : 'error'} style={{ fontWeight: 'bold' }}>
+        <Tag
+          bordered={false}
+          className={`atlas-status-badge ${
+            val > 0 ? 'atlas-status-badge-success' : val < 0 ? 'atlas-status-badge-danger' : 'atlas-status-badge-neutral'
+          }`}
+          style={{ marginInlineEnd: 0 }}
+        >
+          <span className="atlas-status-badge-dot" />
           {formatCurrency(val)}
         </Tag>
       ),
