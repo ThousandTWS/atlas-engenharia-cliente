@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, Typography, Space, App } from 'antd';
-import { 
+import {
   SyncOutlined, 
   ClockCircleOutlined, 
   CheckCircleOutlined, 
@@ -8,8 +9,10 @@ import {
   DollarOutlined,
   LineChartOutlined
 } from '@ant-design/icons';
-import { avcbService, clcbService, processosAdmService, custosIndiretosService, lancamentosService } from '../../../core/services/genericService';
-import { obrasService } from '../../../core/services/obrasService';
+import { resolveProjectPhase } from '../utils/projectStatusStrategies';
+import { homeDashboardFacade } from '../services/homeDashboardFacade';
+import { CollectionComposite, CollectionLeaf } from '../../../core/structural/composite/collectionComposite';
+import { formatCurrencyPtBr } from '../../../core/structural/flyweight/numberFormatterFlyweight';
 
 const { Text, Title } = Typography;
 
@@ -101,34 +104,24 @@ export const DashboardStats: React.FC = () => {
   });
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
+    return formatCurrencyPtBr(value, 2);
   };
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [avcbs, clcbs, obras, processos, custosIndiretos, lancamentos] = await Promise.all([
-          avcbService.getAll(),
-          clcbService.getAll(),
-          obrasService.getAll(),
-          processosAdmService.getAll(),
-          custosIndiretosService.getAll(),
-          lancamentosService.getAll(),
-        ]);
+        const snapshot = await homeDashboardFacade.getSnapshot(0, 500);
 
-        const allProjects: any[] = [
-          ...(Array.isArray(avcbs) ? avcbs : (avcbs as any).content || []),
-          ...(Array.isArray(clcbs) ? clcbs : (clcbs as any).content || []),
-          ...(Array.isArray(obras) ? obras : (obras as any).content || []),
-          ...(Array.isArray(processos) ? processos : (processos as any).content || []),
-        ];
+        const projectsComposite = new CollectionComposite<any>();
+        projectsComposite.add(new CollectionLeaf(snapshot.avcbs));
+        projectsComposite.add(new CollectionLeaf(snapshot.clcbs));
+        projectsComposite.add(new CollectionLeaf(snapshot.obras));
+        projectsComposite.add(new CollectionLeaf(snapshot.processos));
 
-        const allCustos: any[] = Array.isArray(custosIndiretos) ? custosIndiretos : (custosIndiretos as any).content || [];
-        const allLancamentos: any[] = Array.isArray(lancamentos) ? lancamentos : (lancamentos as any).content || [];
+        const allProjects: any[] = projectsComposite.toArray();
+        const allCustos: any[] = snapshot.custos;
+        const allLancamentos: any[] = snapshot.lancamentos;
 
         const totalCustosIndiretos = allCustos.reduce((acc, curr) => acc + (curr.valor || 0), 0);
         const totalLucro = allLancamentos.reduce((acc, curr) => acc + (curr.lucro || 0), 0);
@@ -136,17 +129,18 @@ export const DashboardStats: React.FC = () => {
         const stats = allProjects.reduce((acc, item) => {
           const situacao = item.situacao || item.status;
           const valor = item.valorContrato || 0;
+          const phase = resolveProjectPhase(situacao);
 
           acc.total++;
           acc.totalVolume += valor;
 
-          if (situacao === 'EM_ANDAMENTO' || situacao === 'EM_ANÁLISE' || situacao === 'Em Análise') {
+          if (phase === 'analysis') {
             acc.emAnálise++;
             acc.volumeEmAnálise += valor;
-          } else if (situacao === 'CONCLUIDO' || situacao === 'APROVADO' || situacao === 'Aprovado') {
+          } else if (phase === 'approved') {
             acc.aprovadas++;
             acc.volumeAprovadas += valor;
-          } else if (situacao === 'CANCELADO' || situacao === 'REPROVADO' || situacao === 'Reprovado') {
+          } else if (phase === 'rejected') {
             acc.reprovadas++;
             acc.volumeReprovadas += valor;
           }

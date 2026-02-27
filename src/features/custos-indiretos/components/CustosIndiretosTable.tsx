@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Table,
   Tag,
@@ -7,15 +7,12 @@ import {
   Tooltip,
   Popconfirm,
   Typography,
-} from 'antd';
-import {
-  EditOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
-import type { TablePaginationConfig } from 'antd/es/table/interface';
-import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
-import { htmlToPlainText } from '../../../core/utils/text';
+} from "antd";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
+import type { TablePaginationConfig } from "antd/es/table/interface";
+import { useLayout } from "../../../shared/components/layout/LayoutContext.tsx";
+import { htmlToPlainText } from "../../../core/utils/text";
 
 const { Text } = Typography;
 
@@ -50,69 +47,67 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
 }) => {
   const getCategoriaColor = (categoria: string) => {
     const categories: Record<string, string> = {
-      'Administrativo': 'blue',
-      'Infraestrutura': 'purple',
-      'Pessoal': 'green',
-      'Marketing': 'magenta',
-      'Outros': 'default',
+      Administrativo: "blue",
+      Infraestrutura: "purple",
+      Pessoal: "green",
+      Marketing: "magenta",
+      Outros: "default",
     };
-    return categories[categoria] || 'blue';
+    return categories[categoria] || "blue";
   };
 
-  const {isDarkMode} = useLayout();
+  const { isDarkMode } = useLayout();
   const columns: ColumnsType<CustoIndireto> = [
     {
-      title: 'Data',
-      dataIndex: 'data',
-      key: 'data',
+      title: "Data",
+      dataIndex: "data",
+      key: "data",
       width: 120,
-      render: (date: string) => new Date(date).toLocaleDateString('pt-BR'),
+      render: (date: string) => new Date(date).toLocaleDateString("pt-BR"),
       sorter: (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime(),
     },
     {
-      title: 'Descrição',
-      dataIndex: 'descricao',
-      key: 'descricao',
+      title: "Descrição",
+      dataIndex: "descricao",
+      key: "descricao",
       ellipsis: true,
       render: (descricao: string) => {
         const plainText = htmlToPlainText(descricao);
         return (
           <Tooltip title={plainText}>
-            <Text>{plainText || '-'}</Text>
+            <Text>{plainText || "-"}</Text>
           </Tooltip>
         );
       },
     },
     {
-      title: 'Categoria',
-      dataIndex: 'categoria',
-      key: 'categoria',
+      title: "Categoria",
+      dataIndex: "categoria",
+      key: "categoria",
       width: 150,
       render: (categoria: string) => (
-        <Tag color={getCategoriaColor(categoria)}>
-          {categoria}
-        </Tag>
+        <Tag color={getCategoriaColor(categoria)}>{categoria}</Tag>
       ),
     },
     {
-      title: 'Valor',
-      dataIndex: 'valor',
-      key: 'valor',
+      title: "Valor",
+      dataIndex: "valor",
+      key: "valor",
       width: 150,
       render: (valor: number) => (
         <Text strong>
-          {new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
+          {new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
           }).format(valor)}
         </Text>
       ),
       sorter: (a, b) => a.valor - b.valor,
     },
     {
-      title: 'Ações',
-      key: 'actions',
-      fixed: 'right',
+      title: "Ações",
+      key: "actions",
+      fixed: "right",
       width: 110,
       render: (_, record) => (
         <Space size="small">
@@ -132,11 +127,7 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
             okButtonProps={{ danger: true }}
           >
             <Tooltip title="Excluir">
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-              />
+              <Button type="text" danger icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -145,7 +136,6 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
   ];
 
   return (
-
     <Table
       columns={columns}
       dataSource={dataSource}
@@ -153,18 +143,18 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
       loading={loading}
       scroll={{ x: 800 }}
       pagination={{
-        placement: ['bottomCenter'],
+        placement: ["bottomCenter"],
         current: pagination.current,
         pageSize: pagination.pageSize,
         total: pagination.total,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} registros`,
         style: {
-          backgroundColor: isDarkMode ? '#0A0F1C' : '#FAFBFC',
+          backgroundColor: isDarkMode ? "#0A0F1C" : "#FAFBFC",
           margin: 0,
-          padding: '16px',
-          borderRadius: '0 0 8px 8px'
-        }
+          padding: "16px",
+          borderRadius: "0 0 8px 8px",
+        },
       }}
       onChange={onChange}
     />

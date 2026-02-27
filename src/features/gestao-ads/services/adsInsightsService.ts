@@ -1,5 +1,6 @@
-﻿import { extractArrayPayload, requestAdsEndpoint } from './adsIntegrationClient';
+﻿import { AdsEndpointTemplate } from './adsEndpointTemplate';
 import type { CampaignPerformance, PerformancePoint } from './adsDataService';
+import { normalizeInsightImpact, normalizeInsightPriority } from './adsNormalizationStrategies';
 
 export interface GeminiInsight {
   id: string;
@@ -17,38 +18,6 @@ interface InsightPayload {
 const asRecord = (value: unknown): Record<string, unknown> =>
   (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
 
-const normalizeImpact = (value: unknown): GeminiInsight['impacto'] => {
-  const normalized = String(value ?? '').trim().toLowerCase();
-
-  if (normalized.includes('orc')) {
-    return 'Orçamento';
-  }
-
-  if (normalized.includes('lance') || normalized.includes('bid')) {
-    return 'Lances';
-  }
-
-  if (normalized.includes('criativo') || normalized.includes('creative')) {
-    return 'Criativos';
-  }
-
-  return 'ROI';
-};
-
-const normalizePriority = (value: unknown): GeminiInsight['prioridade'] => {
-  const normalized = String(value ?? '').trim().toLowerCase();
-
-  if (normalized === 'alta' || normalized === 'high') {
-    return 'alta';
-  }
-
-  if (normalized === 'baixa' || normalized === 'low') {
-    return 'baixa';
-  }
-
-  return 'media';
-};
-
 const normalizeInsights = (items: unknown[]): GeminiInsight[] =>
   items.map((entry, index) => {
     const item = asRecord(entry);
@@ -58,23 +27,34 @@ const normalizeInsights = (items: unknown[]): GeminiInsight[] =>
       id: String(item.id ?? item.key ?? `insight-${index}`),
       titulo,
       recomendacao: String(item.recomendacao ?? item.recommendation ?? item.text ?? ''),
-      impacto: normalizeImpact(item.impacto ?? item.impact),
-      prioridade: normalizePriority(item.prioridade ?? item.priority),
+      impacto: normalizeInsightImpact(item.impacto ?? item.impact),
+      prioridade: normalizeInsightPriority(item.prioridade ?? item.priority),
     };
   }).filter((item) => item.recomendacao.trim().length > 0);
 
-export async function fetchGeminiInsights(payload: InsightPayload): Promise<GeminiInsight[]> {
-  try {
-    const response = await requestAdsEndpoint<unknown>('insights', {
-      method: 'POST',
-      data: payload,
-    });
+class GeminiInsightsTemplate extends AdsEndpointTemplate<InsightPayload, GeminiInsight[]> {
+  protected readonly endpointKind = 'insights' as const;
 
-    const list = extractArrayPayload(response, ['insights', 'recommendations']);
-    return normalizeInsights(list);
-  } catch (error) {
-    console.error('Dashboard ADS: falha ao obter insights Gemini', error);
+  protected readonly arrayKeys = ['insights', 'recommendations'];
+
+  protected buildRequestConfig(payload: InsightPayload) {
+    return {
+      method: 'POST' as const,
+      data: payload,
+    };
   }
 
-  return [];
+  protected normalize(list: unknown[], _payload: InsightPayload): GeminiInsight[] {
+    return normalizeInsights(list);
+  }
+
+  protected override handleError(error: unknown): void {
+    console.error('Dashboard ADS: falha ao obter insights Gemini', error);
+  }
+}
+
+const geminiInsightsTemplate = new GeminiInsightsTemplate();
+
+export async function fetchGeminiInsights(payload: InsightPayload): Promise<GeminiInsight[]> {
+  return geminiInsightsTemplate.execute(payload);
 }

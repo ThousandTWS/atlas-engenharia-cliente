@@ -1,6 +1,8 @@
 /* eslint-disable no-useless-catch */
 
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
+import { isCookieAuthMode } from '../config/auth';
+import { authSessionStore } from '../services/authSessionStore';
 
 export const API_BASE_URL = 'https://backend-atlas-engenharia-production-326c.up.railway.app/api';
 
@@ -16,6 +18,7 @@ class ApiClient {
         headers: {
           'Content-Type': 'application/json',
         },
+        withCredentials: isCookieAuthMode(),
         timeout: 15000, 
       });
 
@@ -27,7 +30,11 @@ class ApiClient {
   private static setupInterceptors(): void {
     ApiClient.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('token');
+        if (isCookieAuthMode()) {
+          return config;
+        }
+
+        const token = authSessionStore.getToken();
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -43,9 +50,9 @@ class ApiClient {
 
         if (response?.status === 401) {
           console.warn('Authentication expired. Redirecting to login.');
-          localStorage.removeItem('token');
-          if (!window.location.hash.includes('/login')) {
-             window.location.hash = '/login';
+          authSessionStore.clear();
+          if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/login')) {
+            window.location.assign('/auth/login');
           }
         }
 

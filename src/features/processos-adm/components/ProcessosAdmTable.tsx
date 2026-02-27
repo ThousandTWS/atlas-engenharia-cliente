@@ -95,7 +95,7 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
       render: (situacao: SituacaoProcesso, record) => (
         <Tooltip title={htmlToPlainText(record.descricaoSituacao)}>
           <Tag
-            bordered={false}
+            variant="filled"
             className={`atlas-status-badge ${getSituacaoBadgeClass(situacao)}`}
           >
             <span className="atlas-status-badge-dot" />

@@ -53,15 +53,8 @@ export const ProfilePage: React.FC = () => {
         console.log('ProfilePage: Profile data received from API:', data);
         personalForm.setFieldsValue(data);
         setUser(data);
-        
-        const currentLocalUser = authService.getCurrentUser();
-        if (!currentLocalUser) {
-           console.log('ProfilePage: No local user found, saving API data as initial user');
-           localStorage.setItem('user', JSON.stringify(data));
-           window.dispatchEvent(new Event('userUpdated'));
-        } else {
-           authService.updateLocalUser(data);
-        }
+
+        authService.setCurrentUser(data);
       } catch (error: any) {
         console.error('Erro ao carregar perfil:', error);
       }
@@ -101,8 +94,8 @@ export const ProfilePage: React.FC = () => {
   const uploadProps: UploadProps = {
     name: 'file',
     action: `${API_BASE_URL || ''}/profile/photo`,
+    withCredentials: true,
     headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
       'X-Requested-With': null as any,
     },
     showUploadList: false,

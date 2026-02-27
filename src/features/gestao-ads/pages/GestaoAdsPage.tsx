@@ -20,13 +20,9 @@ import {
 } from '@ant-design/icons';
 import { AdsPerformanceChart } from '../components/AdsPerformanceChart';
 import { CampaignPerformanceTable } from '../components/CampaignPerformanceTable';
-import {
-  computeTotals,
-  enrichCampaignMetrics,
-  fetchCampaignPerformance,
-  fetchPerformanceTimeseries,
-} from '../services/adsDataService';
+import { adsDashboardFacade } from '../services/adsDashboardFacade';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
+import { formatCurrencyPtBr } from '../../../core/structural/flyweight/numberFormatterFlyweight';
 
 const { Title, Text } = Typography;
 
@@ -49,21 +45,11 @@ export const GestaoAdsPage: React.FC = () => {
   const loadSummary = useCallback(async () => {
     setLoadingSummary(true);
     try {
-      const [performance, campaigns] = await Promise.all([
-        fetchPerformanceTimeseries('30d'),
-        fetchCampaignPerformance(),
-      ]);
-
-      const aggregated = computeTotals(performance);
-      const enrichedCampaigns = enrichCampaignMetrics(campaigns);
-      const roasAverage = enrichedCampaigns.length > 0
-        ? enrichedCampaigns.reduce((acc, item) => acc + item.roas, 0) / enrichedCampaigns.length
-        : 0;
-
-      setTotals(aggregated);
-      setCampaignsCount(campaigns.length);
-      setActiveCampaigns(campaigns.filter((campaign) => campaign.status === 'Ativa').length);
-      setAverageRoas(roasAverage);
+      const summary = await adsDashboardFacade.getSummary('30d');
+      setTotals(summary.totals);
+      setCampaignsCount(summary.campaignsCount);
+      setActiveCampaigns(summary.activeCampaigns);
+      setAverageRoas(summary.averageRoas);
     } catch (error) {
       console.error('Erro ao carregar resumo de ads', error);
       message.error('Não foi possível carregar os indicadores de Ads.');
@@ -116,7 +102,10 @@ export const GestaoAdsPage: React.FC = () => {
           type="primary"
           size="large"
           icon={<ReloadOutlined />}
-          onClick={() => setRefreshToken((prev) => prev + 1)}
+          onClick={() => {
+            adsDashboardFacade.clearCache();
+            setRefreshToken((prev) => prev + 1);
+          }}
           loading={loadingSummary}
           style={{ width: isMobile ? '100%' : 'auto' }}
         >
@@ -141,13 +130,7 @@ export const GestaoAdsPage: React.FC = () => {
               title="Custo (30 dias)"
               value={totals.custo}
               prefix={<WalletOutlined />}
-              formatter={(value) =>
-                new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                  maximumFractionDigits: 0,
-                }).format(Number(value))
-              }
+              formatter={(value) => formatCurrencyPtBr(Number(value), 0)}
             />
           </Card>
         </Col>

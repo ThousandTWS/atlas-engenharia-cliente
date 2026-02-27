@@ -5,7 +5,8 @@ import {
   SendOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { fetchCampaignPerformance, fetchPerformanceTimeseries } from '../services/adsDataService';
+import type { AdsChatContextSnapshot } from '../services/adsDashboardFacade';
+import { adsDashboardFacade } from '../services/adsDashboardFacade';
 import { sendGeminiMessage, type GeminiChatMessage } from '../services/geminiChatService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { useNotificationCenter } from '../../../core/notifications/NotificationCenterContext';
@@ -30,16 +31,16 @@ export const GeminiChatCard: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [loadingContext, setLoadingContext] = useState(true);
   const [sending, setSending] = useState(false);
-  const [context, setContext] = useState({ campaigns: [] as Awaited<ReturnType<typeof fetchCampaignPerformance>>, performance: [] as Awaited<ReturnType<typeof fetchPerformanceTimeseries>> });
+  const [context, setContext] = useState<AdsChatContextSnapshot>({
+    campaigns: [],
+    performance: [],
+  });
 
   const loadContext = useCallback(async () => {
     setLoadingContext(true);
     try {
-      const [campaigns, performance] = await Promise.all([
-        fetchCampaignPerformance(),
-        fetchPerformanceTimeseries('30d'),
-      ]);
-      setContext({ campaigns, performance });
+      const snapshot = await adsDashboardFacade.getChatContext('30d');
+      setContext(snapshot);
     } catch (error) {
       console.error('GeminiChat: falha ao carregar contexto', error);
       message.error('Não foi possível carregar o contexto do chat.');
@@ -125,7 +126,7 @@ export const GeminiChatCard: React.FC = () => {
               marginBottom: 12,
             }}
           >
-            <Space direction="vertical" size={10} style={{ width: '100%' }}>
+            <Space orientation="vertical" size={10} style={{ width: '100%' }}>
               {messages.map((item, index) => {
                 const isUser = item.role === 'user';
 

@@ -309,11 +309,11 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
       }
       open={isOpen}
       onClose={closeDrawer}
-      width={isMobile ? "100%" : 560}
+      size={isMobile ? "100%" : 560}
       extra={
         <Tag
           className="atlas-status-badge atlas-status-badge-info"
-          bordered={false}
+          variant="filled"
         >
           <span className="atlas-status-badge-dot" />
           {modelLabel}
@@ -337,7 +337,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
             key: "chat",
             label: "Chat",
             children: (
-              <Space direction="vertical" size={12} style={{ width: "100%" }}>
+              <Space orientation="vertical" size={12} style={{ width: "100%" }}>
                 <Space wrap>
                   {QUICK_PROMPTS.map((prompt) => (
                     <Button
@@ -364,7 +364,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                   }}
                 >
                   <Space
-                    direction="vertical"
+                    orientation="vertical"
                     size={10}
                     style={{ width: "100%" }}
                   >
@@ -543,7 +543,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                   qualquer módulo.
                 </Text>
                 <Divider style={{ margin: "12px 0" }} />
-                <Space direction="vertical" size={10} style={{ width: "100%" }}>
+                <Space orientation="vertical" size={10} style={{ width: "100%" }}>
                   {CAPABILITIES.map((capability) => (
                     <Card
                       key={capability.id}
@@ -575,7 +575,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                           >
                             <Text strong>{capability.title}</Text>
                             <Tag
-                              bordered={false}
+                              variant="filled"
                               className={`atlas-status-badge ${
                                 capability.status === "enabled"
                                   ? "atlas-status-badge-success"

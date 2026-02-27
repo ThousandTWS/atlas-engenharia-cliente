@@ -5,39 +5,16 @@ import {
   FileTextOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
-import {
-  avcbService,
-  clcbService,
-  custosIndiretosService,
-  lancamentosService,
-  processosAdmService,
-} from '../../../core/services/genericService';
-import { obrasService } from '../../../core/services/obrasService';
+import { homeDashboardFacade } from '../services/homeDashboardFacade';
+import { CollectionComposite, CollectionLeaf } from '../../../core/structural/composite/collectionComposite';
 import { MetricTrendCards, type MetricTrendCardDefinition } from '../../../shared/components/charts/MetricTrendCards';
 import { buildEmptySeries, buildMonthlySeries, pickNumericValue, toSeriesRecords, type MetricSeriesPoint, type MetricSeriesRecord } from '../../../shared/utils/metricSeries';
-
-interface PaginatedLike<T> {
-  content?: T[];
-}
 
 interface DashboardSeries {
   entradas: MetricSeriesPoint[];
   faturamento: MetricSeriesPoint[];
   custos: MetricSeriesPoint[];
 }
-
-const toRecords = (response: unknown): MetricSeriesRecord[] => {
-  if (Array.isArray(response)) {
-    return toSeriesRecords(response);
-  }
-
-  if (response && typeof response === 'object' && 'content' in response) {
-    const content = (response as PaginatedLike<unknown>).content;
-    return Array.isArray(content) ? toSeriesRecords(content) : [];
-  }
-
-  return [];
-};
 
 export const DashboardAreaCards: React.FC = () => {
   const { message } = App.useApp();
@@ -53,23 +30,17 @@ export const DashboardAreaCards: React.FC = () => {
       setLoading(true);
 
       try {
-        const [avcbs, clcbs, obras, processos, lancamentos, custos] = await Promise.all([
-          avcbService.getAll({ page: 0, size: 500 }),
-          clcbService.getAll({ page: 0, size: 500 }),
-          obrasService.getAll({ page: 0, size: 500 }),
-          processosAdmService.getAll({ page: 0, size: 500 }),
-          lancamentosService.getAll({ page: 0, size: 500 }),
-          custosIndiretosService.getAll({ page: 0, size: 500 }),
-        ]);
+        const snapshot = await homeDashboardFacade.getSnapshot(0, 500);
 
-        const allContracts = [
-          ...toRecords(avcbs),
-          ...toRecords(clcbs),
-          ...toRecords(obras),
-          ...toRecords(processos),
-        ];
-        const lancamentoRecords = toRecords(lancamentos);
-        const custoRecords = toRecords(custos);
+        const projectsComposite = new CollectionComposite<MetricSeriesRecord>();
+        projectsComposite.add(new CollectionLeaf(toSeriesRecords(snapshot.avcbs)));
+        projectsComposite.add(new CollectionLeaf(toSeriesRecords(snapshot.clcbs)));
+        projectsComposite.add(new CollectionLeaf(toSeriesRecords(snapshot.obras)));
+        projectsComposite.add(new CollectionLeaf(toSeriesRecords(snapshot.processos)));
+
+        const allContracts = projectsComposite.toArray();
+        const lancamentoRecords = toSeriesRecords(snapshot.lancamentos);
+        const custoRecords = toSeriesRecords(snapshot.custos);
 
         setSeries({
           entradas: buildMonthlySeries(allContracts, ['dataContrato', 'data'], () => 1),

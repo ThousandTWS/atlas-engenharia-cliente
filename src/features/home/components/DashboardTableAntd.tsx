@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Card, Table, Tag, Typography, Input, App, type TableProps } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import { avcbService, clcbService, processosAdmService, lancamentosService, custosIndiretosService } from '../../../core/services/genericService';
-import { obrasService } from '../../../core/services/obrasService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { htmlToPlainText } from '../../../core/utils/text';
 import { useLiveSubscription } from '../../../core/realtime/liveProvider';
+import { resolveStatusBadgeClass } from '../utils/projectStatusStrategies';
+import { homeDashboardFacade } from '../services/homeDashboardFacade';
+import { CollectionComposite, CollectionLeaf } from '../../../core/structural/composite/collectionComposite';
+import { formatCurrencyPtBr } from '../../../core/structural/flyweight/numberFormatterFlyweight';
 
 
 const { Title } = Typography;
@@ -39,36 +41,6 @@ interface GenericItem {
 
 type ApiListResponse = GenericItem[] | { content?: GenericItem[] };
 
-const normalizeStatusKey = (status: string) =>
-  status
-    .trim()
-    .toUpperCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '_');
-
-const getStatusBadgeClass = (status: string) => {
-  const normalized = normalizeStatusKey(status);
-
-  if (['APROVADO', 'CONCLUIDO', 'PAGO', 'RECEBIDO', 'ATIVA', 'ATIVO'].includes(normalized)) {
-    return 'atlas-status-badge-success';
-  }
-
-  if (['EM_ANDAMENTO', 'PROCESSANDO', 'EM_EXECUCAO'].includes(normalized)) {
-    return 'atlas-status-badge-info';
-  }
-
-  if (['PENDENTE', 'EM_ANALISE', 'EM_ANALISE_TECNICA', 'AGUARDANDO'].includes(normalized)) {
-    return 'atlas-status-badge-warning';
-  }
-
-  if (['REPROVADO', 'CANCELADO', 'FALHA', 'NEGADO'].includes(normalized)) {
-    return 'atlas-status-badge-danger';
-  }
-
-  return 'atlas-status-badge-neutral';
-};
-
 export const DashboardTableAntd: React.FC = () => {
   const { message } = App.useApp();
   const [searchText, setSearchText] = useState('');
@@ -79,14 +51,7 @@ export const DashboardTableAntd: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [avcbs, clcbs, obras, processos, lancamentos, custos] = await Promise.all([
-        avcbService.getAll(),
-        clcbService.getAll(),
-        obrasService.getAll(),
-        processosAdmService.getAll(),
-        lancamentosService.getAll(),
-        custosIndiretosService.getAll(),
-      ]);
+      const snapshot = await homeDashboardFacade.getSnapshot(0, 500);
 
         const formatItems = (items: ApiListResponse, tipo: string): RowData[] => {
           const list = Array.isArray(items) ? items : items.content ?? [];
@@ -113,14 +78,15 @@ export const DashboardTableAntd: React.FC = () => {
           }));
         };
 
-      const allItems: RowData[] = [
-        ...formatItems(avcbs, 'AVCB'),
-        ...formatItems(clcbs, 'CLCB'),
-        ...formatItems(obras, 'Obra'),
-        ...formatItems(processos, 'Processo Adm'),
-        ...formatItems(lancamentos, 'Lançamento'),
-        ...formatItems(custos, 'Custo'),
-      ];
+      const projectsComposite = new CollectionComposite<RowData>();
+      projectsComposite.add(new CollectionLeaf(formatItems(snapshot.avcbs as ApiListResponse, 'AVCB')));
+      projectsComposite.add(new CollectionLeaf(formatItems(snapshot.clcbs as ApiListResponse, 'CLCB')));
+      projectsComposite.add(new CollectionLeaf(formatItems(snapshot.obras as ApiListResponse, 'Obra')));
+      projectsComposite.add(new CollectionLeaf(formatItems(snapshot.processos as ApiListResponse, 'Processo Adm')));
+      projectsComposite.add(new CollectionLeaf(formatItems(snapshot.lancamentos as ApiListResponse, 'Lançamento')));
+      projectsComposite.add(new CollectionLeaf(formatItems(snapshot.custos as ApiListResponse, 'Custo')));
+
+      const allItems: RowData[] = projectsComposite.toArray();
 
       // Ordenar por data (mais recentes primeiro)
       allItems.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
@@ -199,8 +165,8 @@ export const DashboardTableAntd: React.FC = () => {
       width: 140,
       render: (status: string) => (
         <Tag
-          bordered={false}
-          className={`atlas-status-badge ${getStatusBadgeClass(status)}`}
+          variant="filled"
+          className={`atlas-status-badge ${resolveStatusBadgeClass(status)}`}
           style={{ marginInlineEnd: 0 }}
         >
           <span className="atlas-status-badge-dot" />
@@ -214,10 +180,7 @@ export const DashboardTableAntd: React.FC = () => {
       dataIndex: 'valor',
       key: 'valor',
       width: 140,
-      render: (valor: number) => new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(valor),
+      render: (valor: number) => formatCurrencyPtBr(valor, 2),
       sorter: (a: RowData, b: RowData) => a.valor - b.valor,
     },
     {

@@ -1,5 +1,7 @@
 ﻿import dayjs from 'dayjs';
-import { extractArrayPayload, requestAdsEndpoint } from './adsIntegrationClient';
+import { AdsEndpointTemplate } from './adsEndpointTemplate';
+import { normalizeCampaignStatus, normalizeCampaignType } from './adsNormalizationStrategies';
+import { formatCurrencyPtBr, formatNumberPtBr } from '../../../core/structural/flyweight/numberFormatterFlyweight';
 
 export type MetricKey = 'cliques' | 'impressoes' | 'custo' | 'conversoes';
 
@@ -77,38 +79,6 @@ const normalizeDate = (record: Record<string, unknown>): string => {
   return parsed.isValid() ? parsed.format('DD/MM') : '';
 };
 
-const normalizeStatus = (value: unknown): CampaignPerformance['status'] => {
-  const normalized = String(value ?? '').trim().toLowerCase();
-
-  if (['ativa', 'active', 'enabled'].includes(normalized)) {
-    return 'Ativa';
-  }
-
-  if (['limitada', 'limited'].includes(normalized)) {
-    return 'Limitada';
-  }
-
-  return 'Pausada';
-};
-
-const normalizeType = (value: unknown): CampaignPerformance['tipo'] => {
-  const normalized = String(value ?? '').trim().toLowerCase();
-
-  if (normalized.includes('display')) {
-    return 'Display';
-  }
-
-  if (normalized.includes('video') || normalized.includes('vídeo')) {
-    return 'Vídeo';
-  }
-
-  if (normalized.includes('max') || normalized.includes('pmax') || normalized.includes('performance')) {
-    return 'PMax';
-  }
-
-  return 'Pesquisa';
-};
-
 const normalizePerformance = (list: unknown[]): PerformancePoint[] =>
   list.map((entry) => {
     const item = asRecord(entry);
@@ -137,8 +107,8 @@ const normalizeCampaigns = (list: unknown[]): CampaignPerformance[] =>
     return {
       id,
       nome,
-      tipo: normalizeType(item.tipo ?? item.type ?? item.channelType ?? item.advertisingChannelType),
-      status: normalizeStatus(item.status ?? item.state),
+      tipo: normalizeCampaignType(item.tipo ?? item.type ?? item.channelType ?? item.advertisingChannelType),
+      status: normalizeCampaignStatus(item.status ?? item.state),
       orcamento: Number(budget.toFixed(2)),
       cliques: pickNumber(item, ['cliques', 'clicks']),
       impressoes: pickNumber(item, ['impressoes', 'impressions']),
@@ -147,35 +117,56 @@ const normalizeCampaigns = (list: unknown[]): CampaignPerformance[] =>
     };
   });
 
-export async function fetchPerformanceTimeseries(period: '7d' | '30d' | '90d'): Promise<PerformancePoint[]> {
-  try {
-    const response = await requestAdsEndpoint<unknown>('performance', {
-      method: 'GET',
-      params: { period },
-    });
+class PerformanceTimeseriesTemplate extends AdsEndpointTemplate<'7d' | '30d' | '90d', PerformancePoint[]> {
+  protected readonly endpointKind = 'performance' as const;
 
-    const list = extractArrayPayload(response, ['performance', 'timeseries', 'serie']);
-    return normalizePerformance(list);
-  } catch (error) {
-    console.error('Dashboard ADS: falha ao obter série temporal', error);
+  protected readonly arrayKeys = ['performance', 'timeseries', 'serie'];
+
+  protected buildRequestConfig(period: '7d' | '30d' | '90d') {
+    return {
+      method: 'GET' as const,
+      params: { period },
+    };
   }
 
-  return [];
+  protected normalize(list: unknown[], _period: '7d' | '30d' | '90d'): PerformancePoint[] {
+    return normalizePerformance(list);
+  }
+
+  protected override handleError(error: unknown): void {
+    console.error('Dashboard ADS: falha ao obter série temporal', error);
+  }
+}
+
+class CampaignPerformanceTemplate extends AdsEndpointTemplate<void, CampaignPerformance[]> {
+  protected readonly endpointKind = 'campaigns' as const;
+
+  protected readonly arrayKeys = ['campaigns'];
+
+  protected buildRequestConfig(_input: void) {
+    return {
+      method: 'GET' as const,
+    };
+  }
+
+  protected normalize(list: unknown[], _input: void): CampaignPerformance[] {
+    return normalizeCampaigns(list);
+  }
+
+  protected override handleError(error: unknown): void {
+    console.error('Dashboard ADS: falha ao obter campanhas', error);
+  }
+}
+
+const performanceTimeseriesTemplate = new PerformanceTimeseriesTemplate();
+const campaignPerformanceTemplate = new CampaignPerformanceTemplate();
+
+export async function fetchPerformanceTimeseries(period: '7d' | '30d' | '90d'): Promise<PerformancePoint[]> {
+  return performanceTimeseriesTemplate.execute(period);
 }
 
 export async function fetchCampaignPerformance(): Promise<CampaignPerformance[]> {
-  try {
-    const response = await requestAdsEndpoint<unknown>('campaigns', {
-      method: 'GET',
-    });
-
-    const list = extractArrayPayload(response, ['campaigns']);
-    return normalizeCampaigns(list);
-  } catch (error) {
-    console.error('Dashboard ADS: falha ao obter campanhas', error);
-  }
-
-  return [];
+  return campaignPerformanceTemplate.execute(undefined);
 }
 
 export function getMetricLabel(metric: MetricKey) {
@@ -190,9 +181,9 @@ export function getMetricLabel(metric: MetricKey) {
 
 export function formatMetricValue(metric: MetricKey, value: number) {
   if (metric === 'custo') {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value);
+    return formatCurrencyPtBr(value, 0);
   }
-  return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(value);
+  return formatNumberPtBr(value, 0);
 }
 
 export function computeTotals(performance: PerformancePoint[]) {

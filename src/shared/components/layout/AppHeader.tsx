@@ -15,6 +15,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../../core/services/authService';
 import type { User } from '../../../core/services/authService';
+import { subscribeUserUpdated } from '../../../core/events/userObserver';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationDropdown } from './NotificationDropdown';
 import { useGlobalAiDrawer } from '../../../features/ai/context/GlobalAiDrawerContext';
@@ -45,14 +46,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
 
   React.useEffect(() => {
-    const handleUserUpdate = () => {
-      const currentUser = authService.getCurrentUser();
-      console.log('AppHeader: Received userUpdated event, current user:', currentUser);
-      setUser(currentUser);
-    };
-
-    window.addEventListener('userUpdated', handleUserUpdate);
-    return () => window.removeEventListener('userUpdated', handleUserUpdate);
+    const unsubscribe = subscribeUserUpdated((updatedUser) => {
+      setUser(updatedUser);
+    });
+    return unsubscribe;
   }, []);
 
   const handleProfileMenuClick: MenuProps['onClick'] = async ({ key }) => {

@@ -15,10 +15,15 @@ import {
   enrichCampaignMetrics,
   fetchCampaignPerformance,
 } from '../services/adsDataService';
+import { normalizeCampaignStatus, normalizeCampaignType } from '../services/adsNormalizationStrategies';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { useCsvExport, useCsvImport } from '../../../core/import-export/hooks';
 import { toNumber } from '../../../core/import-export/csv';
 import { useNotificationCenter } from '../../../core/notifications/NotificationCenterContext';
+import {
+  formatCurrencyPtBr,
+  formatPercentPtBr,
+} from '../../../core/structural/flyweight/numberFormatterFlyweight';
 
 const { Text, Title } = Typography;
 
@@ -51,10 +56,9 @@ const statusColor = {
   Pausada: 'default',
 };
 
-const currency = (value: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value);
+const currency = (value: number) => formatCurrencyPtBr(value, 0);
 
-const percent = (value: number) => `${value.toFixed(2)}%`;
+const percent = (value: number) => formatPercentPtBr(value, 2);
 
 export const CampaignPerformanceTable: React.FC = () => {
   const { message } = App.useApp();
@@ -89,21 +93,6 @@ export const CampaignPerformanceTable: React.FC = () => {
     );
   }, [data, search]);
 
-  const normalizeStatus = (value: string): CampaignPerformance['status'] => {
-    const normalized = value.toLowerCase();
-    if (normalized.includes('ativa')) return 'Ativa';
-    if (normalized.includes('limit')) return 'Limitada';
-    return 'Pausada';
-  };
-
-  const normalizeType = (value: string): CampaignPerformance['tipo'] => {
-    const normalized = value.toLowerCase();
-    if (normalized.includes('display')) return 'Display';
-    if (normalized.includes('video') || normalized.includes('vídeo')) return 'Vídeo';
-    if (normalized.includes('max') || normalized.includes('pmax') || normalized.includes('performance')) return 'PMax';
-    return 'Pesquisa';
-  };
-
   const { exportRows, exporting } = useCsvExport<CampaignRow>({
     filename: 'ads-campanhas-performance',
     mapData: (item) => ({
@@ -127,8 +116,8 @@ export const CampaignPerformanceTable: React.FC = () => {
     mapRecord: (row, index) => ({
       id: String(row.id || `import-${index + 1}`),
       nome: row.nome || `Campanha ${index + 1}`,
-      tipo: normalizeType(String(row.tipo || 'Pesquisa')),
-      status: normalizeStatus(String(row.status || 'Ativa')),
+      tipo: normalizeCampaignType(String(row.tipo || 'Pesquisa')),
+      status: normalizeCampaignStatus(String(row.status || 'Ativa')),
       orcamento: toNumber(String(row.orcamento ?? 0)),
       cliques: toNumber(String(row.cliques ?? 0)),
       impressoes: toNumber(String(row.impressoes ?? 0)),
@@ -262,7 +251,7 @@ export const CampaignPerformanceTable: React.FC = () => {
   return (
     <Card
       title={
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text style={{ color: isDarkMode ? '#94A3B8' : '#6B7280', fontSize: 12 }}>Métricas de performance</Text>
           <Title level={4} style={{ margin: 0 }}>Campanhas por tipo</Title>
         </Space>

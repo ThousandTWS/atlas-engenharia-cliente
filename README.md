@@ -32,6 +32,9 @@ Crie um arquivo `.env` na raiz do projeto com:
 
 ```bash
 VITE_RECAPTCHA_SITE_KEY=sua_chave_publica_do_google_recaptcha
+
+# Auth do app: cookie (recomendado) | bearer (legado)
+VITE_AUTH_MODE=cookie
 ```
 
 Esse valor é obrigatório para habilitar o reCAPTCHA nas telas de login e cadastro.

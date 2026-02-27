@@ -346,8 +346,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
             background: siderBackground,
             borderRight: `1px solid ${borderColor}`,
         }}
-        width={sidebarProfileConfig.drawerWidth}
-        size="default"
+        size={sidebarProfileConfig.drawerWidth}
       >
         {menuContent}
       </Drawer>

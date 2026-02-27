@@ -1,9 +1,9 @@
 ﻿import React, { useCallback, useEffect, useState } from 'react';
 import { App, Button, Card, List, Space, Tag, Typography } from 'antd';
 import { BulbOutlined, ReloadOutlined, RobotOutlined } from '@ant-design/icons';
-import { fetchCampaignPerformance, fetchPerformanceTimeseries } from '../services/adsDataService';
-import { fetchGeminiInsights } from '../services/adsInsightsService';
 import type { GeminiInsight } from '../services/adsInsightsService';
+import { getInsightImpactTagColor, getInsightPriorityTagColor } from '../services/adsNormalizationStrategies';
+import { adsDashboardFacade } from '../services/adsDashboardFacade';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 
 const { Title, Text } = Typography;
@@ -17,12 +17,7 @@ export const GeminiInsights: React.FC = () => {
   const loadInsights = useCallback(async () => {
     setLoading(true);
     try {
-      const [campaigns, performance] = await Promise.all([
-        fetchCampaignPerformance(),
-        fetchPerformanceTimeseries('30d'),
-      ]);
-
-      const result = await fetchGeminiInsights({ campaigns, performance });
+      const result = await adsDashboardFacade.getInsights('30d');
       setInsights(result);
     } catch (err) {
       console.error('Erro ao gerar insights Gemini', err);
@@ -66,17 +61,17 @@ export const GeminiInsights: React.FC = () => {
         dataSource={insights}
         renderItem={(item) => (
           <List.Item key={item.id} style={{ borderBlockEnd: '1px solid #E5E7EB1A', padding: '12px 0' }}>
-            <Space direction="vertical" size={4} style={{ width: '100%' }}>
+            <Space orientation="vertical" size={4} style={{ width: '100%' }}>
               <Space>
                 <BulbOutlined style={{ color: '#F9AB00' }} />
                 <Text strong>{item.titulo}</Text>
               </Space>
               <Text style={{ color: isDarkMode ? '#E2E8F0' : '#111827' }}>{item.recomendacao}</Text>
               <Space wrap size={6}>
-                <Tag color={item.impacto === 'ROI' ? 'green' : item.impacto === 'Lances' ? 'blue' : item.impacto === 'Orçamento' ? 'gold' : 'purple'}>
+                <Tag color={getInsightImpactTagColor(item.impacto)}>
                   {item.impacto}
                 </Tag>
-                <Tag color={item.prioridade === 'alta' ? 'red' : item.prioridade === 'media' ? 'orange' : 'default'}>
+                <Tag color={getInsightPriorityTagColor(item.prioridade)}>
                   Prioridade {item.prioridade}
                 </Tag>
               </Space>

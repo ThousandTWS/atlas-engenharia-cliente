@@ -208,7 +208,7 @@ export const ProcessoAdmFormPage: React.FC = () => {
             <Col xs={24} lg={14} style={{ display: 'flex' }}>
               <Card
                 title={
-                  <Space direction="vertical" size={0}>
+                  <Space orientation="vertical" size={0}>
                     <Space size={8}>
                       <UserOutlined style={{ color: token.colorPrimary }} />
                       <Text strong>Identificação e Status</Text>
@@ -280,7 +280,7 @@ export const ProcessoAdmFormPage: React.FC = () => {
             <Col xs={24} lg={10} style={{ display: 'flex' }}>
               <Card
                 title={
-                  <Space direction="vertical" size={0}>
+                  <Space orientation="vertical" size={0}>
                     <Space size={8}>
                       <DollarOutlined style={{ color: token.colorPrimary }} />
                       <Text strong>Financeiro Administrativo</Text>
@@ -355,7 +355,7 @@ export const ProcessoAdmFormPage: React.FC = () => {
             <Col xs={24} lg={14} style={{ display: 'flex' }}>
               <Card
                 title={
-                  <Space direction="vertical" size={0}>
+                  <Space orientation="vertical" size={0}>
                     <Space size={8}>
                       <InfoCircleOutlined style={{ color: token.colorPrimary }} />
                       <Text strong>Documentação e Prazos</Text>
@@ -411,14 +411,14 @@ export const ProcessoAdmFormPage: React.FC = () => {
                     <Space size={[12, 10]} wrap>
                       <div>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>Contrato</Text>
-                        <Tag bordered={false} className="atlas-status-badge atlas-status-badge-info" style={{ marginInlineEnd: 0 }}>
+                        <Tag variant="filled" className="atlas-status-badge atlas-status-badge-info" style={{ marginInlineEnd: 0 }}>
                           <span className="atlas-status-badge-dot" />
                           {formatCurrencyValue(valorContrato)}
                         </Tag>
                       </div>
                       <div>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>Custos</Text>
-                        <Tag bordered={false} className="atlas-status-badge atlas-status-badge-danger" style={{ marginInlineEnd: 0 }}>
+                        <Tag variant="filled" className="atlas-status-badge atlas-status-badge-danger" style={{ marginInlineEnd: 0 }}>
                           <span className="atlas-status-badge-dot" />
                           {formatCurrencyValue(custos)}
                         </Tag>
@@ -426,7 +426,7 @@ export const ProcessoAdmFormPage: React.FC = () => {
                       <div>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>Saldo Líquido</Text>
                         <Tag
-                          bordered={false}
+                          variant="filled"
                           className={`atlas-status-badge ${saldoLiquido < 0 ? 'atlas-status-badge-danger' : 'atlas-status-badge-success'}`}
                           style={{ marginInlineEnd: 0 }}
                         >

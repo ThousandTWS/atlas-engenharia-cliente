@@ -78,9 +78,9 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
       }}
       styles={{ body: { padding: 18 } }}
     >
-      <Space direction="vertical" size={12} style={{ width: '100%' }}>
+      <Space orientation="vertical" size={12} style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Space direction="vertical" size={2}>
+          <Space orientation="vertical" size={2}>
             <Text style={{ fontSize: 12, color: isDarkMode ? '#94A3B8' : '#64748B' }}>{definition.subtitle}</Text>
             <Title level={4} style={{ margin: 0 }}>{definition.title}</Title>
           </Space>
@@ -109,7 +109,7 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
             </Title>
           </div>
           <Tag
-            bordered={false}
+            variant="filled"
             className={`atlas-status-badge ${trendBadgeClass}`}
           >
             <span className="atlas-status-badge-dot" />

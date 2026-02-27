@@ -1,4 +1,7 @@
 import apiClient from '../api/apiClient';
+import { isCookieAuthMode } from '../config/auth';
+import { notifyUserUpdated } from '../events/userObserver';
+import { authSessionStore } from './authSessionStore';
 
 // ==========================================
 // Interfaces de Usuário e Autenticação
@@ -61,15 +64,25 @@ export interface RefreshTokenDTO {
 // ==========================================
 
 export interface TokenResponse {
-  token: string;
-  refreshToken: string;
+  token?: string;
+  refreshToken?: string;
 }
 
 export interface AuthResponse {
-  user: User;
-  token: string;
-  refreshToken: string;
+  user?: User;
+  token?: string;
+  refreshToken?: string;
 }
+
+const isCompleteUser = (value: Partial<User>): value is User =>
+  value.id !== undefined &&
+  value.id !== null &&
+  typeof value.nomeCompleto === 'string' &&
+  typeof value.email === 'string' &&
+  typeof value.username === 'string' &&
+  typeof value.telefone === 'string' &&
+  typeof value.role === 'string' &&
+  typeof value.enabled === 'boolean';
 
 // ==========================================
 // Auth Service
@@ -85,24 +98,26 @@ export const authService = {
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
     console.log('authService.login: Resposta da API recebida', response.data);
 
+    if (isCookieAuthMode()) {
+      authSessionStore.setSession({
+        token: null,
+        refreshToken: null,
+        user: response.data.user ?? null,
+      });
+
+      notifyUserUpdated(authSessionStore.getUser());
+      return response.data;
+    }
+
     if (response.data.token) {
       console.log('authService.login: Token encontrado, armazenando...');
-      // Armazenar tokens
-      localStorage.setItem('token', response.data.token);
-      if (response.data.refreshToken) {
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-      }
-      
-      // Armazenar dados do usuário se disponíveis
-      if (response.data.user) {
-        console.log('authService.login: Dados do usuário encontrados, armazenando...', response.data.user);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      } else {
-        console.warn('authService.login: Dados do usuário NÃO encontrados na resposta');
-      }
+      authSessionStore.setSession({
+        token: response.data.token,
+        refreshToken: response.data.refreshToken ?? null,
+        user: response.data.user ?? null,
+      });
 
-      // Disparar evento para outros componentes (Header) atualizarem
-      window.dispatchEvent(new Event('userUpdated'));
+      notifyUserUpdated(authSessionStore.getUser());
     } else {
       console.error('authService.login: Token NÃO encontrado na resposta');
     }
@@ -151,7 +166,12 @@ export const authService = {
    * Gera um novo token JWT usando um refresh token válido
    */
   refreshToken: async (): Promise<TokenResponse> => {
-    const currentRefreshToken = localStorage.getItem('refreshToken');
+    if (isCookieAuthMode()) {
+      const response = await apiClient.post<TokenResponse>('/auth/refresh-token');
+      return response.data;
+    }
+
+    const currentRefreshToken = authSessionStore.getRefreshToken();
     
     if (!currentRefreshToken) {
       throw new Error('Refresh token não encontrado');
@@ -161,13 +181,10 @@ export const authService = {
       refreshToken: currentRefreshToken,
     } as RefreshTokenDTO);
 
-    // Atualizar tokens no localStorage
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
-    if (response.data.refreshToken) {
-      localStorage.setItem('refreshToken', response.data.refreshToken);
-    }
+    authSessionStore.setSession({
+      token: response.data.token,
+      refreshToken: response.data.refreshToken ?? currentRefreshToken,
+    });
 
     return response.data;
   },
@@ -182,51 +199,81 @@ export const authService = {
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     } finally {
-      // Limpar tokens e dados do usuário do localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
+      authSessionStore.clear();
       
-      // Disparar evento de logout
-      window.dispatchEvent(new Event('userUpdated'));
+      notifyUserUpdated(null);
     }
   },
 
   /**
-   * Obter usuário atual do localStorage
+   * Obter usuário atual da sessão
    */
   getCurrentUser: (): User | null => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    return authSessionStore.getUser();
   },
 
   /**
-   * Atualizar dados do usuário no localStorage
+   * Hidratar sessão com backend (modo cookie)
+   */
+  hydrateSession: async (): Promise<boolean> => {
+    if (authService.getCurrentUser()) {
+      return true;
+    }
+
+    if (!isCookieAuthMode()) {
+      return authService.isAuthenticated();
+    }
+
+    try {
+      const response = await apiClient.get<User>('/profile');
+      authService.setCurrentUser(response.data);
+      return true;
+    } catch {
+      authSessionStore.clear();
+      notifyUserUpdated(null);
+      return false;
+    }
+  },
+
+  /**
+   * Definir o usuário atual da sessão
+   */
+  setCurrentUser: (user: User | null): void => {
+    authSessionStore.setSession({ user });
+    notifyUserUpdated(user);
+  },
+
+  /**
+   * Atualizar dados do usuário na sessão
    */
   updateLocalUser: (userData: Partial<User>): User | null => {
     const currentUser = authService.getCurrentUser();
     console.log('authService.updateLocalUser: Updating user with:', userData);
-    if (currentUser) {
-      const updatedUser = { ...currentUser, ...userData };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      console.log('authService.updateLocalUser: New user data saved to localStorage:', updatedUser);
+    const updatedUser = currentUser
+      ? { ...currentUser, ...userData }
+      : isCompleteUser(userData)
+        ? userData
+        : null;
 
-      // Disparar evento para outros componentes (Header) atualizarem
-      window.dispatchEvent(new Event('userUpdated'));
-      return updatedUser;
-    } else {
-      console.warn('authService.updateLocalUser: No currentUser found to update');
+    if (!updatedUser) {
+      console.warn('authService.updateLocalUser: No current user and partial payload is not enough to create one');
+      return null;
     }
-    return null;
+
+    authSessionStore.setSession({ user: updatedUser });
+    console.log('authService.updateLocalUser: New user data saved to session store:', updatedUser);
+
+    notifyUserUpdated(updatedUser);
+    return updatedUser;
   },
 
   /**
    * Verificar se o usuário está autenticado
    */
   isAuthenticated: (): boolean => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    const isAuth = !!token; // Se tem token, considera autenticado por enquanto para o redirecionamento
+    const token = authSessionStore.getToken();
+    const user = authSessionStore.getUser();
+    const isAuth = isCookieAuthMode() ? !!user : !!token;
     
     console.log('authService.isAuthenticated:', { 
       isAuth,
@@ -241,13 +288,13 @@ export const authService = {
    * Obter o token de acesso atual
    */
   getToken: (): string | null => {
-    return localStorage.getItem('token');
+    return authSessionStore.getToken();
   },
 
   /**
    * Obter o refresh token atual
    */
   getRefreshToken: (): string | null => {
-    return localStorage.getItem('refreshToken');
+    return authSessionStore.getRefreshToken();
   },
 };

@@ -95,7 +95,7 @@ export const AdsPerformanceChart: React.FC = () => {
     <Card
       loading={loading}
       title={
-        <Space direction="vertical" size={2}>
+        <Space orientation="vertical" size={2}>
           <Text style={{ color: isDarkMode ? '#94A3B8' : '#4B5563', fontSize: 12, letterSpacing: 0.4 }}>Dashboard de Tráfego Pago</Text>
           <Title level={4} style={{ margin: 0 }}>Performance Multimétrica</Title>
         </Space>
@@ -146,11 +146,11 @@ export const AdsPerformanceChart: React.FC = () => {
         </Col>
         <Col xs={24} sm={12}>
           <Space size={12} wrap style={{ justifyContent: 'flex-end', width: '100%' }}>
-            <Tag className="atlas-status-badge atlas-status-badge-primary" bordered={false}>
+            <Tag className="atlas-status-badge atlas-status-badge-primary" variant="filled">
               <span className="atlas-status-badge-dot" />
               {getMetricLabel(primaryMetric)}
             </Tag>
-            <Tag className="atlas-status-badge atlas-status-badge-secondary" bordered={false}>
+            <Tag className="atlas-status-badge atlas-status-badge-secondary" variant="filled">
               <span className="atlas-status-badge-dot" />
               {getMetricLabel(secondaryMetric)}
             </Tag>
@@ -210,7 +210,7 @@ export const AdsPerformanceChart: React.FC = () => {
           <Col key={metric as string} xs={12} sm={6}>
             <Card
               size="small"
-              bordered={false}
+              variant="borderless"
               style={{
                 background: isDarkMode ? '#0F172A' : '#F8FAFC',
                 borderRadius: 12,

@@ -130,7 +130,7 @@ export const NotificationDropdown: React.FC = () => {
                 </Space>
               }
               description={
-                <Space direction="vertical" size={2}>
+                <Space orientation="vertical" size={2}>
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     {item.description}
                   </Text>

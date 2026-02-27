@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import axios from 'axios';
 import { requestAdsEndpoint } from '../../gestao-ads/services/adsIntegrationClient';
 import { generateGeminiContent } from '../../../shared/utils/geminiGenerateContent';
+import { AbstractChainHandler, type ChainHandler } from '../../../core/patterns/chain';
 
 export interface GlobalAiMessage {
   role: 'user' | 'assistant';
@@ -11,6 +13,11 @@ interface SendGlobalAiMessageParams {
   prompt: string;
   history: GlobalAiMessage[];
   context?: Record<string, unknown>;
+}
+
+interface GlobalAiStrategy {
+  canHandle(params: SendGlobalAiMessageParams): boolean;
+  execute(params: SendGlobalAiMessageParams): Promise<string | null>;
 }
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() ?? 'AIzaSyDkl7qUpxBJUvt8D6KCD-iv1FXEZ_p9k54';
@@ -34,49 +41,6 @@ const normalizeN8nResponse = (response: unknown): string | null => {
   }
 
   return null;
-};
-
-const tryN8nGlobalChat = async (params: SendGlobalAiMessageParams): Promise<string | null> => {
-  if (!N8N_AI_CHAT_URL) {
-    return null;
-  }
-
-  try {
-    const response = await axios.post(
-      N8N_AI_CHAT_URL,
-      {
-        prompt: params.prompt,
-        history: params.history,
-        context: params.context ?? {},
-        module: 'global-ai',
-      },
-      { timeout: 30000 },
-    );
-
-    return normalizeN8nResponse(response.data);
-  } catch (error) {
-    console.warn('Global AI: endpoint n8n global indisponível.', error);
-    return null;
-  }
-};
-
-const tryAdsChatEndpoint = async (params: SendGlobalAiMessageParams): Promise<string | null> => {
-  try {
-    const response = await requestAdsEndpoint<unknown>('chat', {
-      method: 'POST',
-      data: {
-        prompt: params.prompt,
-        history: params.history,
-        context: params.context ?? {},
-        module: 'global-ai',
-      },
-    });
-
-    return normalizeN8nResponse(response);
-  } catch (error) {
-    console.warn('Global AI: endpoint /ads/chat indisponível.', error);
-    return null;
-  }
 };
 
 const buildGeminiPayload = (params: SendGlobalAiMessageParams) => {
@@ -127,16 +91,103 @@ const requestDirectGemini = async (params: SendGlobalAiMessageParams): Promise<s
   });
 };
 
+class StrategyChainHandler extends AbstractChainHandler<SendGlobalAiMessageParams, string> {
+  private readonly strategy: GlobalAiStrategy;
+
+  constructor(strategy: GlobalAiStrategy) {
+    super();
+    this.strategy = strategy;
+  }
+
+  protected async process(params: SendGlobalAiMessageParams): Promise<string | null> {
+    if (this.strategy.canHandle(params)) {
+      const answer = await this.strategy.execute(params);
+      if (answer) {
+        return answer;
+      }
+    }
+
+    return null;
+  }
+}
+
+class N8nGlobalChatStrategy implements GlobalAiStrategy {
+  canHandle(_params: SendGlobalAiMessageParams): boolean {
+    return Boolean(N8N_AI_CHAT_URL);
+  }
+
+  async execute(params: SendGlobalAiMessageParams): Promise<string | null> {
+    try {
+      const response = await axios.post(
+        N8N_AI_CHAT_URL,
+        {
+          prompt: params.prompt,
+          history: params.history,
+          context: params.context ?? {},
+          module: 'global-ai',
+        },
+        { timeout: 30000 },
+      );
+
+      return normalizeN8nResponse(response.data);
+    } catch (error) {
+      console.warn('Global AI: endpoint n8n global indisponível.', error);
+      return null;
+    }
+  }
+}
+
+class AdsChatStrategy implements GlobalAiStrategy {
+  canHandle(_params: SendGlobalAiMessageParams): boolean {
+    return true;
+  }
+
+  async execute(params: SendGlobalAiMessageParams): Promise<string | null> {
+    try {
+      const response = await requestAdsEndpoint<unknown>('chat', {
+        method: 'POST',
+        data: {
+          prompt: params.prompt,
+          history: params.history,
+          context: params.context ?? {},
+          module: 'global-ai',
+        },
+      });
+
+      return normalizeN8nResponse(response);
+    } catch (error) {
+      console.warn('Global AI: endpoint /ads/chat indisponível.', error);
+      return null;
+    }
+  }
+}
+
+class DirectGeminiStrategy implements GlobalAiStrategy {
+  canHandle(_params: SendGlobalAiMessageParams): boolean {
+    return true;
+  }
+
+  execute(params: SendGlobalAiMessageParams): Promise<string> {
+    return requestDirectGemini(params);
+  }
+}
+
+const createGlobalAiHandlerChain = (): ChainHandler<SendGlobalAiMessageParams, string> => {
+  const n8nHandler = new StrategyChainHandler(new N8nGlobalChatStrategy());
+  const adsHandler = new StrategyChainHandler(new AdsChatStrategy());
+  const geminiHandler = new StrategyChainHandler(new DirectGeminiStrategy());
+
+  n8nHandler.setNext(adsHandler).setNext(geminiHandler);
+  return n8nHandler;
+};
+
+const globalAiHandlerChain = createGlobalAiHandlerChain();
+
 export const sendGlobalAiMessage = async (params: SendGlobalAiMessageParams): Promise<string> => {
-  const n8nGlobalAnswer = await tryN8nGlobalChat(params);
-  if (n8nGlobalAnswer) {
-    return n8nGlobalAnswer;
+  const answer = await globalAiHandlerChain.handle(params);
+  if (answer) {
+    return answer;
   }
 
-  const adsEndpointAnswer = await tryAdsChatEndpoint(params);
-  if (adsEndpointAnswer) {
-    return adsEndpointAnswer;
-  }
-
-  return requestDirectGemini(params);
+  throw new Error('Nenhum provedor de IA retornou resposta.');
 };

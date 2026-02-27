@@ -93,7 +93,7 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       align: 'right',
       render: (val: number) => (
         <Tag
-          bordered={false}
+          variant="filled"
           className="atlas-status-badge atlas-status-badge-info"
           style={{ marginInlineEnd: 0 }}
         >
@@ -111,7 +111,7 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       align: 'right',
       render: (val: number) => (
         <Tag
-          bordered={false}
+          variant="filled"
           className="atlas-status-badge atlas-status-badge-danger"
           style={{ marginInlineEnd: 0 }}
         >
@@ -128,7 +128,7 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       align: 'right',
       render: (val: number) => (
         <Tag
-          bordered={false}
+          variant="filled"
           className={`atlas-status-badge ${
             val > 0 ? 'atlas-status-badge-success' : val < 0 ? 'atlas-status-badge-danger' : 'atlas-status-badge-neutral'
           }`}

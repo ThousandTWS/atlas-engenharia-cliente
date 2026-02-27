@@ -1,9 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { App } from 'antd';
-import { liveProvider, type LiveEvent, type LiveEventType } from '../realtime/liveProvider';
-
-export type NotificationType = 'info' | 'success' | 'warning' | 'error';
+import {
+  notificationMediator,
+  type NotificationType,
+  type OpenNotificationParams,
+} from './NotificationMediator';
 
 export interface NotificationItem {
   id: string;
@@ -12,13 +14,6 @@ export interface NotificationItem {
   timestamp: string;
   type: NotificationType;
   read: boolean;
-}
-
-interface OpenNotificationParams {
-  title: string;
-  description?: string;
-  type?: NotificationType;
-  showToast?: boolean;
 }
 
 interface NotificationCenterContextValue {
@@ -36,36 +31,6 @@ const NotificationCenterContext = createContext<NotificationCenterContextValue |
 
 const randomId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-
-const eventToNotificationType = (eventType: LiveEventType): NotificationType => {
-  if (eventType === 'created') return 'success';
-  if (eventType === 'updated') return 'info';
-  if (eventType === 'deleted') return 'warning';
-  return 'info';
-};
-
-const isKnownType = (value: unknown): value is NotificationType =>
-  value === 'success' || value === 'warning' || value === 'error' || value === 'info';
-
-const toRealtimeNotification = (event: LiveEvent): OpenNotificationParams => {
-  const meta = event.meta ?? {};
-  const metaTitle = typeof meta.title === 'string' ? meta.title : '';
-  const resourceLabel = typeof meta.resourceLabel === 'string' ? meta.resourceLabel : event.channel;
-  const idValue = (event.payload as { id?: string | number } | undefined)?.id;
-
-  const description = idValue !== undefined
-    ? `${resourceLabel} #${idValue}`
-    : `${resourceLabel}`;
-
-  const metaType = isKnownType(meta.notificationType) ? meta.notificationType : undefined;
-
-  return {
-    title: metaTitle || `Evento ${event.type}`,
-    description,
-    type: metaType ?? eventToNotificationType(event.type),
-    showToast: false,
-  };
-};
 
 export const NotificationCenterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { notification } = App.useApp();
@@ -113,11 +78,8 @@ export const NotificationCenterProvider: React.FC<{ children: React.ReactNode }>
   }, []);
 
   React.useEffect(() => {
-    const unsubscribe = liveProvider.subscribe({
-      channel: 'resources.*',
-      callback: (event) => {
-        open(toRealtimeNotification(event));
-      },
+    const unsubscribe = notificationMediator.subscribeToResources((params) => {
+      open(params);
     });
 
     return unsubscribe;

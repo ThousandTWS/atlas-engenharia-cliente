@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { Row, Col, App } from 'antd';
-import { avcbService, clcbService, processosAdmService, custosIndiretosService } from '../../../core/services/genericService';
-import { obrasService } from '../../../core/services/obrasService';
 import { GenericChart } from '../../../shared/components/charts/GenericChart';
 import dayjs from 'dayjs';
+import { isApprovedPhase } from '../utils/projectStatusStrategies';
+import { homeDashboardFacade } from '../services/homeDashboardFacade';
+import { CollectionComposite, CollectionLeaf } from '../../../core/structural/composite/collectionComposite';
 
 export const DashboardChartAntd: React.FC = () => {
   const { message } = App.useApp();
@@ -15,22 +17,16 @@ export const DashboardChartAntd: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [avcbs, clcbs, obras, processos, custos] = await Promise.all([
-          avcbService.getAll(),
-          clcbService.getAll(),
-          obrasService.getAll(),
-          processosAdmService.getAll(),
-          custosIndiretosService.getAll(),
-        ]);
+        const snapshot = await homeDashboardFacade.getSnapshot(0, 500);
 
-        const allProjects: any[] = [
-          ...(Array.isArray(avcbs) ? avcbs : (avcbs as any).content || []),
-          ...(Array.isArray(clcbs) ? clcbs : (clcbs as any).content || []),
-          ...(Array.isArray(obras) ? obras : (obras as any).content || []),
-          ...(Array.isArray(processos) ? processos : (processos as any).content || []),
-        ];
+        const projectsComposite = new CollectionComposite<any>();
+        projectsComposite.add(new CollectionLeaf(snapshot.avcbs));
+        projectsComposite.add(new CollectionLeaf(snapshot.clcbs));
+        projectsComposite.add(new CollectionLeaf(snapshot.obras));
+        projectsComposite.add(new CollectionLeaf(snapshot.processos));
 
-        const allCustos: any[] = Array.isArray(custos) ? custos : (custos as any).content || [];
+        const allProjects: any[] = projectsComposite.toArray();
+        const allCustos: any[] = snapshot.custos;
 
         // Agrupar por mês nos últimos 6 meses
         const last6Months = Array.from({ length: 6 }, (_, i) => {
@@ -49,7 +45,7 @@ export const DashboardChartAntd: React.FC = () => {
           if (performanceMap[month]) {
             performanceMap[month].propostas++;
             const situacao = item.situacao || item.status;
-            if (situacao === 'CONCLUIDO' || situacao === 'APROVADO' || situacao === 'Aprovado') {
+            if (isApprovedPhase(situacao)) {
               performanceMap[month].aprovadas++;
             }
           }

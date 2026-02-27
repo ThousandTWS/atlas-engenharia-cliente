@@ -27,10 +27,26 @@ export const LoginPage: React.FC = () => {
   }, []);
 
   React.useEffect(() => {
-    const isAuth = authService.isAuthenticated();
-    if (isAuth) {
-      navigate('/', { replace: true });
-    }
+    let isMounted = true;
+
+    const checkAuth = async () => {
+      const isAuth = authService.isAuthenticated();
+      if (isAuth && isMounted) {
+        navigate('/', { replace: true });
+        return;
+      }
+
+      const hydrated = await authService.hydrateSession();
+      if (hydrated && isMounted) {
+        navigate('/', { replace: true });
+      }
+    };
+
+    checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   const onFinish = async (values: LoginFormValues) => {
