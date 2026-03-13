@@ -1,7 +1,6 @@
 import { Breadcrumb, Col, Row, Space, Tag, Typography } from 'antd';
 import { CalendarOutlined, HomeOutlined } from '@ant-design/icons';
-import { DashboardAreaCards } from '../components/DashboardAreaCards';
-import { DashboardTableAntd } from '../components/DashboardTableAntd';
+import { ExecutiveDashboard } from '../components/ExecutiveDashboard';
 import { WelcomeBanner } from '../components/WelcomeBanner';
 import dayjs from 'dayjs';
 
@@ -47,11 +46,7 @@ export const HomePage = () => {
         </Row>
 
         <section className="atlas-dashboard-section" id="atlas-dashboard-charts">
-          <DashboardAreaCards />
-        </section>
-
-        <section className="atlas-dashboard-section">
-          <DashboardTableAntd />
+          <ExecutiveDashboard />
         </section>
       </div>
     </div>

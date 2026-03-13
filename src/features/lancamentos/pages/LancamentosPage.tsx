@@ -23,6 +23,7 @@ import {
   DownloadOutlined,
   HomeOutlined,
   ImportOutlined,
+  InboxOutlined,
   PlusOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
@@ -183,11 +184,17 @@ export const LancamentosPage: React.FC = () => {
       });
       setResponse(data);
     } catch (error) {
-      message.error(`Erro ao carregar lançamentos: ${(error as Error).message}`);
+      const errorMessage = (error as Error).message;
+      if (errorMessage.includes('403')) {
+        message.error('Sua sessão não foi reconhecida pelo backend. Faça login novamente para continuar.');
+        navigate('/auth/login', { replace: true });
+      } else {
+        message.error(`Erro ao carregar lançamentos: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }
-  }, [activeTab, filtersForm, message]);
+  }, [activeTab, filtersForm, message, navigate]);
 
   useEffect(() => {
     void fetchLancamentos();
@@ -403,7 +410,7 @@ export const LancamentosPage: React.FC = () => {
   }, [activeTab, fetchLancamentos, importOrigin, importRows, message]);
 
   return (
-    <div style={{ maxWidth: 1480, margin: '0 auto' }}>
+    <div className="atlas-lancamentos-page" style={{ maxWidth: 1480, margin: '0 auto' }}>
       <Breadcrumb
         items={[
           { title: <HomeOutlined />, href: '/' },
@@ -413,58 +420,73 @@ export const LancamentosPage: React.FC = () => {
         style={{ marginBottom: 16 }}
       />
 
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <Space direction="vertical" size={0}>
-          <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>Lançamentos Financeiros</Title>
-          <Text type="secondary">Entradas, saídas, importação bancária e vínculo por serviço/prestador.</Text>
-        </Space>
+      <Card className="atlas-lancamentos-hero" bordered={false} style={{ marginBottom: 24 }}>
+        <div className="atlas-lancamentos-hero-grid">
+          <div>
+            <Text className="atlas-lancamentos-kicker">Financeiro</Text>
+            <Title level={isMobile ? 3 : 2} style={{ margin: '10px 0 6px' }}>Lançamentos Financeiros</Title>
+            <Text className="atlas-lancamentos-hero-copy">
+              Duas frentes claras: entradas de recebimento e saídas de pagamento, com importação e vínculo manual linha a linha.
+            </Text>
+          </div>
+          <div className="atlas-lancamentos-actions">
+            <Button className="atlas-services-button atlas-services-button-primary" type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/lancamentos/novo?tipo=${activeTab}`)}>+ Novo</Button>
+            <Button className="atlas-services-button" icon={<ImportOutlined />} onClick={() => { setImportOrigin('IMPORT_INTER'); setImportModalOpen(true); }}>Importar Inter</Button>
+            <Button className="atlas-services-button" icon={<InboxOutlined />} onClick={() => { setImportOrigin('IMPORT_ASAAS'); setImportModalOpen(true); }}>Importar Asaas</Button>
+            <Button className="atlas-services-button" icon={<DownloadOutlined />} loading={exporting} onClick={() => exportRows(response.content)}>Exportar</Button>
+          </div>
+        </div>
+      </Card>
 
-        <Space wrap>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/lancamentos/novo?tipo=${activeTab}`)}>+ Novo</Button>
-          <Button className="atlas-services-button" icon={<ImportOutlined />} onClick={() => { setImportOrigin('IMPORT_INTER'); setImportModalOpen(true); }}>Importar Inter</Button>
-          <Button className="atlas-services-button" icon={<ImportOutlined />} onClick={() => { setImportOrigin('IMPORT_ASAAS'); setImportModalOpen(true); }}>Importar Asaas</Button>
-          <Button className="atlas-services-button" icon={<DownloadOutlined />} loading={exporting} onClick={() => exportRows(response.content)}>Exportar</Button>
-        </Space>
-      </div>
-
-      <Tabs
-        activeKey={activeTab}
-        onChange={(key) => setActiveTab(key as FinancialLaunchType)}
-        items={[
-          { key: 'ENTRADA', label: 'Entradas (recebimentos)' },
-          { key: 'SAIDA', label: 'Saídas (pagamentos)' },
-        ]}
-      />
+      <Card className="atlas-lancamentos-workbench" bordered={false}>
+        <div className="atlas-lancamentos-topbar">
+          <div>
+            <Text className="atlas-lancamentos-section-label">Estrutura</Text>
+            <Title level={4} style={{ margin: '4px 0 0' }}>
+              {activeTab === 'ENTRADA' ? 'Entradas (recebimentos)' : 'Saídas (pagamentos)'}
+            </Title>
+          </div>
+          <Tabs
+            className="atlas-lancamentos-tabs"
+            activeKey={activeTab}
+            onChange={(key) => setActiveTab(key as FinancialLaunchType)}
+            items={[
+              { key: 'ENTRADA', label: 'Entradas' },
+              { key: 'SAIDA', label: 'Saídas' },
+            ]}
+          />
+        </div>
 
       <Card
         className="atlas-services-filter-card atlas-lancamentos-filter-card"
+        bordered={false}
         style={{ marginBottom: 16, background: isDarkMode ? '#0A0F1C' : '#FAFBFC' }}
       >
         <Form className="atlas-lancamentos-filter-form" form={filtersForm} layout="vertical" onFinish={() => void fetchLancamentos()}>
           <div className="atlas-lancamentos-filter-grid">
             <div>
               <Form.Item name="busca" label="Busca livre">
-                <Input className="atlas-services-input" placeholder="Descrição, cliente, prestador..." />
+                <Input className="atlas-services-input atlas-lancamentos-field" placeholder="Descrição, cliente, prestador..." />
               </Form.Item>
             </div>
             <div>
               <Form.Item name="status" label="Status">
-                <Select className="atlas-services-select" allowClear placeholder="Selecione" options={statusOptions} />
+                <Select className="atlas-services-select atlas-lancamentos-field" allowClear placeholder="Selecione" options={statusOptions} />
               </Form.Item>
             </div>
             <div>
               <Form.Item name="periodo" label="Período">
-                <RangePicker className="atlas-services-date" style={{ width: '100%' }} placeholder={['Data inicial', 'Data final']} />
+                <RangePicker className="atlas-services-date atlas-lancamentos-field" style={{ width: '100%' }} placeholder={['Data inicial', 'Data final']} />
               </Form.Item>
             </div>
             <div>
               <Form.Item name="formaPagamento" label="Forma de pagamento">
-                <Input className="atlas-services-input" placeholder="PIX, boleto..." />
+                <Input className="atlas-services-input atlas-lancamentos-field" placeholder="PIX, boleto..." />
               </Form.Item>
             </div>
             <div>
               <Form.Item name="codigoServico" label="Serviço">
-                <Input className="atlas-services-input" placeholder="Código do serviço" />
+                <Input className="atlas-services-input atlas-lancamentos-field" placeholder="Código do serviço" />
               </Form.Item>
             </div>
           </div>
@@ -476,13 +498,22 @@ export const LancamentosPage: React.FC = () => {
       </Card>
 
       <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card"><Statistic title="Total" value={resumo.total} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
-        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card"><Statistic title="Pago" value={resumo.pago} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
-        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card"><Statistic title="A pagar" value={resumo.aPagar} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
-        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card"><Statistic title="Previsto" value={resumo.previsto} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
+        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card atlas-lancamentos-summary-card-total" bordered={false}><Statistic title="Total" value={resumo.total} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
+        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card atlas-lancamentos-summary-card-paid" bordered={false}><Statistic title="Pago" value={resumo.pago} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
+        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card atlas-lancamentos-summary-card-open" bordered={false}><Statistic title="A pagar" value={resumo.aPagar} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
+        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card atlas-lancamentos-summary-card-forecast" bordered={false}><Statistic title="Previsto" value={resumo.previsto} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
       </Row>
 
-      <Card styles={{ body: { padding: 0 } }}>
+      <Card className="atlas-lancamentos-table-shell" bordered={false} styles={{ body: { padding: 0 } }}>
+        <div className="atlas-lancamentos-table-shell-header">
+          <div>
+            <Text className="atlas-lancamentos-section-label">Listagem</Text>
+            <Title level={5} style={{ margin: '4px 0 0' }}>
+              {activeTab === 'ENTRADA' ? 'Recebimentos cadastrados' : 'Pagamentos cadastrados'}
+            </Title>
+          </div>
+          <Text type="secondary">{response.totalElements} registros</Text>
+        </div>
         <Table
           rowKey="id"
           loading={loading}
@@ -502,6 +533,7 @@ export const LancamentosPage: React.FC = () => {
             </Table.Summary>
           )}
         />
+      </Card>
       </Card>
 
       <Modal
