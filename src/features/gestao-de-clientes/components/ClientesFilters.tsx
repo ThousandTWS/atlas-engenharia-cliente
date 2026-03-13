@@ -11,6 +11,7 @@ import {
 } from 'antd';
 import { SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
+import { getFilterCardStyle, getFilterControlStyle, getFilterSecondaryButtonStyle } from '../../../shared/utils/filterFieldStyles';
 
 const ESTADO_OPTIONS = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO',
@@ -34,12 +35,7 @@ export const ClientesFilters: React.FC<ClientesFiltersProps> = ({ onSearch, onCl
 
   return (
     <Card
-      style={{
-        marginBottom: 24,
-        borderRadius: 8,
-        background: isDarkMode ? '#0A0F1C' : '#FAFBFC',
-        border: isDarkMode ? 'solid 1px #1E2A47' : '1px solid #CBD5E1',
-      }}
+      style={getFilterCardStyle(isDarkMode)}
       styles={{ body: { padding: '16px' } }}
     >
       <Form
@@ -50,39 +46,39 @@ export const ClientesFilters: React.FC<ClientesFiltersProps> = ({ onSearch, onCl
         <Row gutter={[16, 0]}>
           <Col xs={24} sm={12} md={6}>
             <Form.Item name="cnpjCpf" label="CNPJ/CPF">
-              <Input style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }} placeholder="00.000.000/0000-00" allowClear />
+              <Input style={getFilterControlStyle(isDarkMode)} placeholder="00.000.000/0000-00" allowClear />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Form.Item name="razaoSocial" label="Razão Social">
-              <Input style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }} placeholder="Nome da empresa" allowClear />
+              <Input style={getFilterControlStyle(isDarkMode)} placeholder="Nome da empresa" allowClear />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Form.Item name="nomeContato" label="Contato">
-              <Input style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }} placeholder="Nome do contato" allowClear />
+              <Input style={getFilterControlStyle(isDarkMode)} placeholder="Nome do contato" allowClear />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Form.Item name="telefone" label="Telefone">
-              <Input style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }} placeholder="(00) 00000-0000" allowClear />
+              <Input style={getFilterControlStyle(isDarkMode)} placeholder="(00) 00000-0000" allowClear />
             </Form.Item>
           </Col>
 
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="email" label="Email">
-              <Input style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }} placeholder="cliente@email.com" allowClear />
+              <Input style={getFilterControlStyle(isDarkMode)} placeholder="cliente@email.com" allowClear />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="cidade" label="Cidade">
-              <Input style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }} placeholder="Cidade" allowClear />
+              <Input style={getFilterControlStyle(isDarkMode)} placeholder="Cidade" allowClear />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="estado" label="Estado (UF)">
               <Select
-                style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }}
+                style={getFilterControlStyle(isDarkMode)}
                 placeholder="UF"
                 allowClear
                 options={ESTADO_OPTIONS}
@@ -93,7 +89,7 @@ export const ClientesFilters: React.FC<ClientesFiltersProps> = ({ onSearch, onCl
 
         <Row justify="end">
           <Space>
-            <Button style={{ background: isDarkMode ? '#171C2A' : '#fff' }} icon={<ClearOutlined />} onClick={handleClear}>
+            <Button style={getFilterSecondaryButtonStyle(isDarkMode)} icon={<ClearOutlined />} onClick={handleClear}>
               Limpar
             </Button>
             <Button type="primary" icon={<SearchOutlined />} htmlType="submit">

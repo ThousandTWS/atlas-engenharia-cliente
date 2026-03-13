@@ -86,9 +86,9 @@ export const NotificationDropdown: React.FC = () => {
               Marcar lidas
             </Button>
           )}
-          {notifications.length > 0 && (
+          {topNotifications.some((item) => item.source === 'client') && (
             <Button type="link" size="small" danger onClick={clear}>
-              Limpar
+              Limpar locais
             </Button>
           )}
           <Badge count={unreadCount} color={token.colorPrimary} />
@@ -109,16 +109,18 @@ export const NotificationDropdown: React.FC = () => {
             }}
             onClick={() => markAsRead(item.id)}
             actions={[
-              <Button
-                key={`remove-${item.id}`}
-                type="text"
-                icon={<DeleteOutlined />}
-                size="small"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  remove(item.id);
-                }}
-              />,
+              item.source === 'client' ? (
+                <Button
+                  key={`remove-${item.id}`}
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    remove(item.id);
+                  }}
+                />
+              ) : null,
             ]}
           >
             <List.Item.Meta

@@ -462,6 +462,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 180,
       render: (_, row) => (
         <Select
+          className="atlas-services-select"
           size="small"
           value={inlineEdit?.key === row.key && inlineEdit.field === 'subtype' ? inlineEdit.value : row.subtype}
           options={(DEFAULT_SUBTYPE_OPTIONS[row.serviceType] ?? []).map((item) => ({ label: item, value: item }))}
@@ -479,6 +480,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 180,
       render: (_, row) => (
         <Select
+          className="atlas-services-select"
           size="small"
           value={inlineEdit?.key === row.key && inlineEdit.field === 'situation' ? inlineEdit.value : row.situation}
           options={(situationConfig[row.serviceType] ?? []).map((item) => ({ label: item.label, value: item.label }))}
@@ -503,6 +505,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 260,
       render: (_, row) => (
         <Input
+          className="atlas-services-input"
           size="small"
           value={inlineEdit?.key === row.key && inlineEdit.field === 'description' ? inlineEdit.value : row.description}
           placeholder="Descricao livre"
@@ -565,7 +568,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 160,
       render: (_, row) => (
         <Space>
-          <Button size="small" icon={<EditOutlined />} onClick={() => void openDrawer(row)}>
+          <Button className="atlas-services-button" size="small" icon={<EditOutlined />} onClick={() => void openDrawer(row)}>
             Detalhes
           </Button>
         </Space>
@@ -831,6 +834,7 @@ export const ServicesTrackingPage: React.FC = () => {
                 ))}
 
                 <Button
+                  className="atlas-services-button"
                   loading={settingsLoading}
                   icon={<PlusOutlined />}
                   onClick={() => void addSituation(serviceType.value)}

@@ -8,6 +8,9 @@ export interface OpenNotificationParams {
   title: string;
   description?: string;
   type?: NotificationType;
+  category?: 'financial' | 'technical';
+  origin?: 'manual' | 'automatic';
+  ruleId?: string;
   showToast?: boolean;
 }
 

@@ -17,7 +17,7 @@ import { authService } from '../../../core/services/authService';
 import type { User } from '../../../core/services/authService';
 import { subscribeUserUpdated } from '../../../core/events/userObserver';
 import { GlobalSearch } from './GlobalSearch';
-import { NotificationDropdown } from './NotificationDropdown';
+import { NotificationDrawer } from './NotificationDrawer';
 import { useGlobalAiDrawer } from '../../../features/ai/context/GlobalAiDrawerContext';
 
 const { Header } = Layout;
@@ -141,9 +141,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           />
         </Tooltip>
 
-        <Tooltip title="Notificações">
-          <NotificationDropdown />
-        </Tooltip>
+        <NotificationDrawer />
 
       <div style={{display:'flex', justifyContent:'center', alignItems:'center' }}>
         <Button
