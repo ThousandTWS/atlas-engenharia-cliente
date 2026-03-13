@@ -1,37 +1,58 @@
-import { Breadcrumb, Row, Col } from 'antd';
-import { HomeOutlined } from '@ant-design/icons';
+import { Breadcrumb, Col, Row, Space, Tag, Typography } from 'antd';
+import { CalendarOutlined, HomeOutlined } from '@ant-design/icons';
 import { DashboardAreaCards } from '../components/DashboardAreaCards';
 import { DashboardTableAntd } from '../components/DashboardTableAntd';
 import { WelcomeBanner } from '../components/WelcomeBanner';
+import dayjs from 'dayjs';
+
+const { Title, Text } = Typography;
 
 
 export const HomePage = () => {
   return (
-    <div style={{ padding: '4px'}}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Dashboard' },
-          { title: 'Insights' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-      
-      <Row gutter={[24, 24]} align="middle" style={{ marginBottom: 24 }}>
-          <Col span={24}>
-              <WelcomeBanner />
-          </Col>
-      </Row>
-      
-      <div style={{ marginTop: '24px' }}>
-        <DashboardAreaCards />
-      </div>
+    <div className="atlas-dashboard-page">
+      <div className="atlas-dashboard-shell">
+        <div className="atlas-dashboard-topbar">
+          <div>
+            <Breadcrumb
+              items={[
+                { title: <HomeOutlined />, href: '/' },
+                { title: 'Dashboard' },
+                { title: 'Insights' },
+              ]}
+              style={{ marginBottom: 12 }}
+            />
 
-      <DashboardTableAntd />
-      
-      {/* Espaço para futuras seções do dashboard */}
-      <div style={{ marginTop: 32 }}>
-        {/* Gráficos, Tabelas de Atividade Recente, etc */}
+            <Space direction="vertical" size={4}>
+              <Title level={2} style={{ margin: 0 }}>
+                Central de performance
+              </Title>
+              <Text type="secondary">
+                Visão executiva com indicadores, evolução operacional e movimentações recentes.
+              </Text>
+            </Space>
+          </div>
+
+          <div className="atlas-dashboard-topbar-meta">
+            <Tag className="atlas-dashboard-meta-chip" bordered={false}>
+              <CalendarOutlined /> {dayjs().format('DD/MM/YYYY')}
+            </Tag>
+          </div>
+        </div>
+
+        <Row gutter={[20, 20]} align="middle" style={{ marginBottom: 12 }}>
+          <Col span={24}>
+            <WelcomeBanner />
+          </Col>
+        </Row>
+
+        <section className="atlas-dashboard-section" id="atlas-dashboard-charts">
+          <DashboardAreaCards />
+        </section>
+
+        <section className="atlas-dashboard-section">
+          <DashboardTableAntd />
+        </section>
       </div>
     </div>
   );

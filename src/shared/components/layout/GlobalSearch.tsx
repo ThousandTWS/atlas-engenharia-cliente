@@ -32,8 +32,8 @@ export const GlobalSearch: React.FC = () => {
 
   return (
     <AutoComplete
-      popupMatchSelectWidth={isLarge ? 385 : true}
-      style={{ width: isLarge ? 400 : '100%', maxWidth: isLarge ? 400 : 300 }}
+      popupMatchSelectWidth={isLarge ? 540 : true}
+      style={{ width: isLarge ? 560 : '100%', maxWidth: isLarge ? 560 : 320, flex: isLarge ? '1 1 560px' : undefined }}
       options={searchOptions.map(opt => ({ value: opt.value }))}
       onSelect={onSelect}
       filterOption={(inputValue, option) =>
@@ -47,7 +47,6 @@ export const GlobalSearch: React.FC = () => {
         suffix={<SearchOutlined style={{ color:isDarkMode ? '#fff' : 'rgba(0,0,0,0.45)' }} />}
         style={{
           marginTop: isLarge ? 12 : 10,
-          marginRight:12,
           borderRadius: '8px', 
           height: '40px', 
           width: '100%',

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Card, Col, Row, Space, Tag, Typography } from 'antd';
+import { Card, Col, DatePicker, Row, Segmented, Select, Space, Tag, Typography } from 'antd';
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
@@ -14,7 +14,12 @@ import {
   YAxis,
 } from 'recharts';
 import { useLayout } from '../layout/LayoutContext';
-import type { MetricSeriesPoint } from '../../utils/metricSeries';
+import type { Dayjs } from 'dayjs';
+import type {
+  MetricGroupingOption,
+  MetricPeriodOption,
+  MetricSeriesPoint,
+} from '../../utils/metricSeries';
 
 const { Text, Title } = Typography;
 
@@ -27,6 +32,15 @@ export interface MetricTrendCardDefinition {
   color: string;
   icon: React.ReactNode;
   inverseTrend?: boolean;
+  totalLabel?: string;
+  filters?: {
+    period: MetricPeriodOption;
+    grouping: MetricGroupingOption;
+    customRange?: [Dayjs | null, Dayjs | null] | null;
+    onPeriodChange: (value: MetricPeriodOption) => void;
+    onGroupingChange: (value: MetricGroupingOption) => void;
+    onCustomRangeChange: (value: [Dayjs | null, Dayjs | null] | null) => void;
+  };
 }
 
 interface MetricTrendCardsProps {
@@ -45,6 +59,21 @@ const formatMetric = (value: number, type: 'currency' | 'number') => {
 
   return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(value);
 };
+
+const periodOptions = [
+  { label: '1 mês', value: '1m' },
+  { label: '3 meses', value: '3m' },
+  { label: '6 meses', value: '6m' },
+  { label: '12 meses', value: '12m' },
+  { label: 'Personalizado', value: 'custom' },
+] satisfies { label: string; value: MetricPeriodOption }[];
+
+const groupingOptions = [
+  { label: 'Semanal', value: 'weekly' },
+  { label: 'Mensal', value: 'monthly' },
+  { label: 'Trimestral', value: 'quarterly' },
+  { label: 'Anual', value: 'yearly' },
+] satisfies { label: string; value: MetricGroupingOption }[];
 
 const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading: boolean }> = ({ definition, loading }) => {
   const { isDarkMode } = useLayout();
@@ -65,6 +94,7 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
 
   return (
     <Card
+      className="atlas-metric-trend-card"
       loading={loading}
       variant="borderless"
       style={{
@@ -101,9 +131,43 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
           </div>
         </div>
 
+        {definition.filters ? (
+          <Space direction="vertical" size={8} style={{ width: '100%' }}>
+            <Segmented
+              className="atlas-segmented-control"
+              block
+              options={periodOptions}
+              value={definition.filters.period}
+              onChange={(value) => definition.filters?.onPeriodChange(value as MetricPeriodOption)}
+            />
+
+            <Space wrap size={8} style={{ width: '100%' }}>
+              <Select
+                className="atlas-dashboard-filter-select"
+                value={definition.filters.grouping}
+                options={groupingOptions}
+                onChange={(value) => definition.filters?.onGroupingChange(value)}
+                style={{ minWidth: 160, flex: 1 }}
+              />
+
+              {definition.filters.period === 'custom' ? (
+                <DatePicker.RangePicker
+                  className="atlas-dashboard-filter-range"
+                  value={definition.filters.customRange?.[0] && definition.filters.customRange?.[1]
+                    ? [definition.filters.customRange[0], definition.filters.customRange[1]]
+                    : null}
+                  format="DD/MM/YYYY"
+                  onChange={(value) => definition.filters?.onCustomRangeChange(value ? [value[0], value[1]] : null)}
+                  style={{ flex: 1, minWidth: 220 }}
+                />
+              ) : null}
+            </Space>
+          </Space>
+        ) : null}
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 }}>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>Acumulado 6 meses</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{definition.totalLabel ?? 'Acumulado 6 meses'}</Text>
             <Title level={3} style={{ margin: 0, lineHeight: 1.2 }}>
               {formatMetric(total, definition.valueType)}
             </Title>
@@ -141,7 +205,7 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
               />
               <RechartsTooltip
                 formatter={(value: number) => formatMetric(Number(value), definition.valueType)}
-                labelFormatter={(label) => `Mês ${label}`}
+                labelFormatter={(label) => label}
                 contentStyle={{
                   background: isDarkMode ? '#0F172A' : '#FFFFFF',
                   border: isDarkMode ? '1px solid #253353' : '1px solid #e2e8f0',

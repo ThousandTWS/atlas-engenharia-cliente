@@ -21,8 +21,6 @@ import { NotificationDropdown } from './NotificationDropdown';
 import { useGlobalAiDrawer } from '../../../features/ai/context/GlobalAiDrawerContext';
 
 const { Header } = Layout;
-const { Title } = Typography;
-
 interface AppHeaderProps {
   collapsed: boolean;
   setCollapsed?: (collapsed: boolean) => void;
@@ -113,18 +111,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             style={{ fontSize: '16px', width: 40, height: 40 }}
           />
         )}
-        <Title 
-          level={isMobile ? 5 : 4} 
-          style={{ 
-            margin: 0, 
-            whiteSpace: 'nowrap', 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis',
-            display: isMobile && !collapsed ? 'none' : 'block'
+        <div
+          style={{
+            display: isMobile && !collapsed ? 'none' : 'block',
+            minWidth: isMobile ? 0 : 12,
           }}
-        >
-             Atlas Engenharia
-        </Title>
+        />
       </div>
 
       {!isMobile && <GlobalSearch />}

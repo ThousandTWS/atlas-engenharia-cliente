@@ -4,7 +4,7 @@ import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse,
 import { isCookieAuthMode } from '../config/auth';
 import { authSessionStore } from '../services/authSessionStore';
 
-export const API_BASE_URL = 'https://backend-atlas-engenharia-production-326c.up.railway.app/api';
+export const API_BASE_URL = 'http://localhost:8080/api';
 
 class ApiClient {
   private static instance: AxiosInstance;

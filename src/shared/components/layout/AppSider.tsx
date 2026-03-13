@@ -13,6 +13,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   TeamOutlined,
+  TableOutlined,
+  SolutionOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SidebarProfile } from './LayoutContext';
@@ -85,8 +87,8 @@ const SIDEBAR_UX_PROFILES: Record<SidebarProfile, SidebarUxProfile> = {
     iconSize: 24,
     itemFontSize: 18,
     groupTitleFontSize: 14,
-    logoExpandedWidth: 234,
-    logoCollapsedWidth: 120,
+    logoExpandedWidth: 194,
+    logoCollapsedWidth: 104,
     itemPaddingInline: 22,
   },
   corporate: {
@@ -130,6 +132,8 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
       '/custos-indiretos',
       '/gestao-de-clientes',
       '/gestao-ads',
+      '/acompanhamento-servicos',
+      '/cadastros',
       '/profile',
     ];
 
@@ -156,6 +160,16 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
           key: '/processos',
           icon: <AppstoreOutlined style={menuIconStyle} />,
           label: 'Processos Adm',
+        },
+        {
+          key: '/acompanhamento-servicos',
+          icon: <TableOutlined style={menuIconStyle} />,
+          label: 'Acompanhamento',
+        },
+        {
+          key: '/cadastros',
+          icon: <SolutionOutlined style={menuIconStyle} />,
+          label: 'Cadastros',
         },
       ]
     },

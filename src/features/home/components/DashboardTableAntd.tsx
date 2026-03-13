@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Card, Table, Tag, Typography, Input, App, type TableProps } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Typography, Input, App, Space, type TableProps } from 'antd';
+import { ClockCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { htmlToPlainText } from '../../../core/utils/text';
 import { useLiveSubscription } from '../../../core/realtime/liveProvider';
@@ -206,8 +206,21 @@ export const DashboardTableAntd: React.FC = () => {
       }}
       styles={{ body: { padding: '24px' } }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px'}}>
-        <Title level={4} style={{ margin: 0}}>Atividades Recentes</Title>
+      <div className="atlas-dashboard-table-header">
+        <div>
+          <Space direction="vertical" size={4}>
+            <Title level={4} style={{ margin: 0 }}>Atividades Recentes</Title>
+            <Typography.Text type="secondary">
+              Eventos consolidados das frentes operacionais, ordenados pelos registros mais recentes.
+            </Typography.Text>
+          </Space>
+        </div>
+
+        <div className="atlas-dashboard-table-tools">
+          <Tag className="atlas-dashboard-meta-chip" bordered={false}>
+            <ClockCircleOutlined /> {filteredData.length} registros visíveis
+          </Tag>
+
         <Input
           className="recent-activities-search"
           placeholder="Pesquisar..."
@@ -216,6 +229,7 @@ export const DashboardTableAntd: React.FC = () => {
           allowClear
           onChange={(e) => setSearchText(e.target.value)}
         />
+        </div>
       </div>
 
       <Table

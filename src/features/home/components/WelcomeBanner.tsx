@@ -1,30 +1,38 @@
 import React from 'react';
-import { Card } from 'antd';
-import {useLayout} from '../../../shared/components/layout/LayoutContext.tsx'
+import { Card, Image } from 'antd';
+import { useLayout } from '../../../shared/components/layout/LayoutContext.tsx';
 
 export const WelcomeBanner: React.FC = () => {
+  const { isDarkMode } = useLayout();
 
-    const {isDarkMode} = useLayout();
   return (
     <Card
+      className="atlas-dashboard-brand-banner"
       variant="borderless"
       style={{
-        background: isDarkMode ? 'linear-gradient(135deg, #2A3A5C 0%, #1E2A47 50%, #141B2D 100%)' : '#FFF',
-        borderRadius: '16px',
+        background: isDarkMode
+          ? 'linear-gradient(135deg, #0d1b31 0%, #102746 55%, #153760 100%)'
+          : 'linear-gradient(135deg, #0f2743 0%, #173a63 55%, #28558b 100%)',
+        borderRadius: '24px',
         overflow: 'hidden',
         position: 'relative',
-        boxShadow: isDarkMode ?  '0 10px 24px #0000001A' : '0 10px 24px #3B82F61A',
+        boxShadow: isDarkMode ? '0 24px 60px #02061755' : '0 24px 60px #0f172a14',
         width: '100%',
-        display: 'flex',
-          justifyContent: 'center',
-        alignItems: 'center',
-        padding: '12px'
+        border: isDarkMode ? '1px solid #28446d' : '1px solid #295487',
       }}
+      styles={{ body: { padding: 0 } }}
     >
-      <div  style={{ position: 'relative', zIndex: 1}}>
+      <div className="atlas-dashboard-brand-glow atlas-dashboard-brand-glow-left" />
+      <div className="atlas-dashboard-brand-glow atlas-dashboard-brand-glow-right" />
+
+      <div className="atlas-dashboard-brand-banner-inner">
+        <Image
+          preview={false}
+          src={isDarkMode ? '/White_Atlas_Logo.svg' : '/White_Atlas_Logo.svg'}
+          alt="Atlas Engenharia"
+          className="atlas-dashboard-brand-logo"
+        />
       </div>
-
     </Card>
-
   );
 };

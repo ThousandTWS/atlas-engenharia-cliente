@@ -25,6 +25,11 @@ import {GestaoClientesPage} from "../../features/gestao-de-clientes/page/GestaoD
 import { ClienteFormPage } from "../../features/gestao-de-clientes/page/ClienteFormPage.tsx";
 import {GestaoAdsPage} from "../../features/gestao-ads/pages/GestaoAdsPage.tsx";
 import { GeminiChatPage } from '../../features/gestao-ads/pages/GeminiChatPage';
+import { ServicesTrackingPage } from '../../features/services/pages/ServicesTrackingPage';
+import { CadastrosHubPage } from '../../features/cadastros/pages/CadastrosHubPage';
+import { BudgetRegisterPage } from '../../features/cadastros/pages/BudgetRegisterPage';
+import { ProvidersRegisterPage } from '../../features/cadastros/pages/ProvidersRegisterPage';
+import { ServiceClientRegisterPage } from '../../features/cadastros/pages/ServiceClientRegisterPage';
 
 export const router = createBrowserRouter([
   {
@@ -38,6 +43,26 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />,
+      },
+      {
+        path: 'acompanhamento-servicos',
+        element: <ServicesTrackingPage />,
+      },
+      {
+        path: 'cadastros',
+        element: <CadastrosHubPage />,
+      },
+      {
+        path: 'cadastros/orcamentos',
+        element: <BudgetRegisterPage />,
+      },
+      {
+        path: 'cadastros/servicos',
+        element: <ServiceClientRegisterPage />,
+      },
+      {
+        path: 'cadastros/prestadores',
+        element: <ProvidersRegisterPage />,
       },
       {
         path: 'profile',
