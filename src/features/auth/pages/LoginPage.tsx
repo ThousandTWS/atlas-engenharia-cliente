@@ -20,7 +20,7 @@ export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = React.useRef<GoogleRecaptchaHandle>(null);
-  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() ?? '6LcZCHgsAAAAADyLoe3Gc8X2DEJBWk1l_HMKEohX';
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() ?? '6LduFpksAAAAAKykJOtL_V6ALwQ7mSn0cTd4usE6';
   const isRecaptchaConfigured = Boolean(recaptchaSiteKey);
   const handleCaptchaChange = React.useCallback((token: string | null) => {
     setCaptchaToken(token);
