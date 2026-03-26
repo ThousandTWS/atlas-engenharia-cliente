@@ -1,4 +1,4 @@
-# API Faltante: `acompanhamento-servicos`
+# API: `acompanhamento-servicos`
 
 Este documento descreve a API de backend necessária para suportar corretamente a tela `acompanhamento-servicos`.
 
