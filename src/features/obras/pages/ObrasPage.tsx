@@ -15,11 +15,12 @@ import {
   MetricTrendCards,
   type MetricTrendCardDefinition,
 } from "../../../shared/components/charts/MetricTrendCards";
+import { useMetricCardFilters } from "../../../shared/hooks/useMetricCardFilters";
 import { obrasService } from "../../../core/services/obrasService";
 import type { Obra } from "../../../core/services/obrasService";
 import { useLayout } from "../../../shared/components/layout/LayoutContext";
 import {
-  buildMonthlySeries,
+  buildFilteredSeries,
   pickNumericValue,
   toSeriesRecords,
 } from "../../../shared/utils/metricSeries";
@@ -40,6 +41,19 @@ export const ObrasPage: React.FC = () => {
   });
   const [filters, setFilters] = useState<any>({});
 
+  const cardIds = useMemo(() => ([
+    "obras-processos",
+    "obras-faturamento",
+    "obras-custos",
+  ] as const), []);
+
+  const {
+    filters: chartFilters,
+    setPeriod,
+    setGrouping,
+    setCustomRange,
+  } = useMetricCardFilters(cardIds);
+
   const trendCards = useMemo<MetricTrendCardDefinition[]>(() => {
     const records = toSeriesRecords(obras);
 
@@ -49,39 +63,59 @@ export const ObrasPage: React.FC = () => {
         title: "Entradas de Obras",
         subtitle: "Novos contratos por mês",
         valueType: "number",
-        series: buildMonthlySeries(records, ["dataContrato", "data"], () => 1),
+        series: buildFilteredSeries(records, ["dataContrato", "data"], () => 1, chartFilters["obras-processos"]),
         color: "#3B82F6",
         icon: <FileTextOutlined />,
+        filters: {
+          ...chartFilters["obras-processos"],
+          onPeriodChange: (value) => setPeriod("obras-processos", value),
+          onGroupingChange: (value) => setGrouping("obras-processos", value),
+          onCustomRangeChange: (value) => setCustomRange("obras-processos", value),
+        },
       },
       {
         id: "obras-faturamento",
         title: "Volume Contratado",
         subtitle: "Total mensal em contratos",
         valueType: "currency",
-        series: buildMonthlySeries(
+        series: buildFilteredSeries(
           records,
           ["dataContrato", "data"],
           (record) => pickNumericValue(record, ["valorContrato", "valor"]),
+          chartFilters["obras-faturamento"],
         ),
         color: "#10B981",
         icon: <DollarCircleOutlined />,
+        filters: {
+          ...chartFilters["obras-faturamento"],
+          onPeriodChange: (value) => setPeriod("obras-faturamento", value),
+          onGroupingChange: (value) => setGrouping("obras-faturamento", value),
+          onCustomRangeChange: (value) => setCustomRange("obras-faturamento", value),
+        },
       },
       {
         id: "obras-custos",
         title: "Custos de Obras",
         subtitle: "Custos mensais consolidados",
         valueType: "currency",
-        series: buildMonthlySeries(
+        series: buildFilteredSeries(
           records,
           ["dataContrato", "data"],
           (record) => pickNumericValue(record, ["custos", "valor"]),
+          chartFilters["obras-custos"],
         ),
         color: "#F59E0B",
         icon: <WalletOutlined />,
         inverseTrend: true,
+        filters: {
+          ...chartFilters["obras-custos"],
+          onPeriodChange: (value) => setPeriod("obras-custos", value),
+          onGroupingChange: (value) => setGrouping("obras-custos", value),
+          onCustomRangeChange: (value) => setCustomRange("obras-custos", value),
+        },
       },
     ];
-  }, [obras]);
+  }, [chartFilters, obras, setCustomRange, setGrouping, setPeriod]);
 
   const fetchObras = useCallback(
     async (

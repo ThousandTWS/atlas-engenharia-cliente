@@ -15,6 +15,11 @@ export interface MetricSeriesFilters {
   customRange?: [Dayjs | null, Dayjs | null] | null;
 }
 
+export const createDefaultCustomRange = (): [Dayjs, Dayjs] => ([
+  dayjs().subtract(29, 'day').startOf('day'),
+  dayjs().endOf('day'),
+]);
+
 const buildMonthBuckets = (months: number) =>
   Array.from({ length: months }, (_, index) => dayjs().subtract(months - 1 - index, 'month').startOf('month'));
 

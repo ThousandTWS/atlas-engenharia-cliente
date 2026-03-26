@@ -393,12 +393,27 @@ body {
 }
 
 .atlas-dashboard-filter-select .ant-select-selector {
-  min-height: 38px !important;
+  min-height: 34px !important;
 }
 
 .atlas-dashboard-filter-range.ant-picker {
-  min-height: 38px;
+  min-height: 34px;
   background: #fff;
+}
+
+.atlas-dashboard-chart-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.atlas-dashboard-chart-filters .atlas-dashboard-filter-select {
+  flex: 1 1 160px;
+}
+
+.atlas-dashboard-chart-filters .atlas-dashboard-filter-range {
+  flex: 2 1 260px;
 }
 
 .dark .atlas-dashboard-filter-select .ant-select-selector,
@@ -416,7 +431,7 @@ body {
 }
 
 .dark .atlas-overview-activity-toolbar {
-  background: #0f1b2e;
+  background: transparent;
   border-color: #28446d;
 }
 
@@ -506,11 +521,11 @@ body {
 }
 
 .atlas-overview-activity-toolbar {
-  padding: 12px;
+  padding: 10px;
   border-radius: 12px;
-  background: #f8fbff;
+  background: transparent;
   border: 1px solid #e2e8f0;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .atlas-overview-chart-area {

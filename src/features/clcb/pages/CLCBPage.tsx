@@ -16,10 +16,11 @@ import {
   MetricTrendCards,
   type MetricTrendCardDefinition,
 } from "../../../shared/components/charts/MetricTrendCards";
+import { useMetricCardFilters } from "../../../shared/hooks/useMetricCardFilters";
 import { clcbService } from "../../../core/services/genericService";
 import { useLayout } from "../../../shared/components/layout/LayoutContext";
 import {
-  buildMonthlySeries,
+  buildFilteredSeries,
   pickNumericValue,
   toSeriesRecords,
 } from "../../../shared/utils/metricSeries";
@@ -33,6 +34,14 @@ export const CLCBPage: React.FC = () => {
   const [clcbs, setClcbs] = useState<CLCB[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const cardIds = useMemo(() => ([
+    "clcb-processos",
+    "clcb-faturamento",
+    "clcb-custos",
+  ] as const), []);
+
+  const { filters: chartFilters, setPeriod, setGrouping, setCustomRange } = useMetricCardFilters(cardIds);
+
   const trendCards = useMemo<MetricTrendCardDefinition[]>(() => {
     const records = toSeriesRecords(clcbs);
 
@@ -42,39 +51,59 @@ export const CLCBPage: React.FC = () => {
         title: "Entradas CLCB",
         subtitle: "Novos processos por mês",
         valueType: "number",
-        series: buildMonthlySeries(records, ["dataContrato", "data"], () => 1),
+        series: buildFilteredSeries(records, ["dataContrato", "data"], () => 1, chartFilters["clcb-processos"]),
         color: "#3B82F6",
         icon: <FileTextOutlined />,
+        filters: {
+          ...chartFilters["clcb-processos"],
+          onPeriodChange: (value) => setPeriod("clcb-processos", value),
+          onGroupingChange: (value) => setGrouping("clcb-processos", value),
+          onCustomRangeChange: (value) => setCustomRange("clcb-processos", value),
+        },
       },
       {
         id: "clcb-faturamento",
         title: "Volume Contratado",
         subtitle: "Total mensal em contratos",
         valueType: "currency",
-        series: buildMonthlySeries(
+        series: buildFilteredSeries(
           records,
           ["dataContrato", "data"],
           (record) => pickNumericValue(record, ["valorContrato", "valor"]),
+          chartFilters["clcb-faturamento"],
         ),
         color: "#10B981",
         icon: <DollarCircleOutlined />,
+        filters: {
+          ...chartFilters["clcb-faturamento"],
+          onPeriodChange: (value) => setPeriod("clcb-faturamento", value),
+          onGroupingChange: (value) => setGrouping("clcb-faturamento", value),
+          onCustomRangeChange: (value) => setCustomRange("clcb-faturamento", value),
+        },
       },
       {
         id: "clcb-custos",
         title: "Custos Operacionais",
         subtitle: "Custos mensais por processo",
         valueType: "currency",
-        series: buildMonthlySeries(
+        series: buildFilteredSeries(
           records,
           ["dataContrato", "data"],
           (record) => pickNumericValue(record, ["custos", "valor"]),
+          chartFilters["clcb-custos"],
         ),
         color: "#F59E0B",
         icon: <WalletOutlined />,
         inverseTrend: true,
+        filters: {
+          ...chartFilters["clcb-custos"],
+          onPeriodChange: (value) => setPeriod("clcb-custos", value),
+          onGroupingChange: (value) => setGrouping("clcb-custos", value),
+          onCustomRangeChange: (value) => setCustomRange("clcb-custos", value),
+        },
       },
     ];
-  }, [clcbs]);
+  }, [chartFilters, clcbs, setCustomRange, setGrouping, setPeriod]);
 
   const fetchCLCBs = useCallback(async () => {
     setLoading(true);

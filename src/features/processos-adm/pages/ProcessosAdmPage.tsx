@@ -18,8 +18,9 @@ import {
   MetricTrendCards,
   type MetricTrendCardDefinition,
 } from "../../../shared/components/charts/MetricTrendCards";
+import { useMetricCardFilters } from "../../../shared/hooks/useMetricCardFilters";
 import {
-  buildMonthlySeries,
+  buildFilteredSeries,
   pickNumericValue,
   toSeriesRecords,
 } from "../../../shared/utils/metricSeries";
@@ -33,6 +34,14 @@ export const ProcessosAdmPage: React.FC = () => {
   const [processos, setProcessos] = useState<ProcessoAdm[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const cardIds = useMemo(() => ([
+    "processos-adm-entradas",
+    "processos-adm-volume",
+    "processos-adm-custos",
+  ] as const), []);
+
+  const { filters: chartFilters, setPeriod, setGrouping, setCustomRange } = useMetricCardFilters(cardIds);
+
   const trendCards = useMemo<MetricTrendCardDefinition[]>(() => {
     const records = toSeriesRecords(processos);
 
@@ -42,39 +51,59 @@ export const ProcessosAdmPage: React.FC = () => {
         title: "Entradas de Processos",
         subtitle: "Novos processos por mês",
         valueType: "number",
-        series: buildMonthlySeries(records, ["dataContrato", "data"], () => 1),
+        series: buildFilteredSeries(records, ["dataContrato", "data"], () => 1, chartFilters["processos-adm-entradas"]),
         color: "#3B82F6",
         icon: <FileTextOutlined />,
+        filters: {
+          ...chartFilters["processos-adm-entradas"],
+          onPeriodChange: (value) => setPeriod("processos-adm-entradas", value),
+          onGroupingChange: (value) => setGrouping("processos-adm-entradas", value),
+          onCustomRangeChange: (value) => setCustomRange("processos-adm-entradas", value),
+        },
       },
       {
         id: "processos-adm-volume",
         title: "Faturamento",
         subtitle: "Receita mensal consolidada",
         valueType: "currency",
-        series: buildMonthlySeries(
+        series: buildFilteredSeries(
           records,
           ["dataContrato", "data"],
           (record) => pickNumericValue(record, ["valorContrato", "valor"]),
+          chartFilters["processos-adm-volume"],
         ),
         color: "#10B981",
         icon: <DollarCircleOutlined />,
+        filters: {
+          ...chartFilters["processos-adm-volume"],
+          onPeriodChange: (value) => setPeriod("processos-adm-volume", value),
+          onGroupingChange: (value) => setGrouping("processos-adm-volume", value),
+          onCustomRangeChange: (value) => setCustomRange("processos-adm-volume", value),
+        },
       },
       {
         id: "processos-adm-custos",
         title: "Custos Indiretos",
         subtitle: "Saídas mensais consolidadas",
         valueType: "currency",
-        series: buildMonthlySeries(
+        series: buildFilteredSeries(
           records,
           ["dataContrato", "data"],
           (record) => pickNumericValue(record, ["custos", "valor"]),
+          chartFilters["processos-adm-custos"],
         ),
         color: "#F59E0B",
         icon: <WalletOutlined />,
         inverseTrend: true,
+        filters: {
+          ...chartFilters["processos-adm-custos"],
+          onPeriodChange: (value) => setPeriod("processos-adm-custos", value),
+          onGroupingChange: (value) => setGrouping("processos-adm-custos", value),
+          onCustomRangeChange: (value) => setCustomRange("processos-adm-custos", value),
+        },
       },
     ];
-  }, [processos]);
+  }, [chartFilters, processos, setCustomRange, setGrouping, setPeriod]);
 
   const fetchProcessos = useCallback(async () => {
     setLoading(true);

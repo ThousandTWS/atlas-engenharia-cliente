@@ -16,10 +16,11 @@ import {
   MetricTrendCards,
   type MetricTrendCardDefinition,
 } from "../../../shared/components/charts/MetricTrendCards";
+import { useMetricCardFilters } from "../../../shared/hooks/useMetricCardFilters";
 import { avcbService } from "../../../core/services/genericService";
 import { useLayout } from "../../../shared/components/layout/LayoutContext";
 import {
-  buildMonthlySeries,
+  buildFilteredSeries,
   pickNumericValue,
   toSeriesRecords,
 } from "../../../shared/utils/metricSeries";
@@ -33,6 +34,14 @@ export const AVCBPage: React.FC = () => {
   const [avcbs, setAvcbs] = useState<AVCB[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const cardIds = useMemo(() => ([
+    "avcb-processos",
+    "avcb-faturamento",
+    "avcb-custos",
+  ] as const), []);
+
+  const { filters: chartFilters, setPeriod, setGrouping, setCustomRange } = useMetricCardFilters(cardIds);
+
   const trendCards = useMemo<MetricTrendCardDefinition[]>(() => {
     const records = toSeriesRecords(avcbs);
 
@@ -42,39 +51,59 @@ export const AVCBPage: React.FC = () => {
         title: "Entradas AVCB",
         subtitle: "Novos processos por mês",
         valueType: "number",
-        series: buildMonthlySeries(records, ["dataContrato", "data"], () => 1),
+        series: buildFilteredSeries(records, ["dataContrato", "data"], () => 1, chartFilters["avcb-processos"]),
         color: "#3B82F6",
         icon: <FileTextOutlined />,
+        filters: {
+          ...chartFilters["avcb-processos"],
+          onPeriodChange: (value) => setPeriod("avcb-processos", value),
+          onGroupingChange: (value) => setGrouping("avcb-processos", value),
+          onCustomRangeChange: (value) => setCustomRange("avcb-processos", value),
+        },
       },
       {
         id: "avcb-faturamento",
         title: "Volume Contratado",
         subtitle: "Total mensal em contratos",
         valueType: "currency",
-        series: buildMonthlySeries(
+        series: buildFilteredSeries(
           records,
           ["dataContrato", "data"],
           (record) => pickNumericValue(record, ["valorContrato", "valor"]),
+          chartFilters["avcb-faturamento"],
         ),
         color: "#10B981",
         icon: <DollarCircleOutlined />,
+        filters: {
+          ...chartFilters["avcb-faturamento"],
+          onPeriodChange: (value) => setPeriod("avcb-faturamento", value),
+          onGroupingChange: (value) => setGrouping("avcb-faturamento", value),
+          onCustomRangeChange: (value) => setCustomRange("avcb-faturamento", value),
+        },
       },
       {
         id: "avcb-custos",
         title: "Custos Operacionais",
         subtitle: "Custos mensais por processo",
         valueType: "currency",
-        series: buildMonthlySeries(
+        series: buildFilteredSeries(
           records,
           ["dataContrato", "data"],
           (record) => pickNumericValue(record, ["custos", "valor"]),
+          chartFilters["avcb-custos"],
         ),
         color: "#F59E0B",
         icon: <WalletOutlined />,
         inverseTrend: true,
+        filters: {
+          ...chartFilters["avcb-custos"],
+          onPeriodChange: (value) => setPeriod("avcb-custos", value),
+          onGroupingChange: (value) => setGrouping("avcb-custos", value),
+          onCustomRangeChange: (value) => setCustomRange("avcb-custos", value),
+        },
       },
     ];
-  }, [avcbs]);
+  }, [avcbs, chartFilters, setCustomRange, setGrouping, setPeriod]);
 
   const fetchAVCBs = useCallback(async () => {
     setLoading(true);
@@ -177,7 +206,6 @@ export const AVCBPage: React.FC = () => {
     </div>
   );
 };
-
 
 
 

@@ -12,6 +12,7 @@ import { AppFooter } from "./shared/components/layout/AppFooter";
 import { GlobalAiDrawerProvider } from "./features/ai/context/GlobalAiDrawerContext";
 import { GlobalAiAssistantDrawer } from "./features/ai/components/GlobalAiAssistantDrawer";
 import "./shared/components/layout/theme/token.json";
+
 const { Content } = Layout;
 
 function AppLayoutStructure() {

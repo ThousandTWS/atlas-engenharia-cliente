@@ -20,9 +20,10 @@ import { CustosIndiretosTable } from '../components/CustosIndiretosTable';
 import type { CustoIndireto } from '../components/CustosIndiretosTable';
 import { CustosIndiretosFilters } from '../components/CustosIndiretosFilters';
 import { MetricTrendCards, type MetricTrendCardDefinition } from '../../../shared/components/charts/MetricTrendCards';
+import { useMetricCardFilters } from '../../../shared/hooks/useMetricCardFilters';
 import { custosIndiretosService } from '../../../core/services/genericService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
-import { buildMonthlySeries, pickNumericValue, toSeriesRecords } from '../../../shared/utils/metricSeries';
+import { buildFilteredSeries, pickNumericValue, toSeriesRecords } from '../../../shared/utils/metricSeries';
 
 const { Title, Text } = Typography;
 
@@ -40,6 +41,19 @@ export const CustosIndiretosPage: React.FC = () => {
   });
   const [filters, setFilters] = useState<any>({});
 
+  const cardIds = useMemo(() => ([
+    'custos-indiretos-entradas',
+    'custos-indiretos-total',
+    'custos-indiretos-admin',
+  ] as const), []);
+
+  const {
+    filters: chartFilters,
+    setPeriod,
+    setGrouping,
+    setCustomRange,
+  } = useMetricCardFilters(cardIds);
+
   const trendCards = useMemo<MetricTrendCardDefinition[]>(() => {
     const records = toSeriesRecords(custos);
 
@@ -49,35 +63,63 @@ export const CustosIndiretosPage: React.FC = () => {
         title: 'Entradas de Custos',
         subtitle: 'Lançamentos mensais registrados',
         valueType: 'number',
-        series: buildMonthlySeries(records, ['data', 'dataContrato'], () => 1),
+        series: buildFilteredSeries(records, ['data', 'dataContrato'], () => 1, chartFilters['custos-indiretos-entradas']),
         color: '#3B82F6',
         icon: <FileTextOutlined />,
+        filters: {
+          ...chartFilters['custos-indiretos-entradas'],
+          onPeriodChange: (value) => setPeriod('custos-indiretos-entradas', value),
+          onGroupingChange: (value) => setGrouping('custos-indiretos-entradas', value),
+          onCustomRangeChange: (value) => setCustomRange('custos-indiretos-entradas', value),
+        },
       },
       {
         id: 'custos-indiretos-total',
         title: 'Custos Totais',
         subtitle: 'Saídas mensais consolidadas',
         valueType: 'currency',
-        series: buildMonthlySeries(records, ['data', 'dataContrato'], (record) => pickNumericValue(record, ['valor', 'custos'])),
+        series: buildFilteredSeries(
+          records,
+          ['data', 'dataContrato'],
+          (record) => pickNumericValue(record, ['valor', 'custos']),
+          chartFilters['custos-indiretos-total'],
+        ),
         color: '#F59E0B',
         icon: <WalletOutlined />,
         inverseTrend: true,
+        filters: {
+          ...chartFilters['custos-indiretos-total'],
+          onPeriodChange: (value) => setPeriod('custos-indiretos-total', value),
+          onGroupingChange: (value) => setGrouping('custos-indiretos-total', value),
+          onCustomRangeChange: (value) => setCustomRange('custos-indiretos-total', value),
+        },
       },
       {
         id: 'custos-indiretos-admin',
         title: 'Custos Administrativos',
         subtitle: 'Despesas administrativas por mês',
         valueType: 'currency',
-        series: buildMonthlySeries(records, ['data', 'dataContrato'], (record) => {
-          const categoria = String(record.categoria ?? '').toLowerCase();
-          return categoria.includes('administr') ? pickNumericValue(record, ['valor', 'custos']) : 0;
-        }),
+        series: buildFilteredSeries(
+          records,
+          ['data', 'dataContrato'],
+          (record) => {
+            const categoria = String(record.categoria ?? '').toLowerCase();
+            return categoria.includes('administr') ? pickNumericValue(record, ['valor', 'custos']) : 0;
+          },
+          chartFilters['custos-indiretos-admin'],
+        ),
         color: '#10B981',
         icon: <DollarCircleOutlined />,
         inverseTrend: true,
+        filters: {
+          ...chartFilters['custos-indiretos-admin'],
+          onPeriodChange: (value) => setPeriod('custos-indiretos-admin', value),
+          onGroupingChange: (value) => setGrouping('custos-indiretos-admin', value),
+          onCustomRangeChange: (value) => setCustomRange('custos-indiretos-admin', value),
+        },
       },
     ];
-  }, [custos]);
+  }, [chartFilters, custos, setCustomRange, setGrouping, setPeriod]);
 
   const fetchCustos = useCallback(async (page = 1, pageSize = DEFAULT_PAGE_SIZE, currentFilters: any = {}) => {
     setLoading(true);

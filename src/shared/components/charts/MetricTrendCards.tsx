@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Card, Col, DatePicker, Row, Segmented, Select, Space, Tag, Typography } from 'antd';
+import { Card, Col, DatePicker, Row, Select, Space, Tag, Typography } from 'antd';
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
@@ -75,6 +75,23 @@ const groupingOptions = [
   { label: 'Anual', value: 'yearly' },
 ] satisfies { label: string; value: MetricGroupingOption }[];
 
+const getDefaultTotalLabel = (period?: MetricPeriodOption) => {
+  switch (period) {
+    case '1m':
+      return 'Acumulado 1 mês';
+    case '3m':
+      return 'Acumulado 3 meses';
+    case '6m':
+      return 'Acumulado 6 meses';
+    case '12m':
+      return 'Acumulado 12 meses';
+    case 'custom':
+      return 'Acumulado no período';
+    default:
+      return 'Acumulado 6 meses';
+  }
+};
+
 const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading: boolean }> = ({ definition, loading }) => {
   const { isDarkMode } = useLayout();
 
@@ -132,42 +149,42 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
         </div>
 
         {definition.filters ? (
-          <Space direction="vertical" size={8} style={{ width: '100%' }}>
-            <Segmented
-              className="atlas-segmented-control"
-              block
-              options={periodOptions}
+          <div className="atlas-dashboard-chart-filters">
+            <Select
+              className="atlas-dashboard-filter-select atlas-dashboard-filter-select-period"
               value={definition.filters.period}
-              onChange={(value) => definition.filters?.onPeriodChange(value as MetricPeriodOption)}
+              options={periodOptions}
+              onChange={(value) => definition.filters?.onPeriodChange(value)}
+              style={{ minWidth: 140 }}
             />
 
-            <Space wrap size={8} style={{ width: '100%' }}>
-              <Select
-                className="atlas-dashboard-filter-select"
-                value={definition.filters.grouping}
-                options={groupingOptions}
-                onChange={(value) => definition.filters?.onGroupingChange(value)}
-                style={{ minWidth: 160, flex: 1 }}
-              />
+            <Select
+              className="atlas-dashboard-filter-select"
+              value={definition.filters.grouping}
+              options={groupingOptions}
+              onChange={(value) => definition.filters?.onGroupingChange(value)}
+              style={{ minWidth: 140 }}
+            />
 
-              {definition.filters.period === 'custom' ? (
-                <DatePicker.RangePicker
-                  className="atlas-dashboard-filter-range"
-                  value={definition.filters.customRange?.[0] && definition.filters.customRange?.[1]
-                    ? [definition.filters.customRange[0], definition.filters.customRange[1]]
-                    : null}
-                  format="DD/MM/YYYY"
-                  onChange={(value) => definition.filters?.onCustomRangeChange(value ? [value[0], value[1]] : null)}
-                  style={{ flex: 1, minWidth: 220 }}
-                />
-              ) : null}
-            </Space>
-          </Space>
+            {definition.filters.period === 'custom' ? (
+              <DatePicker.RangePicker
+                className="atlas-dashboard-filter-range"
+                value={definition.filters.customRange?.[0] && definition.filters.customRange?.[1]
+                  ? [definition.filters.customRange[0], definition.filters.customRange[1]]
+                  : null}
+                format="DD/MM/YYYY"
+                onChange={(value) => definition.filters?.onCustomRangeChange(value ? [value[0], value[1]] : null)}
+                style={{ minWidth: 220 }}
+              />
+            ) : null}
+          </div>
         ) : null}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 }}>
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>{definition.totalLabel ?? 'Acumulado 6 meses'}</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {definition.totalLabel ?? getDefaultTotalLabel(definition.filters?.period)}
+            </Text>
             <Title level={3} style={{ margin: 0, lineHeight: 1.2 }}>
               {formatMetric(total, definition.valueType)}
             </Title>
