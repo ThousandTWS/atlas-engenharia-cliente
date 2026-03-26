@@ -33,6 +33,7 @@ import type { User } from '../../../core/services/authService';
 import apiClient from '../../../core/api/apiClient';
 import { API_BASE_URL } from '../../../core/api/apiClient';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
+import { normalizePhoneBR } from '../../../shared/utils/inputFormat';
 
 const { Title, Text } = Typography;
 
@@ -209,7 +210,7 @@ export const ProfilePage: React.FC = () => {
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
-              <Form.Item name="telefone" label="Telefone">
+              <Form.Item name="telefone" label="Telefone" normalize={normalizePhoneBR}>
                 <Input
                   size="large"
                   className="atlas-form-input"

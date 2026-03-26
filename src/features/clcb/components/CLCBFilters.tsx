@@ -64,11 +64,6 @@ export const CLCBFilters: React.FC<CLCBFiltersProps> = ({ onSearch, onClear }) =
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Form.Item name="nf" label="Nota Fiscal">
-              <Input style={getFilterControlStyle(isDarkMode)} placeholder="Número da NF" allowClear />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
             <Form.Item  name="periodo" label="Período do Contrato">
               <RangePicker style={getFilterControlStyle(isDarkMode, '100%')} format="DD/MM/YYYY" />
             </Form.Item>

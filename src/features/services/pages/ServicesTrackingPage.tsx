@@ -23,6 +23,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
+  CalendarOutlined,
   EditOutlined,
   FilePdfOutlined,
   FolderOpenOutlined,
@@ -33,6 +34,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
+import { formatPhoneBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
 import {
   servicesTrackingApi,
   type ServiceHistoryEntry,
@@ -75,6 +77,49 @@ interface InlineEditState {
   value: string;
 }
 
+interface InspectionSchedule {
+  start: string;
+  end: string;
+  location: string;
+}
+
+type InspectionScheduleMap = Record<string, InspectionSchedule>;
+
+const INSPECTION_STORAGE_KEY = 'atlas.service_tracking.inspection_schedule';
+
+const readInspectionScheduleMap = (): InspectionScheduleMap => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(INSPECTION_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as InspectionScheduleMap) : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeInspectionScheduleMap = (value: InspectionScheduleMap) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(INSPECTION_STORAGE_KEY, JSON.stringify(value));
+};
+
+const buildGoogleCalendarUrl = (params: { title: string; details?: string; location?: string; start: dayjs.Dayjs; end: dayjs.Dayjs }) => {
+  const timeZone = 'America/Sao_Paulo';
+  const start = params.start.format('YYYYMMDDTHHmmss');
+  const end = params.end.format('YYYYMMDDTHHmmss');
+
+  const query = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: params.title,
+    dates: `${start}/${end}`,
+    ctz: timeZone,
+  });
+
+  if (params.details) query.set('details', params.details);
+  if (params.location) query.set('location', params.location);
+
+  return `https://calendar.google.com/calendar/render?${query.toString()}`;
+};
+
 const SERVICE_TYPE_OPTIONS = [
   { label: 'AVCB', value: 'AVCB' },
   { label: 'CLCB', value: 'CLCB' },
@@ -106,7 +151,7 @@ const mapServiceRow = (item: TrackingServiceDto): UnifiedServiceRow => ({
   serviceType: item.tipoServico,
   code: item.codigo,
   clientName: item.nomeCliente || 'Nao informado',
-  phone: item.telefone || '-',
+  phone: formatPhoneBR(item.telefone || '-') || '-',
   subtype: item.subtipo || DEFAULT_SUBTYPE_OPTIONS[item.tipoServico][0] || '',
   situation: item.situacao,
   situationDurationDays: Math.max(Number(item.tempoNaSituacao || 0), 0),
@@ -167,6 +212,15 @@ export const ServicesTrackingPage: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inlineEdit, setInlineEdit] = useState<InlineEditState | null>(null);
   const [drawerForm] = Form.useForm();
+  const [inspectionScheduleMap, setInspectionScheduleMap] = useState<InspectionScheduleMap>(() => readInspectionScheduleMap());
+  const [inspectionModalOpen, setInspectionModalOpen] = useState(false);
+  const [inspectionDraftStart, setInspectionDraftStart] = useState<dayjs.Dayjs | null>(null);
+  const [inspectionDraftLocation, setInspectionDraftLocation] = useState('');
+  const [lastDrawerSituation, setLastDrawerSituation] = useState('');
+
+  const drawerSituation = Form.useWatch<string>('situation', drawerForm) || '';
+
+  const isInspectionSituation = (value: string) => value.toLowerCase().includes('vistoria');
 
   const loadSituationConfig = useCallback(async () => {
     const responses = await Promise.all(
@@ -200,6 +254,7 @@ export const ServicesTrackingPage: React.FC = () => {
   useEffect(() => {
     if (!drawerRow) {
       drawerForm.resetFields();
+      setLastDrawerSituation('');
       return;
     }
 
@@ -207,7 +262,93 @@ export const ServicesTrackingPage: React.FC = () => {
       ...drawerRow,
       contractDate: drawerRow.contractDate ? dayjs(drawerRow.contractDate) : null,
     });
+
+    setLastDrawerSituation(drawerRow.situation || '');
   }, [drawerForm, drawerRow]);
+
+  useEffect(() => {
+    if (!drawerRow) return;
+    if (!drawerSituation) return;
+
+    const previousWasInspection = isInspectionSituation(lastDrawerSituation);
+    const currentIsInspection = isInspectionSituation(drawerSituation);
+
+    if (!previousWasInspection && currentIsInspection && !inspectionScheduleMap[drawerRow.key]) {
+      setInspectionDraftStart(dayjs().add(1, 'day').hour(9).minute(0).second(0));
+      setInspectionDraftLocation('');
+      setInspectionModalOpen(true);
+    }
+
+    setLastDrawerSituation(drawerSituation);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawerRow?.key, drawerSituation]);
+
+  const openInspectionOnGoogleCalendar = () => {
+    if (!drawerRow) return;
+
+    const schedule = inspectionScheduleMap[drawerRow.key];
+    if (!schedule) {
+      setInspectionDraftStart(dayjs().add(1, 'day').hour(9).minute(0).second(0));
+      setInspectionDraftLocation('');
+      setInspectionModalOpen(true);
+      return;
+    }
+
+    const url = buildGoogleCalendarUrl({
+      title: `Vistoria - ${drawerRow.code} - ${drawerRow.clientName}`,
+      details: [
+        `Servico: ${drawerRow.serviceType}`,
+        drawerRow.subtype ? `Subtipo: ${drawerRow.subtype}` : null,
+        drawerRow.phone ? `Telefone: ${drawerRow.phone}` : null,
+        drawerRow.folderUrl ? `Pasta: ${drawerRow.folderUrl}` : null,
+      ].filter(Boolean).join('\\n'),
+      location: schedule.location || undefined,
+      start: dayjs(schedule.start),
+      end: dayjs(schedule.end),
+    });
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const confirmInspectionSchedule = () => {
+    if (!drawerRow) return;
+    if (!inspectionDraftStart) {
+      message.warning('Selecione a data e horario da vistoria.');
+      return;
+    }
+
+    const start = inspectionDraftStart;
+    const end = inspectionDraftStart.add(60, 'minute');
+    const location = inspectionDraftLocation.trim();
+
+    const nextMap: InspectionScheduleMap = {
+      ...inspectionScheduleMap,
+      [drawerRow.key]: {
+        start: start.toISOString(),
+        end: end.toISOString(),
+        location,
+      },
+    };
+
+    setInspectionScheduleMap(nextMap);
+    writeInspectionScheduleMap(nextMap);
+    setInspectionModalOpen(false);
+
+    const url = buildGoogleCalendarUrl({
+      title: `Vistoria - ${drawerRow.code} - ${drawerRow.clientName}`,
+      details: [
+        `Servico: ${drawerRow.serviceType}`,
+        drawerRow.subtype ? `Subtipo: ${drawerRow.subtype}` : null,
+        drawerRow.phone ? `Telefone: ${drawerRow.phone}` : null,
+        drawerRow.folderUrl ? `Pasta: ${drawerRow.folderUrl}` : null,
+      ].filter(Boolean).join('\\n'),
+      location: location || undefined,
+      start,
+      end,
+    });
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const filteredRows = useMemo(() => rows.filter((row) => {
     const matchesType = typeFilter === 'ALL' || row.serviceType === typeFilter;
@@ -674,7 +815,7 @@ export const ServicesTrackingPage: React.FC = () => {
                               </Form.Item>
                             </Col>
                             <Col span={12}>
-                              <Form.Item name="phone" label="Telefone">
+                              <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR}>
                                 <Input className="atlas-services-input" />
                               </Form.Item>
                             </Col>
@@ -738,6 +879,11 @@ export const ServicesTrackingPage: React.FC = () => {
                           <Space wrap>
                             <Button className="atlas-services-button atlas-services-button-primary" type="primary" htmlType="submit" icon={<SaveOutlined />}>Salvar</Button>
                             <Button className="atlas-services-button" icon={<FilePdfOutlined />} onClick={() => void exportRowPdf(drawerRow)}>Gerar PDF</Button>
+                            {isInspectionSituation(drawerSituation) ? (
+                              <Button className="atlas-services-button" icon={<CalendarOutlined />} onClick={openInspectionOnGoogleCalendar}>
+                                Agendar vistoria
+                              </Button>
+                            ) : null}
                             <Button className="atlas-services-button" icon={<EditOutlined />} onClick={() => navigate(drawerRow.editPath)}>Abrir cadastro completo</Button>
                             {drawerRow.folderUrl ? (
                               <Button className="atlas-services-button" icon={<FolderOpenOutlined />} onClick={() => window.open(drawerRow.folderUrl, '_blank', 'noopener,noreferrer')}>
@@ -845,6 +991,43 @@ export const ServicesTrackingPage: React.FC = () => {
             ),
           }))}
         />
+      </Modal>
+
+      <Modal
+        className="atlas-services-modal"
+        open={inspectionModalOpen}
+        onCancel={() => setInspectionModalOpen(false)}
+        title="Agendar vistoria no Google"
+        okText="Abrir Google Agenda"
+        cancelText="Cancelar"
+        onOk={confirmInspectionSchedule}
+      >
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Text type="secondary">
+            Selecione a data/hora e abra o evento no Google Agenda. O agendamento fica salvo localmente neste navegador.
+          </Text>
+          <div>
+            <Text strong>Data e horario</Text>
+            <DatePicker
+              className="atlas-services-date"
+              style={{ width: '100%', marginTop: 6 }}
+              showTime
+              format="DD/MM/YYYY HH:mm"
+              value={inspectionDraftStart}
+              onChange={(value) => setInspectionDraftStart(value)}
+            />
+          </div>
+          <div>
+            <Text strong>Local (opcional)</Text>
+            <Input
+              className="atlas-services-input"
+              style={{ marginTop: 6 }}
+              value={inspectionDraftLocation}
+              onChange={(event) => setInspectionDraftLocation(event.target.value)}
+              placeholder="Ex: Endereco da vistoria"
+            />
+          </div>
+        </Space>
       </Modal>
     </div>
   );

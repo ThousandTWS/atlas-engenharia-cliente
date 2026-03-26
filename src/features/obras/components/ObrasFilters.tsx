@@ -62,11 +62,6 @@ export const ObrasFilters: React.FC<ObrasFiltersProps> = ({ onSearch, onClear })
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Form.Item name="nf" label="NF">
-              <Input style={getFilterControlStyle(isDarkMode)} placeholder="Número da NF" allowClear />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
             <Form.Item name="situacao" label="Situação">
               <Select style={getFilterControlStyle(isDarkMode)} placeholder="Selecione" allowClear>
                 <Option value="PENDENTE">Pendente</Option>

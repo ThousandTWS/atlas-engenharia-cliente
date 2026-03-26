@@ -4,6 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { HomeOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { cadastrosApi, type ProviderRecord } from '../cadastrosApi';
+import { normalizeCpfCnpjBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
 
 const { Title, Text } = Typography;
 
@@ -33,7 +34,7 @@ export const ProvidersRegisterPage: React.FC = () => {
   }, []);
 
   const filtered = useMemo(() => records.filter((item) => (
-    [item.name, item.document, item.phone, item.email, item.paymentMethod, item.pixKey, item.bank]
+    [item.name, item.document, item.phone, item.email, item.paymentMethod, item.paymentCondition, item.pixKey, item.bank]
       .join(' ')
       .toLowerCase()
       .includes(searchText.toLowerCase())
@@ -71,6 +72,7 @@ export const ProvidersRegisterPage: React.FC = () => {
     { title: 'Telefone', dataIndex: 'phone', key: 'phone' },
     { title: 'E-mail', dataIndex: 'email', key: 'email', responsive: ['lg'] },
     { title: 'Metodo', dataIndex: 'paymentMethod', key: 'paymentMethod', responsive: ['lg'] },
+    { title: 'Condição', dataIndex: 'paymentCondition', key: 'paymentCondition', responsive: ['xl'] },
     { title: 'Criado em', dataIndex: 'createdAt', key: 'createdAt', responsive: ['xl'], render: (value) => dayjs(value).format('DD/MM/YYYY') },
     { title: 'Acoes', key: 'actions', render: (_, record) => <Button onClick={() => openEdit(record)}>Editar</Button> },
   ];
@@ -128,10 +130,10 @@ export const ProvidersRegisterPage: React.FC = () => {
           <Form.Item name="name" label="Nome">
             <Input className="atlas-services-input" />
           </Form.Item>
-          <Form.Item name="document" label="CPF/CNPJ">
+          <Form.Item name="document" label="CPF/CNPJ" normalize={normalizeCpfCnpjBR}>
             <Input className="atlas-services-input" />
           </Form.Item>
-          <Form.Item name="phone" label="Telefone">
+          <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR}>
             <Input className="atlas-services-input" />
           </Form.Item>
           <Form.Item name="email" label="E-mail">
@@ -139,6 +141,9 @@ export const ProvidersRegisterPage: React.FC = () => {
           </Form.Item>
           <Form.Item name="paymentMethod" label="Metodo de pagamento">
             <Input className="atlas-services-input" />
+          </Form.Item>
+          <Form.Item name="paymentCondition" label="Condicao de pagamento">
+            <Input className="atlas-services-input" placeholder="Ex: A vista, 30/60 dias" />
           </Form.Item>
           <Form.Item name="pixKey" label="Chave Pix">
             <Input className="atlas-services-input" />

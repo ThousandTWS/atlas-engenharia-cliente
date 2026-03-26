@@ -4,6 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { HomeOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { cadastrosApi, type BudgetRecord, type ServiceKind } from '../cadastrosApi';
+import { normalizePhoneBR } from '../../../shared/utils/inputFormat';
 
 const { Title, Text } = Typography;
 
@@ -146,7 +147,7 @@ export const BudgetRegisterPage: React.FC = () => {
         className="atlas-services-drawer"
       >
         <Form form={form} layout="vertical" onFinish={onFinish}>
-          <Form.Item name="phone" label="Telefone" rules={[{ required: true, message: 'Informe o telefone' }]}>
+          <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR} rules={[{ required: true, message: 'Informe o telefone' }]}>
             <Input className="atlas-services-input" />
           </Form.Item>
           <Form.Item name="serviceType" label="Tipo de servico" rules={[{ required: true, message: 'Selecione o tipo' }]}>

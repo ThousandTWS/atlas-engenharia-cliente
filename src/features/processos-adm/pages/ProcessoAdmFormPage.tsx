@@ -370,11 +370,14 @@ export const ProcessoAdmFormPage: React.FC = () => {
               >
                 <Row gutter={[16, 0]}>
                   <Col xs={24} md={12}>
-                    <Form.Item name="nf" label="Nota Fiscal (NF)">
-                      <Input
+                    <Form.Item name="descontoNf" label="Desconto NF (opcional)">
+                      <InputNumber
                         size="large"
-                        style={fieldStyle}
-                        placeholder="Ex: NF-2026-001"
+                        style={{ width: '100%', ...fieldStyle }}
+                        min={0}
+                        precision={2}
+                        formatter={formatCurrencyInput}
+                        parser={parseCurrencyInput}
                       />
                     </Form.Item>
                   </Col>

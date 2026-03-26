@@ -233,8 +233,14 @@ export const CLCBFormPage: React.FC = () => {
               >
                 <Row gutter={16}>
                   <Col span={24}>
-                    <Form.Item name="nf" label="Nota Fiscal (NF)">
-                      <Input style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }} placeholder="Ex: NF-100" />
+                    <Form.Item name="descontoNf" label="Desconto NF (opcional)">
+                      <InputNumber
+                        style={{ width: '100%', background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'none' : 'solid 1px #CBD5E1' }}
+                        min={0}
+                        precision={2}
+                        formatter={formatCurrencyInput}
+                        parser={parseCurrencyInput}
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={24}>

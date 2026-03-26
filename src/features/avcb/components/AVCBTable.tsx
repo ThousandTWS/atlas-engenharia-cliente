@@ -25,7 +25,7 @@ export type AVCB = {
   descricaoSituacao: string;
   valorContrato: number;
   dataContrato: string;
-  nf: string;
+  descontoNf?: number;
   condicaoPagamento: string;
   aReceber: number;
   recebido: number;
@@ -62,11 +62,18 @@ export const AVCBTable: React.FC<AVCBTableProps> = ({
 
   const columns: ColumnsType<AVCB> = [
     {
-      title: 'NF',
-      dataIndex: 'nf',
-      key: 'nf',
-      width: 100,
-      render: (text) => <Text strong>{text}</Text>,
+      title: 'Desconto NF',
+      dataIndex: 'descontoNf',
+      key: 'descontoNf',
+      width: 140,
+      render: (value: number | undefined) => (
+        <Text>
+          {new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          }).format(Number(value || 0))}
+        </Text>
+      ),
     },
     {
       title: 'Situação',

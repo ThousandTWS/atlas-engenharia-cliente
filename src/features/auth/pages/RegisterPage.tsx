@@ -6,6 +6,7 @@ import { authService } from '../../../core/services/authService';
 import type { RegisterDTO } from '../../../core/services/authService';
 import { AuthShell } from '../components/AuthShell';
 import { GoogleRecaptcha, type GoogleRecaptchaHandle } from '../components/GoogleRecaptcha';
+import { normalizePhoneBR } from '../../../shared/utils/inputFormat';
 
 const { Text } = Typography;
 
@@ -87,6 +88,7 @@ export const RegisterPage: React.FC = () => {
             <Form.Item
               name="telefone"
               label="Telefone"
+              normalize={normalizePhoneBR}
               rules={[{ required: true, message: 'Por favor, insira seu telefone.' }]}
             >
               <Input className="atlas-form-input" prefix={<PhoneOutlined />} placeholder="(00) 00000-0000" />

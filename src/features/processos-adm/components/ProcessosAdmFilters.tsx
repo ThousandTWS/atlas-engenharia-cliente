@@ -64,11 +64,6 @@ export const ProcessosAdmFilters: React.FC<ProcessosAdmFiltersProps> = ({ onSear
               </Select>
             </Form.Item>
           </Col>
-          <Col xs={24} sm={12} md={4}>
-            <Form.Item name="nf" label="Nota Fiscal">
-              <Input style={getFilterControlStyle(isDarkMode)} placeholder="NF-XXXX" allowClear />
-            </Form.Item>
-          </Col>
           <Col xs={24} sm={24} md={5}>
             <Form.Item name="periodo" label="Período do Contrato">
               <RangePicker style={getFilterControlStyle(isDarkMode)} format="DD/MM/YYYY" />

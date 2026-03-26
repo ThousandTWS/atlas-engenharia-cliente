@@ -29,7 +29,7 @@ export interface ProcessoAdm {
   codigo: string;
   valorContrato: number;
   dataContrato: string;
-  nf: string;
+  descontoNf?: number;
   condicaoPagamento: string;
   proximaParcela: string;
   aReceber: number;

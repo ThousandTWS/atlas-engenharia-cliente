@@ -9,6 +9,7 @@ export interface BaseModule {
   valorContrato?: number;
   dataContrato?: string;
   nf?: string;
+  descontoNf?: number;
   condicaoPagamento?: string;
   aReceber?: number;
   recebido?: number;

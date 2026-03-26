@@ -1,5 +1,6 @@
 import apiClient from '../../core/api/apiClient';
 import type { PaginatedResponse } from '../../core/services/genericService';
+import { formatCpfCnpjBR, formatPhoneBR } from '../../shared/utils/inputFormat';
 
 export type ServiceKind = 'AVCB' | 'CLCB' | 'OBRAS' | 'PROCESSOS_ADM';
 export type SubtypeConfig = Record<ServiceKind, string[]>;
@@ -20,6 +21,7 @@ export interface ProviderRecord {
   phone: string;
   email: string;
   paymentMethod: string;
+  paymentCondition?: string;
   pixKey: string;
   bank: string;
   agency: string;
@@ -93,7 +95,7 @@ const emptySubtypeConfig = (): SubtypeConfig => ({
 const mapBudget = (item: any): BudgetRecord => ({
   id: item.id,
   code: item.codigo,
-  phone: item.telefone || '',
+  phone: formatPhoneBR(item.telefone || ''),
   serviceType: item.tipoServico,
   totalValue: Number(item.valorTotal || 0),
   createdAt: item.createdAt,
@@ -102,10 +104,11 @@ const mapBudget = (item: any): BudgetRecord => ({
 const mapProvider = (item: any): ProviderRecord => ({
   id: item.id,
   name: item.nome || '',
-  document: item.cnpjCpf || '',
-  phone: item.telefone || '',
+  document: formatCpfCnpjBR(item.cnpjCpf || ''),
+  phone: formatPhoneBR(item.telefone || ''),
   email: item.email || '',
   paymentMethod: item.metodoPagamento || '',
+  paymentCondition: item.condicaoPagamento || '',
   pixKey: item.chavePix || '',
   bank: item.banco || '',
   agency: item.agencia || '',
@@ -129,10 +132,10 @@ const mapService = (item: any): ServiceRegistrationRecord => ({
   linkedBudgetCode: item.orcamentoCodigo,
   entryDate: item.dataEntrada,
   initialSituation: item.situacaoInicial,
-  companyDocument: item.documentoEmpresa,
+  companyDocument: formatCpfCnpjBR(item.documentoEmpresa || ''),
   companyName: item.razaoSocialEmpresa,
   contactName: item.contatoEmpresa || '',
-  phone: item.telefone || '',
+  phone: formatPhoneBR(item.telefone || ''),
   email: item.email || '',
   companyAddress: item.enderecoEmpresa || '',
   serviceAddress: item.enderecoServico || '',
@@ -190,7 +193,7 @@ export const cadastrosApi = {
   },
 
   async saveProvider(item: Partial<ProviderRecord>) {
-    const payload = {
+    const payload: any = {
       nome: item.name,
       cnpjCpf: item.document,
       telefone: item.phone,
@@ -201,6 +204,10 @@ export const cadastrosApi = {
       agencia: item.agency,
       conta: item.account,
     };
+
+    if (item.paymentCondition?.trim()) {
+      payload.condicaoPagamento = item.paymentCondition.trim();
+    }
     const response = item.id
       ? await apiClient.put<any>(`/prestadores/${item.id}`, payload)
       : await apiClient.post<any>('/prestadores', payload);

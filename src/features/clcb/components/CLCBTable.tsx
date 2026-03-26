@@ -27,7 +27,7 @@ export type CLCB = {
   situacao: 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
   descricaoSituacao: string;
   valorContrato: number;
-  nf: string;
+  descontoNf?: number;
   dataContrato: string;
   aReceber: number;
   recebido: number;

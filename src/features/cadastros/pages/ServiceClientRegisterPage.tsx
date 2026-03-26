@@ -21,11 +21,12 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { HomeOutlined, PlusOutlined, SaveOutlined, SearchOutlined } from '@ant-design/icons';
+import { FilePdfOutlined, HomeOutlined, PlusOutlined, SaveOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { clientesService } from '../../../core/services/clientesService';
 import { servicesTrackingApi } from '../../services/servicesTrackingApi';
 import { cadastrosApi, type BudgetRecord, type LinkedProviderRecord, type PaymentConditionRecord, type PaymentInstallment, type ProviderRecord, type ServiceKind, type ServiceRegistrationRecord, type SubtypeConfig } from '../cadastrosApi';
+import { formatPhoneBR, normalizeCpfCnpjBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
 
 const { Title, Text } = Typography;
 
@@ -67,7 +68,7 @@ const buildInstallments = (count: number, totalValue: number): PaymentInstallmen
   }));
 };
 
-const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
 export const ServiceClientRegisterPage: React.FC = () => {
@@ -248,7 +249,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
       form.setFieldsValue({
         companyName: match.razaoSocial,
         contactName: match.nomeContato,
-        phone: match.telefone,
+        phone: formatPhoneBR(match.telefone || ''),
         email: match.email,
         companyAddress: address,
         serviceAddress: form.getFieldValue('sameAddressAsCompany') ? address : form.getFieldValue('serviceAddress'),
@@ -332,6 +333,117 @@ export const ServiceClientRegisterPage: React.FC = () => {
     }
   };
 
+  const exportPurchaseOrderPdf = () => {
+    const values = form.getFieldsValue(true);
+    const code = editingRecord?.code || servicePreviewCode;
+    const nowLabel = dayjs().format('DD/MM/YYYY HH:mm');
+
+    const paymentConditionLabel = values.paymentConditionLabel || paymentConditions.find((item) => item.id === values.paymentConditionId)?.label || '-';
+
+    const providersRows = (linkedProviders || [])
+      .map((provider) => `
+        <tr>
+          <td>${provider.providerName || '-'}</td>
+          <td style="text-align:right">${formatCurrency(Number(provider.provisionedValue || 0))}</td>
+          <td style="text-align:right">${formatCurrency(Number(provider.effectiveValue || 0))}</td>
+          <td style="text-align:center">${provider.confirmed ? 'Sim' : 'Nao'}</td>
+        </tr>
+      `)
+      .join('');
+
+    const installmentsRows = (installments || [])
+      .map((installment) => `
+        <tr>
+          <td style="text-align:center">${installment.number}</td>
+          <td style="text-align:right">${formatCurrency(Number(installment.value || 0))}</td>
+          <td style="text-align:center">${installment.date ? dayjs(installment.date).format('DD/MM/YYYY') : '-'}</td>
+          <td style="text-align:center">${installment.method || '-'}</td>
+        </tr>
+      `)
+      .join('');
+
+    const printWindow = window.open('', '_blank', 'width=900,height=900');
+    if (!printWindow) {
+      message.error('O navegador bloqueou a abertura da janela de impressao.');
+      return;
+    }
+
+    printWindow.document.write(`
+      <html lang="pt-BR">
+        <head>
+          <title>Pedido de Compra ${code}</title>
+          <style>
+            body { font-family: "Segoe UI", sans-serif; padding: 24px; color: #0f172a; }
+            h1 { margin: 0 0 4px; }
+            p { margin: 0 0 18px; color: #475569; }
+            h2 { margin: 20px 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: #334155; }
+            table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+            td, th { border: 1px solid #dbe7f6; padding: 10px 12px; font-size: 13px; }
+            th { background: #f8fbff; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h1>Pedido de Compra</h1>
+          <p>${code} • Gerado em ${nowLabel}</p>
+
+          <h2>Cliente e Servico</h2>
+          <table>
+            <tr><th style="width: 240px">Documento</th><td>${values.companyDocument || '-'}</td></tr>
+            <tr><th>Razao social</th><td>${values.companyName || '-'}</td></tr>
+            <tr><th>Contato</th><td>${values.contactName || '-'}</td></tr>
+            <tr><th>Telefone</th><td>${values.phone || '-'}</td></tr>
+            <tr><th>E-mail</th><td>${values.email || '-'}</td></tr>
+            <tr><th>Endereco da empresa</th><td>${values.companyAddress || '-'}</td></tr>
+            <tr><th>Local do servico</th><td>${values.serviceAddress || '-'}</td></tr>
+            <tr><th>Tipo</th><td>${values.serviceType || '-'}</td></tr>
+            <tr><th>Subtipo</th><td>${values.subtype || '-'}</td></tr>
+          </table>
+
+          <h2>Financeiro</h2>
+          <table>
+            <tr><th style="width: 240px">Valor do contrato</th><td>${formatCurrency(Number(values.contractValue || 0))}</td></tr>
+            <tr><th>Data do contrato</th><td>${values.contractDate ? dayjs(values.contractDate).format('DD/MM/YYYY') : '-'}</td></tr>
+            <tr><th>Desconto NF</th><td>${formatCurrency(Number(values.invoiceValue || 0))}</td></tr>
+            <tr><th>Condicao de pagamento</th><td>${paymentConditionLabel}</td></tr>
+          </table>
+
+          <h2>Parcelas</h2>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 90px; text-align:center">#</th>
+                <th style="text-align:right">Valor</th>
+                <th style="width: 140px; text-align:center">Vencimento</th>
+                <th style="width: 140px; text-align:center">Forma</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${installmentsRows || '<tr><td colspan="4">Sem parcelas</td></tr>'}
+            </tbody>
+          </table>
+
+          <h2>Prestadores</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Prestador</th>
+                <th style="text-align:right">Provisionado</th>
+                <th style="text-align:right">Efetivo</th>
+                <th style="text-align:center; width: 110px">Confirmado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${providersRows || '<tr><td colspan="4">Sem prestadores vinculados</td></tr>'}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
   const createPaymentCondition = async (values: { label: string; installments: number }) => {
     try {
       const created = await cadastrosApi.savePaymentCondition(values);
@@ -390,7 +502,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
                 <Row gutter={[16, 16]}>
                   <Col xs={24} lg={10}>
                     <Card className="atlas-services-table-card" title="Dados do cliente" loading={loading}>
-                      <Form.Item name="companyDocument" label="CPF ou CNPJ" rules={[{ required: true, message: 'Informe o documento' }]}>
+                      <Form.Item name="companyDocument" label="CPF ou CNPJ" normalize={normalizeCpfCnpjBR} rules={[{ required: true, message: 'Informe o documento' }]}>
                         <Input
                           className="atlas-services-input"
                           addonAfter={<SearchOutlined onClick={() => void handleClientLookup()} />}
@@ -407,7 +519,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
                           </Form.Item>
                         </Col>
                         <Col span={12}>
-                          <Form.Item name="phone" label="Telefone">
+                          <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR}>
                             <Input className="atlas-services-input" />
                           </Form.Item>
                         </Col>
@@ -488,7 +600,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
                       <Form.Item name="contractDate" label="Data do contrato" rules={[{ required: true, message: 'Informe a data do contrato' }]}>
                         <Input type="date" className="atlas-services-input" />
                       </Form.Item>
-                      <Form.Item name="invoiceValue" label="Valor da Nota Fiscal (opcional)">
+                      <Form.Item name="invoiceValue" label="Desconto NF (opcional)">
                         <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
                       </Form.Item>
                       <Form.Item name="paymentConditionId" label="Condicao de pagamento" rules={[{ required: true, message: 'Selecione uma condicao' }]}>
@@ -636,6 +748,14 @@ export const ServiceClientRegisterPage: React.FC = () => {
           <Button type="primary" htmlType="submit" icon={<SaveOutlined />} className="atlas-services-button atlas-services-button-primary">
             Salvar cadastro
           </Button>
+          <Button
+            icon={<FilePdfOutlined />}
+            className="atlas-services-button"
+            disabled={!editingRecord?.id}
+            onClick={exportPurchaseOrderPdf}
+          >
+            Pedido de compra (PDF)
+          </Button>
           {paymentMismatch ? <Tag color="red">Nao e possivel salvar com parcelas divergentes</Tag> : null}
         </Space>
       </Form>
@@ -703,10 +823,10 @@ export const ServiceClientRegisterPage: React.FC = () => {
           <Form.Item name="name" label="Nome">
             <Input className="atlas-services-input" />
           </Form.Item>
-          <Form.Item name="document" label="CPF/CNPJ">
+          <Form.Item name="document" label="CPF/CNPJ" normalize={normalizeCpfCnpjBR}>
             <Input className="atlas-services-input" />
           </Form.Item>
-          <Form.Item name="phone" label="Telefone">
+          <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR}>
             <Input className="atlas-services-input" />
           </Form.Item>
           <Form.Item name="email" label="E-mail">
@@ -714,6 +834,9 @@ export const ServiceClientRegisterPage: React.FC = () => {
           </Form.Item>
           <Form.Item name="paymentMethod" label="Metodo">
             <Input className="atlas-services-input" />
+          </Form.Item>
+          <Form.Item name="paymentCondition" label="Condicao de pagamento">
+            <Input className="atlas-services-input" placeholder="Ex: A vista, 30/60 dias" />
           </Form.Item>
           <Form.Item name="pixKey" label="Chave Pix">
             <Input className="atlas-services-input" />

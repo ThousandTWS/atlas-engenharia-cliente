@@ -2,7 +2,6 @@
 import React from 'react';
 import {
   Form,
-  Input,
   Row,
   Col,
   Select,
@@ -42,11 +41,6 @@ export const AVCBFilters: React.FC<AVCBFiltersProps> = ({ onSearch, onClear }) =
         onFinish={onSearch}
       >
         <Row gutter={[16, 0]}>
-          <Col xs={24} sm={12} md={8}>
-            <Form.Item name="nf" label="Nota Fiscal (NF)">
-                <Input style={getFilterControlStyle(isDarkMode)} placeholder="Buscar por NF" allowClear />
-            </Form.Item>
-          </Col>
           <Col xs={24} sm={12} md={8}>
             <Form.Item name="situacao" label="Situação">
               <Select style={getFilterControlStyle(isDarkMode)} placeholder="Selecione" allowClear>

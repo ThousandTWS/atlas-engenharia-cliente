@@ -200,12 +200,11 @@ export const AVCBPage: React.FC = () => {
           dataSource={avcbs}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onView={(record) => message.info(`Visualizar AVCB: ${record.nf}`)}
+          onView={(record) => message.info(`Visualizar AVCB: ${record.id}`)}
         />
       </Card>
     </div>
   );
 };
-
 
 
