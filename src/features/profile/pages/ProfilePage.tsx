@@ -395,6 +395,7 @@ export const ProfilePage: React.FC = () => {
               icon={<UserOutlined />} 
               src={user?.profilePictureUrl}
               style={{
+                alignSelf: 'center',
                 marginBottom: 16,
                 border: `3px solid ${palette.border}`,
                 objectFit: 'cover',

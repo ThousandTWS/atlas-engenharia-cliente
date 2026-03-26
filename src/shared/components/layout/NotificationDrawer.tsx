@@ -104,12 +104,12 @@ export const NotificationDrawer: React.FC = () => {
 
   return (
     <>
-      <Badge count={pendingConfirmationCount} size="small" offset={[-2, 2]}>
+      <Badge count={pendingConfirmationCount} size="small" offset={[-2, 2]} style={{ display: 'inline-flex', alignItems: 'center' }}>
         <Tooltip title="Notificações">
           <Button
             type="text"
             icon={<BellOutlined style={{ fontSize: '18px' }} />}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 36, height: 36, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={() => setOpen(true)}
           />
         </Tooltip>

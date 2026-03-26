@@ -1,7 +1,6 @@
-import { Layout, ConfigProvider, theme } from "antd";
+import { Layout } from "antd";
 import { Outlet, useLocation } from "react-router-dom";
 import {
-  LayoutProvider,
   useLayout,
 } from "./shared/components/layout/LayoutContext";
 import "../index.css";
@@ -38,37 +37,7 @@ function AppLayoutStructure() {
   const contentBorderRadius = isProfilePage ? "0" : "8px";
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
-        token: { colorPrimary: isDarkMode ? "#A67458" : "#1890ff" },
-        components: {
-          Modal: {
-            contentBg: isDarkMode ? "#141B2D" : "#ffffff",
-            headerBg: isDarkMode ? "#141B2D" : "#ffffff",
-            titleColor: isDarkMode ? "#ffffff" : "#000000",
-          },
-          Table: {
-            headerBg: isDarkMode ? "#1c2536" : "#FFFFFF",
-            headerColor: isDarkMode ? "#FFFFFF" : "#1E293B",
-            colorBgContainer: isDarkMode ? "#0A0F1C" : "#FAFBFC",
-            colorText: isDarkMode ? "#E2E8F0" : "#334155",
-            rowHoverBg: isDarkMode ? "#1e293b" : "#F8FAFC",
-          },
-          Button: {
-            colorPrimary: isDarkMode ? "#A67458" : "#1890ff",
-          },
-          Select: {
-            selectorBg: isDarkMode ? "#171C2A" : "#ffffff",
-
-            optionSelectedBg: isDarkMode ? "#1e293b" : "#e6f4ff",
-            colorBgElevated: isDarkMode ? "#171C2A" : "#ffffff",
-
-            colorBorder: isDarkMode ? "#1E2A47" : "#CBD5E1",
-          },
-        },
-      }}
-    >
+    <>
       <Layout style={{ minHeight: "100vh" }}>
         <AppSider
           collapsed={collapsed}
@@ -113,17 +82,15 @@ function AppLayoutStructure() {
         </Layout>
       </Layout>
       <GlobalAiAssistantDrawer />
-    </ConfigProvider>
+    </>
   );
 }
 
 function App() {
   return (
-    <LayoutProvider>
-      <GlobalAiDrawerProvider>
-        <AppLayoutStructure />
-      </GlobalAiDrawerProvider>
-    </LayoutProvider>
+    <GlobalAiDrawerProvider>
+      <AppLayoutStructure />
+    </GlobalAiDrawerProvider>
   );
 }
 

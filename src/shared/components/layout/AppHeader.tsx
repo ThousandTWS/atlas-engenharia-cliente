@@ -62,6 +62,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const userName = user?.nomeCompleto || user?.email || 'Admin';
   const profilePicture = user?.profilePictureUrl;
 
+  const iconButtonStyle: React.CSSProperties = {
+    width: 36,
+    height: 36,
+    padding: 0,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
   const profileMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
@@ -121,13 +130,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
       {!isMobile && <GlobalSearch />}
 
-      <Space size={isMobile ? 8 : 20} style={{ marginLeft: 'auto' }}>
+      <Space size={isMobile ? 10 : 14} style={{ marginLeft: 'auto', alignItems: 'center' }} wrap>
         {!isMobile && (
           <Tooltip title="Ajuda">
             <Button
               type="text"
               icon={<QuestionCircleOutlined style={{ fontSize: '18px' }} />}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={iconButtonStyle}
             />
           </Tooltip>
         )}
@@ -136,22 +145,23 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <Button
             type="text"
             icon={<RobotOutlined style={{ fontSize: '18px', color: '#4285F4' }} />}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={iconButtonStyle}
             onClick={toggleDrawer}
           />
         </Tooltip>
 
-        <NotificationDrawer />
+        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <NotificationDrawer />
+        </span>
 
-      <div style={{display:'flex', justifyContent:'center', alignItems:'center' }}>
-        <Button
-             type="text"
-             icon={isDarkMode ? <SunOutlined style={{ fontSize: '18px' }}/> : <MoonOutlined style={{ fontSize: '18px' }}/>}
-             style={{padding:'4px', alignItems:'center'}}
-             onClick={toggleTheme}
-
-         />
-      </div>
+        <Tooltip title={isDarkMode ? 'Tema claro' : 'Tema escuro'}>
+          <Button
+            type="text"
+            icon={isDarkMode ? <SunOutlined style={{ fontSize: '18px' }} /> : <MoonOutlined style={{ fontSize: '18px' }} />}
+            style={iconButtonStyle}
+            onClick={toggleTheme}
+          />
+        </Tooltip>
 
         <Dropdown menu={{ items: profileMenuItems, onClick: handleProfileMenuClick }} placement="bottomRight" trigger={['click']}>
           <Space style={{ cursor: 'pointer', marginLeft: isMobile ? 0 : '4px' }}>

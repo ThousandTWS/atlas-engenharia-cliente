@@ -35,6 +35,7 @@ import {
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { formatPhoneBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
+import { htmlToPlainText } from '../../../core/utils/text';
 import {
   servicesTrackingApi,
   type ServiceHistoryEntry,
@@ -155,7 +156,7 @@ const mapServiceRow = (item: TrackingServiceDto): UnifiedServiceRow => ({
   subtype: item.subtipo || DEFAULT_SUBTYPE_OPTIONS[item.tipoServico][0] || '',
   situation: item.situacao,
   situationDurationDays: Math.max(Number(item.tempoNaSituacao || 0), 0),
-  description: item.descricao || '',
+  description: htmlToPlainText(item.descricao || ''),
   contractValue: Number(item.valorContrato || 0),
   contractDate: item.dataContrato || '',
   paymentCondition: item.condicaoPagamento || '-',
@@ -260,6 +261,7 @@ export const ServicesTrackingPage: React.FC = () => {
 
     drawerForm.setFieldsValue({
       ...drawerRow,
+      description: htmlToPlainText(drawerRow.description || ''),
       contractDate: drawerRow.contractDate ? dayjs(drawerRow.contractDate) : null,
     });
 
@@ -441,7 +443,7 @@ export const ServicesTrackingPage: React.FC = () => {
       phone: values.phone || '-',
       subtype: values.subtype || '',
       situation: values.situation,
-      description: values.description || '',
+      description: htmlToPlainText(values.description || ''),
       contractValue: Number(values.contractValue || 0),
       contractDate: values.contractDate ? values.contractDate.format('YYYY-MM-DD') : '',
       paymentCondition: values.paymentCondition || '-',
@@ -742,7 +744,7 @@ export const ServicesTrackingPage: React.FC = () => {
       </div>
 
       <Card className="atlas-services-filter-card" style={{ borderRadius: 14, marginBottom: 20 }} styles={{ body: { padding: 16 } }}>
-        <Row gutter={[12, 12]}>
+        <Row gutter={[12, 12]} align="middle">
           <Col xs={24} md={8}>
             <Select
               className="atlas-services-select"
@@ -760,7 +762,7 @@ export const ServicesTrackingPage: React.FC = () => {
               onChange={(event) => setSearchText(event.target.value)}
             />
           </Col>
-          <Col xs={24} md={6}>
+          <Col xs={24} md={6} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <Tag className="atlas-dashboard-meta-chip" bordered={false}>
               {filteredRows.length} servico(s)
             </Tag>
@@ -907,7 +909,7 @@ export const ServicesTrackingPage: React.FC = () => {
                         <Space direction="vertical" size={2}>
                           <Text strong>{entry.previousSituation} → {entry.nextSituation}</Text>
                           <Text type="secondary">{dayjs(entry.changedAt).format('DD/MM/YYYY HH:mm')} • {entry.responsible}</Text>
-                          <Text>{entry.description || 'Sem descricao registrada.'}</Text>
+                          <Text>{htmlToPlainText(entry.description) || 'Sem descricao registrada.'}</Text>
                         </Space>
                       ),
                     }))}
