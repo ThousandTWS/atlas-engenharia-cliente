@@ -77,10 +77,12 @@ export const ExecutiveDashboard = () => {
             </Space>
           </Col>
           <Col xs={24} lg={10}>
-            <Space wrap style={{ width: '100%', justifyContent: 'flex-end' }}>
+            <div className="atlas-dashboard-chart-filters atlas-dashboard-chart-filters-right">
               <RangePicker
+                className="atlas-dashboard-filter-range"
                 value={range}
                 format="DD/MM/YYYY"
+                size="middle"
                 onChange={(value) => {
                   if (!value?.[0] || !value[1]) {
                     return;
@@ -88,8 +90,15 @@ export const ExecutiveDashboard = () => {
                   setRange([value[0], value[1]]);
                 }}
               />
-              <Button type="primary" loading={loading} onClick={() => void loadSummary(range)}>Atualizar</Button>
-            </Space>
+              <Button
+                className="atlas-dashboard-action-button"
+                type="primary"
+                loading={loading}
+                onClick={() => void loadSummary(range)}
+              >
+                Atualizar
+              </Button>
+            </div>
           </Col>
         </Row>
       </Card>
@@ -104,9 +113,9 @@ export const ExecutiveDashboard = () => {
         ))}
       </Row>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} xl={14}>
-          <Card title="Carteira de serviços" style={{ borderRadius: 16 }}>
+      <Row gutter={[16, 16]} align="stretch">
+        <Col xs={24} xl={14} className="atlas-equal-height-col">
+          <Card title="Carteira de serviços" className="atlas-equal-height-card" style={{ borderRadius: 16 }}>
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
               <Col xs={12} md={6}><Statistic title="Ativos" value={summary.carteira.servicosAtivos} formatter={(value) => number(Number(value))} /></Col>
               <Col xs={12} md={6}><Statistic title="Novos" value={summary.carteira.novosServicosNoPeriodo} formatter={(value) => number(Number(value))} /></Col>
@@ -130,8 +139,8 @@ export const ExecutiveDashboard = () => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} xl={10}>
-          <Card title="Ticket médio por tipo" style={{ borderRadius: 16 }}>
+        <Col xs={24} xl={10} className="atlas-equal-height-col">
+          <Card title="Ticket médio por tipo" className="atlas-equal-height-card" style={{ borderRadius: 16 }}>
             <Table
               size="small"
               rowKey="tipo"
@@ -146,9 +155,9 @@ export const ExecutiveDashboard = () => {
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} xl={12}>
-          <Card title="Contas a receber" style={{ borderRadius: 16 }}>
+      <Row gutter={[16, 16]} align="stretch">
+        <Col xs={24} xl={12} className="atlas-equal-height-col">
+          <Card title="Contas a receber" className="atlas-equal-height-card" style={{ borderRadius: 16 }}>
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
               <Col xs={24} md={8}><Statistic title="Em 7 dias" value={summary.contasReceber.parcelasAVencerEm7Dias} formatter={(value) => currency(Number(value))} /></Col>
               <Col xs={24} md={8}><Statistic title="Em 30 dias" value={summary.contasReceber.parcelasAVencerEm30Dias} formatter={(value) => currency(Number(value))} /></Col>
@@ -173,8 +182,8 @@ export const ExecutiveDashboard = () => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} xl={12}>
-          <Card title="Prestadores e custos" style={{ borderRadius: 16 }}>
+        <Col xs={24} xl={12} className="atlas-equal-height-col">
+          <Card title="Prestadores e custos" className="atlas-equal-height-card" style={{ borderRadius: 16 }}>
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
               <Col xs={12}><Statistic title="Custos diretos" value={summary.prestadores.custosDiretosPeriodo} formatter={(value) => currency(Number(value))} /></Col>
               <Col xs={12}><Statistic title="Custos indiretos" value={summary.prestadores.custosIndiretosPeriodo} formatter={(value) => currency(Number(value))} /></Col>
@@ -204,9 +213,9 @@ export const ExecutiveDashboard = () => {
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} xl={12}>
-          <Card title="Desempenho operacional" style={{ borderRadius: 16 }}>
+      <Row gutter={[16, 16]} align="stretch">
+        <Col xs={24} xl={12} className="atlas-equal-height-col">
+          <Card title="Desempenho operacional" className="atlas-equal-height-card" style={{ borderRadius: 16 }}>
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
               <Col xs={24} md={12}><Statistic title="Parados há +30 dias" value={summary.operacional.servicosParadosHaMaisDe30Dias} formatter={(value) => number(Number(value))} /></Col>
               <Col xs={24} md={12}><Statistic title="Etapas monitoradas" value={summary.operacional.tempoMedioPorSituacao.length} formatter={(value) => number(Number(value))} /></Col>
@@ -223,8 +232,8 @@ export const ExecutiveDashboard = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} xl={12}>
-          <Card title="Etapas com maior gargalo" style={{ borderRadius: 16 }}>
+        <Col xs={24} xl={12} className="atlas-equal-height-col">
+          <Card title="Etapas com maior gargalo" className="atlas-equal-height-card" style={{ borderRadius: 16 }}>
             <Table
               size="small"
               rowKey="situacao"

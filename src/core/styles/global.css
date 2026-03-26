@@ -408,12 +408,23 @@ body {
   flex-wrap: wrap;
 }
 
+.atlas-dashboard-chart-filters-right {
+  justify-content: flex-end;
+}
+
 .atlas-dashboard-chart-filters .atlas-dashboard-filter-select {
   flex: 1 1 160px;
 }
 
 .atlas-dashboard-chart-filters .atlas-dashboard-filter-range {
   flex: 2 1 260px;
+}
+
+.atlas-dashboard-action-button.ant-btn {
+  height: 34px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: none;
 }
 
 .dark .atlas-dashboard-filter-select .ant-select-selector,
