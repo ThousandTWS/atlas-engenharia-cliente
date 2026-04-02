@@ -39,7 +39,7 @@ const buildPreviewRules = (): NotificationRulePreview[] => {
       id: 'finance-installment-due',
       category: 'financial',
       type: 'warning',
-      title: 'Parcela do fornecedor Atlas Fire vence em 3 dias',
+      title: 'Parcela do fornecedor vence em 3 dias',
       description: 'Regra automática de demonstração para parcelas próximas do vencimento.',
       timestamp: addDays(now, 3),
     },

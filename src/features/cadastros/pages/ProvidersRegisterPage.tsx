@@ -93,16 +93,16 @@ export const ProvidersRegisterPage: React.FC = () => {
           <Title level={2} style={{ margin: 0 }}>Cadastro de Prestadores</Title>
           <Text type="secondary">Base enxuta de prestadores e dados de pagamento.</Text>
         </Space>
-        <Button type="primary" icon={<PlusOutlined />} className="atlas-services-button atlas-services-button-primary" onClick={openCreate}>
+        <Button type="primary" icon={<PlusOutlined />} className="prevent-services-button prevent-services-button-primary" onClick={openCreate}>
           Novo prestador
         </Button>
       </div>
 
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Card className="atlas-services-filter-card">
+          <Card className="prevent-services-filter-card">
             <Input
-              className="atlas-services-input"
+              className="prevent-services-input"
               placeholder="Buscar por nome, documento, telefone, e-mail ou banco"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
@@ -110,9 +110,9 @@ export const ProvidersRegisterPage: React.FC = () => {
           </Card>
         </Col>
         <Col span={24}>
-          <Card className="atlas-services-table-card">
+          <Card className="prevent-services-table-card">
             <Space style={{ marginBottom: 16 }}>
-              <Tag className="atlas-dashboard-meta-chip" bordered={false}>{filtered.length} prestador(es)</Tag>
+              <Tag className="prevent-dashboard-meta-chip" bordered={false}>{filtered.length} prestador(es)</Tag>
             </Space>
             <Table rowKey="id" loading={loading} columns={columns} dataSource={filtered} pagination={{ pageSize: 10 }} />
           </Card>
@@ -124,40 +124,40 @@ export const ProvidersRegisterPage: React.FC = () => {
         onClose={() => setDrawerOpen(false)}
         width={560}
         title={editing ? 'Editar prestador' : 'Novo prestador'}
-        className="atlas-services-drawer"
+        className="prevent-services-drawer"
       >
         <Form form={form} layout="vertical" onFinish={onFinish}>
           <Form.Item name="name" label="Nome">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="document" label="CPF/CNPJ" normalize={normalizeCpfCnpjBR}>
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR}>
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="email" label="E-mail">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="paymentMethod" label="Metodo de pagamento">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="paymentCondition" label="Condicao de pagamento">
-            <Input className="atlas-services-input" placeholder="Ex: A vista, 30/60 dias" />
+            <Input className="prevent-services-input" placeholder="Ex: A vista, 30/60 dias" />
           </Form.Item>
           <Form.Item name="pixKey" label="Chave Pix">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="bank" label="Banco">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="agency" label="Agencia">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="account" label="Conta">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
-          <Button htmlType="submit" type="primary" icon={<SaveOutlined />} className="atlas-services-button atlas-services-button-primary">
+          <Button htmlType="submit" type="primary" icon={<SaveOutlined />} className="prevent-services-button prevent-services-button-primary">
             Salvar prestador
           </Button>
         </Form>

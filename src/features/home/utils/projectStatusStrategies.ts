@@ -1,11 +1,11 @@
 import { FirstMatchStrategyResolver, type StrategyMatcher } from '../../../core/patterns/strategy';
 
 type BadgeClass =
-  | 'atlas-status-badge-success'
-  | 'atlas-status-badge-info'
-  | 'atlas-status-badge-warning'
-  | 'atlas-status-badge-danger'
-  | 'atlas-status-badge-neutral';
+  | 'prevent-status-badge-success'
+  | 'prevent-status-badge-info'
+  | 'prevent-status-badge-warning'
+  | 'prevent-status-badge-danger'
+  | 'prevent-status-badge-neutral';
 
 type ProjectPhase = 'analysis' | 'approved' | 'rejected' | 'other';
 
@@ -27,12 +27,12 @@ const byExact = <TResult>(
 
 const badgeClassResolver = new FirstMatchStrategyResolver<string, BadgeClass>(
   [
-    byExact(['APROVADO', 'CONCLUIDO', 'PAGO', 'RECEBIDO', 'ATIVA', 'ATIVO'], 'atlas-status-badge-success'),
-    byExact(['EM_ANDAMENTO', 'PROCESSANDO', 'EM_EXECUCAO'], 'atlas-status-badge-info'),
-    byExact(['PENDENTE', 'EM_ANALISE', 'EM_ANALISE_TECNICA', 'AGUARDANDO'], 'atlas-status-badge-warning'),
-    byExact(['REPROVADO', 'CANCELADO', 'FALHA', 'NEGADO'], 'atlas-status-badge-danger'),
+    byExact(['APROVADO', 'CONCLUIDO', 'PAGO', 'RECEBIDO', 'ATIVA', 'ATIVO'], 'prevent-status-badge-success'),
+    byExact(['EM_ANDAMENTO', 'PROCESSANDO', 'EM_EXECUCAO'], 'prevent-status-badge-info'),
+    byExact(['PENDENTE', 'EM_ANALISE', 'EM_ANALISE_TECNICA', 'AGUARDANDO'], 'prevent-status-badge-warning'),
+    byExact(['REPROVADO', 'CANCELADO', 'FALHA', 'NEGADO'], 'prevent-status-badge-danger'),
   ],
-  () => 'atlas-status-badge-neutral',
+  () => 'prevent-status-badge-neutral',
 );
 
 const projectPhaseResolver = new FirstMatchStrategyResolver<string, ProjectPhase>(

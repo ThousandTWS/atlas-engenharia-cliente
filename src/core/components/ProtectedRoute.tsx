@@ -42,7 +42,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   console.log("ProtectedRoute: Checking auth...", {
     isAuthenticated,
     path: location.pathname,
-    hasToken: !!authService.getToken(),
+    hasToken: !!authService.getAccessToken(),
     hasUser: !!authService.getCurrentUser(),
     isCheckingAuth,
   });

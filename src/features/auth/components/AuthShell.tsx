@@ -30,25 +30,25 @@ export const AuthShell: React.FC<AuthShellProps> = ({
   const isMobile = !screens.md;
 
   return (
-    <div className="atlas-auth-shell">
-      <div className="atlas-auth-shell-glow" />
-      <div className="atlas-auth-shell-grid">
-        <section className="atlas-auth-brand-panel" aria-hidden={isMobile}>
-          <div className="atlas-auth-brand-top">
-            <img src="/White_Atlas_Logo.svg" alt="Atlas Engenharia" className="atlas-auth-brand-logo" />
+    <div className="prevent-auth-shell">
+      <div className="prevent-auth-shell-glow" />
+      <div className="prevent-auth-shell-grid">
+        <section className="prevent-auth-brand-panel" aria-hidden={isMobile}>
+          <div className="prevent-auth-brand-top">
+            <img src="/White_Prevent_Logo.svg" alt="Prevent Mecânica" className="prevent-auth-brand-logo" />
           </div>
-          <div className="atlas-auth-brand-visual">
+          <div className="prevent-auth-brand-visual">
             <img
               src="/auth-placeholder-image.png"
               alt="Placeholder visual da plataforma"
-              className="atlas-auth-brand-illustration"
+              className="prevent-auth-brand-illustration"
             />
           </div>
         </section>
 
-        <section className="atlas-auth-form-panel">
+        <section className="prevent-auth-form-panel">
           <Card
-            className="atlas-auth-card"
+            className="prevent-auth-card"
             styles={{
               body: {
                 padding: isMobile ? 22 : 30,
@@ -57,7 +57,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
           >
             {backTo && (
               <Button
-                className="atlas-auth-back-button"
+                className="prevent-auth-back-button"
                 icon={<ArrowLeftOutlined />}
                 onClick={() => navigate(backTo)}
               >
@@ -65,15 +65,15 @@ export const AuthShell: React.FC<AuthShellProps> = ({
               </Button>
             )}
 
-            <Text className="atlas-auth-context">{contextLabel}</Text>
-            <Title level={2} className="atlas-auth-title">
+            <Text className="prevent-auth-context">{contextLabel}</Text>
+            <Title level={2} className="prevent-auth-title">
               {title}
             </Title>
-            <Text className="atlas-auth-subtitle">{subtitle}</Text>
+            <Text className="prevent-auth-subtitle">{subtitle}</Text>
 
-            <div className="atlas-auth-form-content">{children}</div>
+            <div className="prevent-auth-form-content">{children}</div>
 
-            {footer && <div className="atlas-auth-footer">{footer}</div>}
+            {footer && <div className="prevent-auth-footer">{footer}</div>}
           </Card>
         </section>
       </div>

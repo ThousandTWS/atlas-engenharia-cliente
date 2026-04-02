@@ -121,11 +121,11 @@ export const NotificationDrawer: React.FC = () => {
         width={420}
         open={open}
         onClose={() => setOpen(false)}
-        className="atlas-notification-drawer atlas-services-drawer"
+        className="prevent-notification-drawer prevent-services-drawer"
         extra={<Tag color={pendingConfirmationCount > 0 ? 'gold' : 'green'}>{pendingConfirmationCount} pendentes</Tag>}
       >
         <Space direction="vertical" size={16} style={{ width: '100%' }}>
-          <Card className="atlas-services-filter-card atlas-notification-summary-card" size="small">
+          <Card className="prevent-services-filter-card prevent-notification-summary-card" size="small">
             <Space direction="vertical" size={14} style={{ width: '100%' }}>
               <Space size={8}>
                 <FilterOutlined style={{ color: token.colorPrimary }} />
@@ -146,18 +146,18 @@ export const NotificationDrawer: React.FC = () => {
             </Space>
           </Card>
 
-          <Card className="atlas-services-table-card atlas-notification-list-card" size="small">
+          <Card className="prevent-services-table-card prevent-notification-list-card" size="small">
             {visibleNotifications.length === 0 ? (
               <Empty description="Nenhuma notificação nesta categoria." image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
               <List
                 dataSource={visibleNotifications}
-                className="atlas-notification-list"
+                className="prevent-notification-list"
                 renderItem={(item) => (
-                  <List.Item key={item.id} className="atlas-notification-list-item">
+                  <List.Item key={item.id} className="prevent-notification-list-item">
                     <Card
                       size="small"
-                      className={`atlas-notification-card${item.confirmedAt ? ' atlas-notification-card-confirmed' : ''}`}
+                      className={`prevent-notification-card${item.confirmedAt ? ' prevent-notification-card-confirmed' : ''}`}
                     >
                       <Space direction="vertical" size={10} style={{ width: '100%' }}>
                         <Space wrap>
@@ -197,12 +197,12 @@ export const NotificationDrawer: React.FC = () => {
 
                         <Space wrap>
                           {!item.read && (
-                            <Button className="atlas-services-button" size="small" onClick={() => markAsRead(item.id)}>
+                            <Button className="prevent-services-button" size="small" onClick={() => markAsRead(item.id)}>
                               Marcar como lida
                             </Button>
                           )}
                           <Button
-                            className={item.confirmedAt ? 'atlas-services-button' : 'atlas-services-button atlas-services-button-primary'}
+                            className={item.confirmedAt ? 'prevent-services-button' : 'prevent-services-button prevent-services-button-primary'}
                             size="small"
                             disabled={Boolean(item.confirmedAt)}
                             onClick={() => confirm(item.id)}

@@ -36,7 +36,7 @@ interface GoogleRecaptchaProps {
   theme?: 'light' | 'dark';
 }
 
-const RECAPTCHA_SCRIPT_ID = 'atlas-google-recaptcha-script';
+const RECAPTCHA_SCRIPT_ID = 'prevent-google-recaptcha-script';
 const RECAPTCHA_SCRIPT_SRC = 'https://www.google.com/recaptcha/api.js?render=explicit&hl=pt-BR';
 
 function resolveRecaptchaClient(): GrecaptchaClient | null {
@@ -185,9 +185,9 @@ export const GoogleRecaptcha = forwardRef<GoogleRecaptchaHandle, GoogleRecaptcha
     }, [onTokenChange, siteKey, theme]);
 
     return (
-      <div className="atlas-recaptcha-wrapper">
+      <div className="prevent-recaptcha-wrapper">
         {errorMessage ? (
-          <Alert type="warning" showIcon message={errorMessage} className="atlas-recaptcha-alert" />
+          <Alert type="warning" showIcon message={errorMessage} className="prevent-recaptcha-alert" />
         ) : (
           <div ref={containerRef} />
         )}

@@ -487,7 +487,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
           <Text type="secondary">Tudo em uma unica tela com financeiro, parcelas, orcamento e prestadores.</Text>
         </Space>
         <Space wrap>
-          <Tag className="atlas-dashboard-meta-chip" bordered={false}>Codigo previsto {servicePreviewCode}</Tag>
+          <Tag className="prevent-dashboard-meta-chip" bordered={false}>Codigo previsto {servicePreviewCode}</Tag>
           <Button onClick={resetForm}>Novo cadastro</Button>
         </Space>
       </div>
@@ -501,50 +501,50 @@ export const ServiceClientRegisterPage: React.FC = () => {
               children: (
                 <Row gutter={[16, 16]}>
                   <Col xs={24} lg={10}>
-                    <Card className="atlas-services-table-card" title="Dados do cliente" loading={loading}>
+                    <Card className="prevent-services-table-card" title="Dados do cliente" loading={loading}>
                       <Form.Item name="companyDocument" label="CPF ou CNPJ" normalize={normalizeCpfCnpjBR} rules={[{ required: true, message: 'Informe o documento' }]}>
                         <Input
-                          className="atlas-services-input"
+                          className="prevent-services-input"
                           addonAfter={<SearchOutlined onClick={() => void handleClientLookup()} />}
                           onBlur={() => void handleClientLookup()}
                         />
                       </Form.Item>
                       <Form.Item name="companyName" label="Razao social" rules={[{ required: true, message: 'Informe a razao social' }]}>
-                        <Input className="atlas-services-input" />
+                        <Input className="prevent-services-input" />
                       </Form.Item>
                       <Row gutter={12}>
                         <Col span={12}>
                           <Form.Item name="contactName" label="Contato">
-                            <Input className="atlas-services-input" />
+                            <Input className="prevent-services-input" />
                           </Form.Item>
                         </Col>
                         <Col span={12}>
                           <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR}>
-                            <Input className="atlas-services-input" />
+                            <Input className="prevent-services-input" />
                           </Form.Item>
                         </Col>
                       </Row>
                       <Form.Item name="email" label="E-mail">
-                        <Input className="atlas-services-input" />
+                        <Input className="prevent-services-input" />
                       </Form.Item>
                       <Form.Item name="companyAddress" label="Endereco da empresa">
-                        <Input.TextArea className="atlas-services-input" rows={3} />
+                        <Input.TextArea className="prevent-services-input" rows={3} />
                       </Form.Item>
                     </Card>
                   </Col>
 
                   <Col xs={24} lg={14}>
-                    <Card className="atlas-services-table-card" title="Dados do servico" loading={loading}>
+                    <Card className="prevent-services-table-card" title="Dados do servico" loading={loading}>
                       <Row gutter={12}>
                         <Col span={8}>
                           <Form.Item name="serviceType" label="Tipo" rules={[{ required: true, message: 'Selecione o tipo' }]}>
-                            <Select className="atlas-services-select" options={SERVICE_TYPE_OPTIONS} />
+                            <Select className="prevent-services-select" options={SERVICE_TYPE_OPTIONS} />
                           </Form.Item>
                         </Col>
                         <Col span={8}>
                           <Form.Item name="subtype" label="Subtipo" rules={[{ required: true, message: 'Informe o subtipo' }]}>
                             <Select
-                              className="atlas-services-select"
+                              className="prevent-services-select"
                               options={(subtypeConfig[serviceType] || []).map((item) => ({ label: item, value: item }))}
                               showSearch
                             />
@@ -552,7 +552,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
                         </Col>
                         <Col span={8}>
                           <Form.Item label="Codigo gerado">
-                            <Input className="atlas-services-input" value={servicePreviewCode} disabled />
+                            <Input className="prevent-services-input" value={servicePreviewCode} disabled />
                           </Form.Item>
                         </Col>
                       </Row>
@@ -560,12 +560,12 @@ export const ServiceClientRegisterPage: React.FC = () => {
                       <Row gutter={12}>
                         <Col span={12}>
                           <Form.Item name="entryDate" label="Data de entrada" rules={[{ required: true, message: 'Informe a data de entrada' }]}>
-                            <Input type="date" className="atlas-services-input" />
+                            <Input type="date" className="prevent-services-input" />
                           </Form.Item>
                         </Col>
                         <Col span={12}>
                           <Form.Item name="initialSituation" label="Situacao inicial">
-                            <Input className="atlas-services-input" disabled />
+                            <Input className="prevent-services-input" disabled />
                           </Form.Item>
                         </Col>
                       </Row>
@@ -580,7 +580,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
                       </Form.Item>
 
                       <Form.Item name="serviceAddress" label="Local do servico">
-                        <Input.TextArea className="atlas-services-input" rows={3} />
+                        <Input.TextArea className="prevent-services-input" rows={3} />
                       </Form.Item>
                     </Card>
                   </Col>
@@ -593,19 +593,19 @@ export const ServiceClientRegisterPage: React.FC = () => {
               children: (
                 <Row gutter={[16, 16]}>
                   <Col xs={24} lg={10}>
-                    <Card className="atlas-services-table-card" title="Resumo financeiro">
+                    <Card className="prevent-services-table-card" title="Resumo financeiro">
                       <Form.Item name="contractValue" label="Valor total do contrato" rules={[{ required: true, message: 'Informe o valor do contrato' }]}>
-                        <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                        <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                       </Form.Item>
                       <Form.Item name="contractDate" label="Data do contrato" rules={[{ required: true, message: 'Informe a data do contrato' }]}>
-                        <Input type="date" className="atlas-services-input" />
+                        <Input type="date" className="prevent-services-input" />
                       </Form.Item>
                       <Form.Item name="invoiceValue" label="Desconto NF (opcional)">
-                        <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                        <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                       </Form.Item>
                       <Form.Item name="paymentConditionId" label="Condicao de pagamento" rules={[{ required: true, message: 'Selecione uma condicao' }]}>
                         <Select
-                          className="atlas-services-select"
+                          className="prevent-services-select"
                           options={paymentConditions.map((item) => ({ label: item.label, value: item.id }))}
                           dropdownRender={(menu) => (
                             <>
@@ -622,16 +622,16 @@ export const ServiceClientRegisterPage: React.FC = () => {
                     </Card>
                   </Col>
                   <Col xs={24} lg={14}>
-                    <Card className="atlas-services-table-card" title="Parcelas" extra={paymentMismatch ? <Tag color="red">Soma divergente</Tag> : <Tag color="green">Soma conferida</Tag>}>
+                    <Card className="prevent-services-table-card" title="Parcelas" extra={paymentMismatch ? <Tag color="red">Soma divergente</Tag> : <Tag color="green">Soma conferida</Tag>}>
                       <Space direction="vertical" size={12} style={{ width: '100%' }}>
                         {installments.map((item, index) => (
                           <Row key={`${item.id || item.number}-${index}`} gutter={10}>
                             <Col xs={24} md={4}>
-                              <Input className="atlas-services-input" value={`Parcela ${item.number}`} disabled />
+                              <Input className="prevent-services-input" value={`Parcela ${item.number}`} disabled />
                             </Col>
                             <Col xs={24} md={6}>
                               <InputNumber
-                                className="atlas-services-number"
+                                className="prevent-services-number"
                                 style={{ width: '100%' }}
                                 min={0}
                                 value={item.value}
@@ -641,14 +641,14 @@ export const ServiceClientRegisterPage: React.FC = () => {
                             <Col xs={24} md={7}>
                               <Input
                                 type="date"
-                                className="atlas-services-input"
+                                className="prevent-services-input"
                                 value={item.date}
                                 onChange={(event) => setInstallments((current) => current.map((currentItem, currentIndex) => currentIndex === index ? { ...currentItem, date: event.target.value } : currentItem))}
                               />
                             </Col>
                             <Col xs={24} md={7}>
                               <Select
-                                className="atlas-services-select"
+                                className="prevent-services-select"
                                 options={PAYMENT_METHOD_OPTIONS}
                                 value={item.method}
                                 onChange={(value) => setInstallments((current) => current.map((currentItem, currentIndex) => currentIndex === index ? { ...currentItem, method: value } : currentItem))}
@@ -669,11 +669,11 @@ export const ServiceClientRegisterPage: React.FC = () => {
               key: 'prestadores',
               label: 'Prestadores / Custos',
               children: (
-                <Card className="atlas-services-table-card" title="Prestadores vinculados" extra={<Button icon={<PlusOutlined />} onClick={() => setProviderDrawerOpen(true)}>Novo prestador</Button>}>
+                <Card className="prevent-services-table-card" title="Prestadores vinculados" extra={<Button icon={<PlusOutlined />} onClick={() => setProviderDrawerOpen(true)}>Novo prestador</Button>}>
                   <Row gutter={12} style={{ marginBottom: 16 }}>
                     <Col xs={24} md={8}>
                       <Select
-                        className="atlas-services-select"
+                        className="prevent-services-select"
                         placeholder="Selecionar prestador existente"
                         options={providers.map((item) => ({ label: item.name || item.document || String(item.id), value: item.id }))}
                         onChange={(value) => {
@@ -702,11 +702,11 @@ export const ServiceClientRegisterPage: React.FC = () => {
                     {linkedProviders.map((item, index) => (
                       <Row key={`${item.providerId || item.providerName}-${index}`} gutter={10}>
                         <Col xs={24} md={8}>
-                          <Input className="atlas-services-input" value={item.providerName} disabled />
+                          <Input className="prevent-services-input" value={item.providerName} disabled />
                         </Col>
                         <Col xs={24} md={5}>
                           <InputNumber
-                            className="atlas-services-number"
+                            className="prevent-services-number"
                             style={{ width: '100%' }}
                             min={0}
                             value={item.provisionedValue}
@@ -715,7 +715,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
                         </Col>
                         <Col xs={24} md={5}>
                           <InputNumber
-                            className="atlas-services-number"
+                            className="prevent-services-number"
                             style={{ width: '100%' }}
                             min={0}
                             value={item.effectiveValue}
@@ -745,12 +745,12 @@ export const ServiceClientRegisterPage: React.FC = () => {
         />
 
         <Space style={{ marginTop: 20 }}>
-          <Button type="primary" htmlType="submit" icon={<SaveOutlined />} className="atlas-services-button atlas-services-button-primary">
+          <Button type="primary" htmlType="submit" icon={<SaveOutlined />} className="prevent-services-button prevent-services-button-primary">
             Salvar cadastro
           </Button>
           <Button
             icon={<FilePdfOutlined />}
-            className="atlas-services-button"
+            className="prevent-services-button"
             disabled={!editingRecord?.id}
             onClick={exportPurchaseOrderPdf}
           >
@@ -760,7 +760,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
         </Space>
       </Form>
 
-      <Card className="atlas-services-table-card" style={{ marginTop: 24 }} title="Cadastros recentes" loading={loading}>
+      <Card className="prevent-services-table-card" style={{ marginTop: 24 }} title="Cadastros recentes" loading={loading}>
         <Table rowKey="id" columns={recentServicesColumns} dataSource={services} pagination={{ pageSize: 6 }} />
       </Card>
 
@@ -770,11 +770,11 @@ export const ServiceClientRegisterPage: React.FC = () => {
         footer={null}
         width={860}
         title="Selecionar orcamento existente"
-        className="atlas-services-modal"
+        className="prevent-services-modal"
       >
         <Space direction="vertical" size={12} style={{ width: '100%' }}>
           <Input
-            className="atlas-services-input"
+            className="prevent-services-input"
             placeholder="Filtrar por codigo, valor, tipo ou data"
             value={budgetSearch}
             onChange={(event) => setBudgetSearch(event.target.value)}
@@ -817,40 +817,40 @@ export const ServiceClientRegisterPage: React.FC = () => {
         onClose={() => setProviderDrawerOpen(false)}
         width={520}
         title="Novo prestador"
-        className="atlas-services-drawer"
+        className="prevent-services-drawer"
       >
         <Form form={providerForm} layout="vertical" onFinish={saveInlineProvider}>
           <Form.Item name="name" label="Nome">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="document" label="CPF/CNPJ" normalize={normalizeCpfCnpjBR}>
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR}>
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="email" label="E-mail">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="paymentMethod" label="Metodo">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="paymentCondition" label="Condicao de pagamento">
-            <Input className="atlas-services-input" placeholder="Ex: A vista, 30/60 dias" />
+            <Input className="prevent-services-input" placeholder="Ex: A vista, 30/60 dias" />
           </Form.Item>
           <Form.Item name="pixKey" label="Chave Pix">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="bank" label="Banco">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="agency" label="Agencia">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="account" label="Conta">
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
-          <Button htmlType="submit" type="primary" icon={<SaveOutlined />} className="atlas-services-button atlas-services-button-primary">
+          <Button htmlType="submit" type="primary" icon={<SaveOutlined />} className="prevent-services-button prevent-services-button-primary">
             Salvar prestador
           </Button>
         </Form>
@@ -861,16 +861,16 @@ export const ServiceClientRegisterPage: React.FC = () => {
         onCancel={() => setPaymentModalOpen(false)}
         footer={null}
         title="Nova condicao de pagamento"
-        className="atlas-services-modal"
+        className="prevent-services-modal"
       >
         <Form form={paymentConditionForm} layout="vertical" onFinish={createPaymentCondition}>
           <Form.Item name="label" label="Nome da condicao" rules={[{ required: true, message: 'Informe a condicao' }]}>
-            <Input className="atlas-services-input" />
+            <Input className="prevent-services-input" />
           </Form.Item>
           <Form.Item name="installments" label="Quantidade de parcelas" rules={[{ required: true, message: 'Informe a quantidade' }]}>
-            <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={1} />
+            <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={1} />
           </Form.Item>
-          <Button htmlType="submit" type="primary" icon={<PlusOutlined />} className="atlas-services-button atlas-services-button-primary">
+          <Button htmlType="submit" type="primary" icon={<PlusOutlined />} className="prevent-services-button prevent-services-button-primary">
             Criar condicao
           </Button>
         </Form>

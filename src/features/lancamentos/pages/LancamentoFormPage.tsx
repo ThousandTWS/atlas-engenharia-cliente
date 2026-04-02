@@ -266,7 +266,7 @@ export const LancamentoFormPage: React.FC = () => {
         </Space>
 
         <Button
-          className="atlas-back-button"
+          className="prevent-back-button"
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/lancamentos')}
           style={{ width: isMobile ? '100%' : 'auto' }}

@@ -86,7 +86,7 @@ interface InspectionSchedule {
 
 type InspectionScheduleMap = Record<string, InspectionSchedule>;
 
-const INSPECTION_STORAGE_KEY = 'atlas.service_tracking.inspection_schedule';
+const INSPECTION_STORAGE_KEY = 'prevent.service_tracking.inspection_schedule';
 
 const readInspectionScheduleMap = (): InspectionScheduleMap => {
   if (typeof window === 'undefined') return {};
@@ -605,7 +605,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 180,
       render: (_, row) => (
         <Select
-          className="atlas-services-select"
+          className="prevent-services-select"
           size="small"
           value={inlineEdit?.key === row.key && inlineEdit.field === 'subtype' ? inlineEdit.value : row.subtype}
           options={(DEFAULT_SUBTYPE_OPTIONS[row.serviceType] ?? []).map((item) => ({ label: item, value: item }))}
@@ -623,7 +623,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 180,
       render: (_, row) => (
         <Select
-          className="atlas-services-select"
+          className="prevent-services-select"
           size="small"
           value={inlineEdit?.key === row.key && inlineEdit.field === 'situation' ? inlineEdit.value : row.situation}
           options={(situationConfig[row.serviceType] ?? []).map((item) => ({ label: item.label, value: item.label }))}
@@ -648,7 +648,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 260,
       render: (_, row) => (
         <Input
-          className="atlas-services-input"
+          className="prevent-services-input"
           size="small"
           value={inlineEdit?.key === row.key && inlineEdit.field === 'description' ? inlineEdit.value : row.description}
           placeholder="Descricao livre"
@@ -711,7 +711,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 160,
       render: (_, row) => (
         <Space>
-          <Button className="atlas-services-button" size="small" icon={<EditOutlined />} onClick={() => void openDrawer(row)}>
+          <Button className="prevent-services-button" size="small" icon={<EditOutlined />} onClick={() => void openDrawer(row)}>
             Detalhes
           </Button>
         </Space>
@@ -720,7 +720,7 @@ export const ServicesTrackingPage: React.FC = () => {
   ];
 
   return (
-    <div className="atlas-services-page" style={{ maxWidth: 1600, margin: '0 auto' }}>
+    <div className="prevent-services-page" style={{ maxWidth: 1600, margin: '0 auto' }}>
       <Breadcrumb
         items={[
           { title: <HomeOutlined />, href: '/' },
@@ -738,16 +738,16 @@ export const ServicesTrackingPage: React.FC = () => {
         </Space>
 
         <Space wrap>
-          <Button className="atlas-services-button" icon={<PlusOutlined />} onClick={() => navigate('/obras/novo')}>Novo servico</Button>
-          <Button className="atlas-services-button" icon={<SettingOutlined />} onClick={() => void openSettings()}>Configurar situacoes</Button>
+          <Button className="prevent-services-button" icon={<PlusOutlined />} onClick={() => navigate('/obras/novo')}>Novo servico</Button>
+          <Button className="prevent-services-button" icon={<SettingOutlined />} onClick={() => void openSettings()}>Configurar situacoes</Button>
         </Space>
       </div>
 
-      <Card className="atlas-services-filter-card" style={{ borderRadius: 14, marginBottom: 20 }} styles={{ body: { padding: 16 } }}>
+      <Card className="prevent-services-filter-card" style={{ borderRadius: 14, marginBottom: 20 }} styles={{ body: { padding: 16 } }}>
         <Row gutter={[12, 12]} align="middle">
           <Col xs={24} md={8}>
             <Select
-              className="atlas-services-select"
+              className="prevent-services-select"
               value={typeFilter}
               options={[{ label: 'Todos os tipos', value: 'ALL' }, ...SERVICE_TYPE_OPTIONS]}
               onChange={(value) => setTypeFilter(value)}
@@ -756,23 +756,23 @@ export const ServicesTrackingPage: React.FC = () => {
           </Col>
           <Col xs={24} md={10}>
             <Input
-              className="atlas-services-input"
+              className="prevent-services-input"
               placeholder="Buscar por codigo, cliente, telefone, subtipo ou situacao"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
             />
           </Col>
           <Col xs={24} md={6} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-            <Tag className="atlas-dashboard-meta-chip" bordered={false}>
+            <Tag className="prevent-dashboard-meta-chip" bordered={false}>
               {filteredRows.length} servico(s)
             </Tag>
           </Col>
         </Row>
       </Card>
 
-      <Card className="atlas-services-table-card" style={{ borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
+      <Card className="prevent-services-table-card" style={{ borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
         <Table
-          className="atlas-services-table"
+          className="prevent-services-table"
           rowKey="key"
           loading={loading}
           columns={columns}
@@ -791,7 +791,7 @@ export const ServicesTrackingPage: React.FC = () => {
       </Card>
 
       <Drawer
-        className="atlas-services-drawer"
+        className="prevent-services-drawer"
         open={Boolean(drawerRow)}
         onClose={() => setDrawerRow(null)}
         width={820}
@@ -813,82 +813,82 @@ export const ServicesTrackingPage: React.FC = () => {
                           <Row gutter={16}>
                             <Col span={12}>
                               <Form.Item name="clientName" label="Nome do cliente" rules={[{ required: true }]}>
-                                <Input className="atlas-services-input" />
+                                <Input className="prevent-services-input" />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR}>
-                                <Input className="atlas-services-input" />
+                                <Input className="prevent-services-input" />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="serviceType" label="Tipo de servico" rules={[{ required: true }]}>
-                                <Select className="atlas-services-select" options={SERVICE_TYPE_OPTIONS} disabled />
+                                <Select className="prevent-services-select" options={SERVICE_TYPE_OPTIONS} disabled />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="subtype" label="Subtipo">
-                                <Input className="atlas-services-input" />
+                                <Input className="prevent-services-input" />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="situation" label="Situacao" rules={[{ required: true }]}>
-                                <Select className="atlas-services-select" options={availableSituations} />
+                                <Select className="prevent-services-select" options={availableSituations} />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="contractDate" label="Data do contrato">
-                                <DatePicker className="atlas-services-date" style={{ width: '100%' }} format="DD/MM/YYYY" />
+                                <DatePicker className="prevent-services-date" style={{ width: '100%' }} format="DD/MM/YYYY" />
                               </Form.Item>
                             </Col>
                             <Col span={24}>
                               <Form.Item name="description" label="Descricao">
-                                <Input.TextArea className="atlas-services-input" rows={3} />
+                                <Input.TextArea className="prevent-services-input" rows={3} />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="contractValue" label="Valor do contrato">
-                                <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                                <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="paymentCondition" label="Condicao de pagamento">
-                                <Input className="atlas-services-input" />
+                                <Input className="prevent-services-input" />
                               </Form.Item>
                             </Col>
                             <Col span={8}>
                               <Form.Item name="receivable" label="A receber">
-                                <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                                <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                               </Form.Item>
                             </Col>
                             <Col span={8}>
                               <Form.Item name="received" label="Recebido">
-                                <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                                <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                               </Form.Item>
                             </Col>
                             <Col span={8}>
                               <Form.Item name="costs" label="Custos">
-                                <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                                <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                               </Form.Item>
                             </Col>
                             <Col span={24}>
                               <Form.Item name="folderUrl" label="Atalho da pasta">
-                                <Input className="atlas-services-input" placeholder="https://... ou caminho da pasta" />
+                                <Input className="prevent-services-input" placeholder="https://... ou caminho da pasta" />
                               </Form.Item>
                             </Col>
                           </Row>
 
                           <Space wrap>
-                            <Button className="atlas-services-button atlas-services-button-primary" type="primary" htmlType="submit" icon={<SaveOutlined />}>Salvar</Button>
-                            <Button className="atlas-services-button" icon={<FilePdfOutlined />} onClick={() => void exportRowPdf(drawerRow)}>Gerar PDF</Button>
+                            <Button className="prevent-services-button prevent-services-button-primary" type="primary" htmlType="submit" icon={<SaveOutlined />}>Salvar</Button>
+                            <Button className="prevent-services-button" icon={<FilePdfOutlined />} onClick={() => void exportRowPdf(drawerRow)}>Gerar PDF</Button>
                             {isInspectionSituation(drawerSituation) ? (
-                              <Button className="atlas-services-button" icon={<CalendarOutlined />} onClick={openInspectionOnGoogleCalendar}>
+                              <Button className="prevent-services-button" icon={<CalendarOutlined />} onClick={openInspectionOnGoogleCalendar}>
                                 Agendar vistoria
                               </Button>
                             ) : null}
-                            <Button className="atlas-services-button" icon={<EditOutlined />} onClick={() => navigate(drawerRow.editPath)}>Abrir cadastro completo</Button>
+                            <Button className="prevent-services-button" icon={<EditOutlined />} onClick={() => navigate(drawerRow.editPath)}>Abrir cadastro completo</Button>
                             {drawerRow.folderUrl ? (
-                              <Button className="atlas-services-button" icon={<FolderOpenOutlined />} onClick={() => window.open(drawerRow.folderUrl, '_blank', 'noopener,noreferrer')}>
+                              <Button className="prevent-services-button" icon={<FolderOpenOutlined />} onClick={() => window.open(drawerRow.folderUrl, '_blank', 'noopener,noreferrer')}>
                                 Abrir pasta
                               </Button>
                             ) : null}
@@ -922,7 +922,7 @@ export const ServicesTrackingPage: React.FC = () => {
       </Drawer>
 
       <Modal
-        className="atlas-services-modal"
+        className="prevent-services-modal"
         open={settingsOpen}
         onCancel={() => setSettingsOpen(false)}
         footer={null}
@@ -939,7 +939,7 @@ export const ServicesTrackingPage: React.FC = () => {
                   <Row key={item.id} gutter={8} align="middle">
                     <Col flex="auto">
                       <Input
-                        className="atlas-services-input"
+                        className="prevent-services-input"
                         value={item.label}
                         onChange={(event) => {
                           setSituationConfig((current) => ({
@@ -982,7 +982,7 @@ export const ServicesTrackingPage: React.FC = () => {
                 ))}
 
                 <Button
-                  className="atlas-services-button"
+                  className="prevent-services-button"
                   loading={settingsLoading}
                   icon={<PlusOutlined />}
                   onClick={() => void addSituation(serviceType.value)}
@@ -996,7 +996,7 @@ export const ServicesTrackingPage: React.FC = () => {
       </Modal>
 
       <Modal
-        className="atlas-services-modal"
+        className="prevent-services-modal"
         open={inspectionModalOpen}
         onCancel={() => setInspectionModalOpen(false)}
         title="Agendar vistoria no Google"
@@ -1011,7 +1011,7 @@ export const ServicesTrackingPage: React.FC = () => {
           <div>
             <Text strong>Data e horario</Text>
             <DatePicker
-              className="atlas-services-date"
+              className="prevent-services-date"
               style={{ width: '100%', marginTop: 6 }}
               showTime
               format="DD/MM/YYYY HH:mm"
@@ -1022,7 +1022,7 @@ export const ServicesTrackingPage: React.FC = () => {
           <div>
             <Text strong>Local (opcional)</Text>
             <Input
-              className="atlas-services-input"
+              className="prevent-services-input"
               style={{ marginTop: 6 }}
               value={inspectionDraftLocation}
               onChange={(event) => setInspectionDraftLocation(event.target.value)}

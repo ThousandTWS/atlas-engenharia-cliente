@@ -181,7 +181,7 @@ const QUICK_PROMPTS = [
 const INITIAL_MESSAGE: GlobalAiMessage = {
   role: "assistant",
   content:
-    "Sou o Atlas AI global. Posso te ajudar com chat, imagem, vídeo, voz, Google Search, Google Maps e automações.",
+    "Sou o Prevent AI. Posso te ajudar com chat, imagem, vídeo, voz, Google Search, Google Maps e automações.",
 };
 
 const mapErrorMessage = (error: unknown) => {
@@ -302,7 +302,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
               Supercharge your apps with AI
             </Text>
             <Title level={4} style={{ margin: 0, lineHeight: 1.2 }}>
-              Atlas AI Global
+              Prevent AI
             </Title>
           </div>
         </Space>
@@ -312,10 +312,10 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
       size={isMobile ? "100%" : 560}
       extra={
         <Tag
-          className="atlas-status-badge atlas-status-badge-info"
+          className="prevent-status-badge prevent-status-badge-info"
           variant="filled"
         >
-          <span className="atlas-status-badge-dot" />
+          <span className="prevent-status-badge-dot" />
           {modelLabel}
         </Tag>
       }
@@ -404,7 +404,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                                   color: isDarkMode ? "#8EA5C7" : "#64748B",
                                 }}
                               >
-                                {isUser ? "Você" : "Atlas AI"}
+                                {isUser ? "Você" : "Prevent AI"}
                               </Text>
                               <div
                                 style={{
@@ -485,7 +485,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                     autoSize={{ minRows: 3, maxRows: 6 }}
                     placeholder="Peça análises, plano de IA, automações e próximos passos..."
                     disabled={sending}
-                    className="atlas-form-input"
+                    className="prevent-form-input"
                     style={{ border: "none", boxShadow: "none" }}
                     onPressEnter={(event) => {
                       if (!event.shiftKey) {
@@ -576,13 +576,13 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                             <Text strong>{capability.title}</Text>
                             <Tag
                               variant="filled"
-                              className={`atlas-status-badge ${
+                              className={`prevent-status-badge ${
                                 capability.status === "enabled"
-                                  ? "atlas-status-badge-success"
-                                  : "atlas-status-badge-info"
+                                  ? "prevent-status-badge-success"
+                                  : "prevent-status-badge-info"
                               }`}
                             >
-                              <span className="atlas-status-badge-dot" />
+                              <span className="prevent-status-badge-dot" />
                               {capability.status === "enabled"
                                 ? "Ativo"
                                 : "Preview"}
