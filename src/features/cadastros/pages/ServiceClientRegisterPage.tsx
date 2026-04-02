@@ -901,7 +901,6 @@ export const ServiceClientRegisterPage: React.FC = () => {
                       <Form.Item name="email" label="E-mail">
                         <Input className="prevent-services-input" />
                       </Form.Item>
-<<<<<<< HEAD
                       <Row gutter={12}>
                         <Col span={8}>
                           <Form.Item name="companyCep" label="CEP" normalize={normalizeCepBR}>
@@ -939,11 +938,6 @@ export const ServiceClientRegisterPage: React.FC = () => {
                           </Form.Item>
                         </Col>
                       </Row>
-=======
-                      <Form.Item name="companyAddress" label="Endereco da empresa">
-                        <Input.TextArea className="prevent-services-input" rows={3} />
-                      </Form.Item>
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                     </Card>
                   </Col>
 
@@ -1032,16 +1026,11 @@ export const ServiceClientRegisterPage: React.FC = () => {
                         </Col>
                       </Row>
 
-<<<<<<< HEAD
                       <Form.Item name="companyAddress" hidden>
                         <Input />
                       </Form.Item>
                       <Form.Item name="serviceAddress" hidden>
                         <Input />
-=======
-                      <Form.Item name="serviceAddress" label="Local do servico">
-                        <Input.TextArea className="prevent-services-input" rows={3} />
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                       </Form.Item>
                     </Card>
                   </Col>
@@ -1056,7 +1045,6 @@ export const ServiceClientRegisterPage: React.FC = () => {
                   <Col xs={24} lg={10}>
                     <Card className="prevent-services-table-card" title="Resumo financeiro">
                       <Form.Item name="contractValue" label="Valor total do contrato" rules={[{ required: true, message: 'Informe o valor do contrato' }]}>
-<<<<<<< HEAD
                         <InputNumber
                           className="atlas-services-number"
                           style={{ width: '100%' }}
@@ -1064,15 +1052,11 @@ export const ServiceClientRegisterPage: React.FC = () => {
                           formatter={formatCurrencyInput}
                           parser={parseCurrencyInput}
                         />
-=======
-                        <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                       </Form.Item>
                       <Form.Item name="contractDate" label="Data do contrato" rules={[{ required: true, message: 'Informe a data do contrato' }]}>
                         <Input type="date" className="prevent-services-input" />
                       </Form.Item>
                       <Form.Item name="invoiceValue" label="Desconto NF (opcional)">
-<<<<<<< HEAD
                         <InputNumber
                           className="atlas-services-number"
                           style={{ width: '100%' }}
@@ -1081,9 +1065,6 @@ export const ServiceClientRegisterPage: React.FC = () => {
                           formatter={formatCurrencyInput}
                           parser={parseCurrencyInput}
                         />
-=======
-                        <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                       </Form.Item>
                       <Form.Item label="Regra do desconto NF">
                         <Select
@@ -1342,7 +1323,6 @@ export const ServiceClientRegisterPage: React.FC = () => {
         </Space>
       </Form>
 
-<<<<<<< HEAD
       <Modal
         open={templateModalOpen}
         onCancel={() => setTemplateModalOpen(false)}
@@ -1375,9 +1355,6 @@ export const ServiceClientRegisterPage: React.FC = () => {
       </Modal>
 
       <Card className="atlas-services-table-card" style={{ marginTop: 24 }} title="Cadastros recentes" loading={loading}>
-=======
-      <Card className="prevent-services-table-card" style={{ marginTop: 24 }} title="Cadastros recentes" loading={loading}>
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
         <Table rowKey="id" columns={recentServicesColumns} dataSource={services} pagination={{ pageSize: 6 }} />
       </Card>
 
@@ -1391,13 +1368,8 @@ export const ServiceClientRegisterPage: React.FC = () => {
       >
         <Space direction="vertical" size={12} style={{ width: '100%' }}>
           <Input
-<<<<<<< HEAD
             className="atlas-services-input"
             placeholder="Filtrar por codigo, telefone, valor, tipo ou data"
-=======
-            className="prevent-services-input"
-            placeholder="Filtrar por codigo, valor, tipo ou data"
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
             value={budgetSearch}
             onChange={(event) => setBudgetSearch(event.target.value)}
           />
@@ -1483,13 +1455,8 @@ export const ServiceClientRegisterPage: React.FC = () => {
         open={paymentModalOpen}
         onCancel={() => setPaymentModalOpen(false)}
         footer={null}
-<<<<<<< HEAD
         title={editingPaymentCondition ? 'Editar condição de pagamento' : 'Nova condição de pagamento'}
         className="atlas-services-modal"
-=======
-        title="Nova condicao de pagamento"
-        className="prevent-services-modal"
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
       >
         <Form form={paymentConditionForm} layout="vertical" onFinish={upsertPaymentCondition}>
           <Form.Item name="label" label="Nome da condicao" rules={[{ required: true, message: 'Informe a condicao' }]}>
@@ -1498,7 +1465,6 @@ export const ServiceClientRegisterPage: React.FC = () => {
           <Form.Item name="installments" label="Quantidade de parcelas" rules={[{ required: true, message: 'Informe a quantidade' }]}>
             <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={1} />
           </Form.Item>
-<<<<<<< HEAD
           <Row gutter={12}>
             <Col span={14}>
               <Form.Item name="intervalDays" label="Intervalo (dias)">
@@ -1518,10 +1484,6 @@ export const ServiceClientRegisterPage: React.FC = () => {
           </Row>
           <Button htmlType="submit" type="primary" icon={<PlusOutlined />} className="atlas-services-button atlas-services-button-primary">
             {editingPaymentCondition ? 'Salvar condição' : 'Criar condição'}
-=======
-          <Button htmlType="submit" type="primary" icon={<PlusOutlined />} className="prevent-services-button prevent-services-button-primary">
-            Criar condicao
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
           </Button>
           {editingPaymentCondition ? (
             <Button

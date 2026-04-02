@@ -260,7 +260,7 @@ export const ServicesTrackingPage: React.FC = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [services, _] = await Promise.all([
+      const [services,] = await Promise.all([
         servicesTrackingApi.getAll({ size: 500 }),
         loadSituationConfig(),
       ]);
@@ -763,7 +763,6 @@ export const ServicesTrackingPage: React.FC = () => {
       key: 'situation',
       width: 180,
       render: (_, row) => (
-<<<<<<< HEAD
         <Space direction="vertical" size={6} style={{ width: '100%' }}>
           <Select
             className="atlas-services-select"
@@ -790,18 +789,6 @@ export const ServicesTrackingPage: React.FC = () => {
             ))}
           </Space>
         </Space>
-=======
-        <Select
-          className="prevent-services-select"
-          size="small"
-          value={inlineEdit?.key === row.key && inlineEdit.field === 'situation' ? inlineEdit.value : row.situation}
-          options={(situationConfig[row.serviceType] ?? []).map((item) => ({ label: item.label, value: item.label }))}
-          style={{ width: '100%' }}
-          onFocus={() => setInlineEdit({ key: row.key, field: 'situation', value: row.situation })}
-          onChange={(value) => setInlineEdit({ key: row.key, field: 'situation', value })}
-          onBlur={() => saveInlineEdit(row)}
-        />
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
       ),
     },
     {
@@ -908,7 +895,6 @@ export const ServicesTrackingPage: React.FC = () => {
         </Space>
 
         <Space wrap>
-<<<<<<< HEAD
           <Button
             className="atlas-services-button"
             icon={<PlusOutlined />}
@@ -917,10 +903,6 @@ export const ServicesTrackingPage: React.FC = () => {
             Novo servico
           </Button>
           <Button className="atlas-services-button" icon={<SettingOutlined />} onClick={() => void openSettings()}>Configurar situacoes</Button>
-=======
-          <Button className="prevent-services-button" icon={<PlusOutlined />} onClick={() => navigate('/obras/novo')}>Novo servico</Button>
-          <Button className="prevent-services-button" icon={<SettingOutlined />} onClick={() => void openSettings()}>Configurar situacoes</Button>
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
         </Space>
       </div>
 
@@ -951,16 +933,10 @@ export const ServicesTrackingPage: React.FC = () => {
         </Row>
       </Card>
 
-<<<<<<< HEAD
       <Card className="atlas-services-table-card" style={{ borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
         <ExcelLikeTable
           tableId="acompanhamento-servicos"
           className="atlas-services-table"
-=======
-      <Card className="prevent-services-table-card" style={{ borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
-        <Table
-          className="prevent-services-table"
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
           rowKey="key"
           loading={loading}
           columns={columns}
@@ -1022,11 +998,7 @@ export const ServicesTrackingPage: React.FC = () => {
                             </Col>
                             <Col span={12}>
                               <Form.Item name="situation" label="Situacao" rules={[{ required: true }]}>
-<<<<<<< HEAD
                                 <Select className="atlas-services-select" options={availableSituations} disabled={hasPending} />
-=======
-                                <Select className="prevent-services-select" options={availableSituations} />
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                               </Form.Item>
                             </Col>
                             <Col span={24}>
@@ -1091,29 +1063,20 @@ export const ServicesTrackingPage: React.FC = () => {
                           </Row>
 
                           <Space wrap>
-<<<<<<< HEAD
                             <Button className="atlas-services-button atlas-services-button-primary" type="primary" htmlType="submit" icon={<SaveOutlined />}>Salvar</Button>
                             <Button className="atlas-services-button" onClick={() => void openReportTemplateEditor()}>
                               Modelo PDF
                             </Button>
                             <Button className="atlas-services-button" icon={<FilePdfOutlined />} onClick={() => void exportRowPdf(drawerRow)}>Gerar PDF</Button>
-=======
-                            <Button className="prevent-services-button prevent-services-button-primary" type="primary" htmlType="submit" icon={<SaveOutlined />}>Salvar</Button>
-                            <Button className="prevent-services-button" icon={<FilePdfOutlined />} onClick={() => void exportRowPdf(drawerRow)}>Gerar PDF</Button>
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                             {isInspectionSituation(drawerSituation) ? (
                               <Button className="prevent-services-button" icon={<CalendarOutlined />} onClick={openInspectionOnGoogleCalendar}>
                                 Agendar vistoria
                               </Button>
                             ) : null}
-<<<<<<< HEAD
                             <Button className="atlas-services-button" icon={<EditOutlined />} onClick={() => navigate(drawerRow.editPath)}>Abrir cadastro do painel</Button>
                             <Button className="atlas-services-button" onClick={() => navigate(`/cadastros/servicos?tipo=${drawerRow.serviceType}&codigo=${encodeURIComponent(drawerRow.code)}`)}>
                               Atalho: cadastro unico
                             </Button>
-=======
-                            <Button className="prevent-services-button" icon={<EditOutlined />} onClick={() => navigate(drawerRow.editPath)}>Abrir cadastro completo</Button>
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                             {drawerRow.folderUrl ? (
                               <Button className="prevent-services-button" icon={<FolderOpenOutlined />} onClick={() => window.open(drawerRow.folderUrl, '_blank', 'noopener,noreferrer')}>
                                 Abrir pasta
@@ -1163,7 +1126,6 @@ export const ServicesTrackingPage: React.FC = () => {
             children: (
               <Space direction="vertical" size={12} style={{ width: '100%' }}>
                 {(situationConfig[serviceType.value] ?? []).map((item) => (
-<<<<<<< HEAD
                   <div key={item.id} style={{ padding: 10, border: '1px solid #dbe7f6', borderRadius: 12, background: '#f8fbff' }}>
                     <Row gutter={8} align="middle">
                       <Col flex="auto">
@@ -1232,51 +1194,6 @@ export const ServicesTrackingPage: React.FC = () => {
                       </Space>
                     </div>
                   </div>
-=======
-                  <Row key={item.id} gutter={8} align="middle">
-                    <Col flex="auto">
-                      <Input
-                        className="prevent-services-input"
-                        value={item.label}
-                        onChange={(event) => {
-                          setSituationConfig((current) => ({
-                            ...current,
-                            [serviceType.value]: current[serviceType.value].map((currentItem) => (
-                              currentItem.id === item.id
-                                ? { ...currentItem, label: event.target.value.toUpperCase() }
-                                : currentItem
-                            )),
-                          }));
-                        }}
-                        onBlur={() => void updateSituationItem(
-                          serviceType.value,
-                          {
-                            ...item,
-                            label: situationConfig[serviceType.value].find((currentItem) => currentItem.id === item.id)?.label || item.label,
-                          },
-                          {},
-                          'Situacao atualizada.'
-                        )}
-                      />
-                    </Col>
-                    <Col>
-                      <Button
-                        type={item.isDefault ? 'primary' : 'default'}
-                        onClick={() => void updateSituationItem(serviceType.value, item, { isDefault: true }, 'Situacao inicial atualizada.')}
-                      >
-                        Inicial
-                      </Button>
-                    </Col>
-                    <Col>
-                      <Button
-                        danger
-                        onClick={() => void deleteSituation(item)}
-                      >
-                        Excluir
-                      </Button>
-                    </Col>
-                  </Row>
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                 ))}
 
                 <Button
@@ -1294,7 +1211,6 @@ export const ServicesTrackingPage: React.FC = () => {
       </Modal>
 
       <Modal
-<<<<<<< HEAD
         className="atlas-services-modal"
         open={conditionModalOpen}
         onCancel={() => {
@@ -1365,9 +1281,6 @@ export const ServicesTrackingPage: React.FC = () => {
 
       <Modal
         className="atlas-services-modal"
-=======
-        className="prevent-services-modal"
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
         open={inspectionModalOpen}
         onCancel={() => setInspectionModalOpen(false)}
         title="Agendar vistoria no Google"

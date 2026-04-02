@@ -123,7 +123,6 @@ export const NotificationDrawer: React.FC = () => {
         width={420}
         open={open}
         onClose={() => setOpen(false)}
-<<<<<<< HEAD
         className="atlas-notification-drawer atlas-services-drawer"
         extra={(
           <Space>
@@ -140,10 +139,6 @@ export const NotificationDrawer: React.FC = () => {
             <Tag color={pendingConfirmationCount > 0 ? 'gold' : 'green'}>{pendingConfirmationCount} pendentes</Tag>
           </Space>
         )}
-=======
-        className="prevent-notification-drawer prevent-services-drawer"
-        extra={<Tag color={pendingConfirmationCount > 0 ? 'gold' : 'green'}>{pendingConfirmationCount} pendentes</Tag>}
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
       >
         <Space direction="vertical" size={16} style={{ width: '100%' }}>
           <Card className="prevent-services-filter-card prevent-notification-summary-card" size="small">

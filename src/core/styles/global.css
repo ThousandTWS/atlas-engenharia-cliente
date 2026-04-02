@@ -115,15 +115,20 @@ body {
 }
 
 .prevent-services-filter-card.ant-card,
+.atlas-services-filter-card.ant-card,
 .prevent-services-table-card.ant-card,
+.atlas-services-table-card.ant-card,
 .prevent-services-drawer .ant-drawer-content,
-.prevent-services-modal .ant-modal-content {
+.atlas-services-drawer .ant-drawer-content,
+.prevent-services-modal .ant-modal-content,
+.atlas-services-modal .ant-modal-content {
   border: 1px solid #dbe7f6;
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   box-shadow: 0 24px 60px #0f172a12;
 }
 
-.prevent-services-button.ant-btn {
+.prevent-services-button.ant-btn,
+.atlas-services-button.ant-btn {
   border-radius: 10px;
   border: 1px solid #dbe7f6 !important;
   background: #ffffff !important;
@@ -132,30 +137,41 @@ body {
 }
 
 .prevent-services-button.ant-btn:hover,
-.prevent-services-button.ant-btn:focus {
+.prevent-services-button.ant-btn:focus,
+.atlas-services-button.ant-btn:hover,
+.atlas-services-button.ant-btn:focus {
   border-color: #b9d3ff !important;
   background: #eef4ff !important;
   color: #1d4ed8 !important;
 }
 
-.prevent-services-button-primary.ant-btn {
+.prevent-services-button-primary.ant-btn,
+.atlas-services-button-primary.ant-btn {
   border-color: transparent !important;
   background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%) !important;
   color: #ffffff !important;
 }
 
 .prevent-services-button-primary.ant-btn:hover,
-.prevent-services-button-primary.ant-btn:focus {
+.prevent-services-button-primary.ant-btn:focus,
+.atlas-services-button-primary.ant-btn:hover,
+.atlas-services-button-primary.ant-btn:focus {
   background: linear-gradient(135deg, #172554 0%, #1e40af 100%) !important;
   color: #ffffff !important;
 }
 
 .prevent-services-select .ant-select-selector,
+.atlas-services-select .ant-select-selector,
 .prevent-services-date.ant-picker,
+.atlas-services-date.ant-picker,
 .prevent-services-input.ant-input,
+.atlas-services-input.ant-input,
 .prevent-services-input.ant-input-affix-wrapper,
+.atlas-services-input.ant-input-affix-wrapper,
 .prevent-services-input.ant-input-textarea textarea,
-.prevent-services-number.ant-input-number {
+.atlas-services-input.ant-input-textarea textarea,
+.prevent-services-number.ant-input-number,
+.atlas-services-number.ant-input-number {
   border-radius: 10px !important;
   border: 1px solid #d5e3f2 !important;
   background: #ffffff !important;
@@ -168,7 +184,19 @@ body {
   overflow: hidden;
 }
 
+.atlas-services-table .ant-table-container {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
 .prevent-services-table .ant-table-thead > tr > th {
+  background: #f8fbff !important;
+  color: #334155;
+  font-weight: 700;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.atlas-services-table .ant-table-thead > tr > th {
   background: #f8fbff !important;
   color: #334155;
   font-weight: 700;
@@ -180,9 +208,20 @@ body {
   border-bottom: 1px solid #e2e8f0 !important;
 }
 
+.atlas-services-table .ant-table-tbody > tr > td {
+  background: transparent;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
 .prevent-services-table .ant-table-cell::before,
 .prevent-services-table .ant-table-ping-left .ant-table-cell-fix-left-last::after,
 .prevent-services-table .ant-table-ping-right .ant-table-cell-fix-right-first::after {
+  display: none !important;
+}
+
+.atlas-services-table .ant-table-cell::before,
+.atlas-services-table .ant-table-ping-left .ant-table-cell-fix-left-last::after,
+.atlas-services-table .ant-table-ping-right .ant-table-cell-fix-right-first::after {
   display: none !important;
 }
 
@@ -190,7 +229,6 @@ body {
   display: none !important;
 }
 
-<<<<<<< HEAD
 .atlas-excel-resizable {
   position: relative;
   user-select: none;
@@ -226,37 +264,44 @@ body {
 .dark .atlas-services-filter-card.ant-card,
 .dark .atlas-services-table-card.ant-card,
 .dark .atlas-services-drawer .ant-drawer-content,
-.dark .atlas-services-modal .ant-modal-content {
-=======
+.dark .atlas-services-modal .ant-modal-content,
 .dark .prevent-services-filter-card.ant-card,
 .dark .prevent-services-table-card.ant-card,
 .dark .prevent-services-drawer .ant-drawer-content,
 .dark .prevent-services-modal .ant-modal-content {
->>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
   border-color: #28446d;
   background: linear-gradient(180deg, #10203a 0%, #0b1628 100%);
   box-shadow: 0 24px 60px #02061755;
 }
 
-.dark .prevent-services-button.ant-btn {
+.dark .prevent-services-button.ant-btn,
+.dark .atlas-services-button.ant-btn {
   border-color: #28446d !important;
   background: #10203a !important;
   color: #e2e8f0 !important;
 }
 
 .dark .prevent-services-button.ant-btn:hover,
-.dark .prevent-services-button.ant-btn:focus {
+.dark .prevent-services-button.ant-btn:focus,
+.dark .atlas-services-button.ant-btn:hover,
+.dark .atlas-services-button.ant-btn:focus {
   border-color: #3b5f8f !important;
   background: #132742 !important;
   color: #ffffff !important;
 }
 
 .dark .prevent-services-select .ant-select-selector,
+.dark .atlas-services-select .ant-select-selector,
 .dark .prevent-services-date.ant-picker,
+.dark .atlas-services-date.ant-picker,
 .dark .prevent-services-input.ant-input,
+.dark .atlas-services-input.ant-input,
 .dark .prevent-services-input.ant-input-affix-wrapper,
+.dark .atlas-services-input.ant-input-affix-wrapper,
 .dark .prevent-services-input.ant-input-textarea textarea,
-.dark .prevent-services-number.ant-input-number {
+.dark .atlas-services-input.ant-input-textarea textarea,
+.dark .prevent-services-number.ant-input-number,
+.dark .atlas-services-number.ant-input-number {
   border-color: #28446d !important;
   background: #10203a !important;
   color: #e2e8f0 !important;
@@ -264,19 +309,28 @@ body {
 
 .prevent-services-input.ant-input::placeholder,
 .prevent-services-input.ant-input-affix-wrapper input::placeholder,
-.prevent-services-input.ant-input-textarea textarea::placeholder {
+.prevent-services-input.ant-input-textarea textarea::placeholder,
+.atlas-services-input.ant-input::placeholder,
+.atlas-services-input.ant-input-affix-wrapper input::placeholder,
+.atlas-services-input.ant-input-textarea textarea::placeholder {
   color: #64748b !important;
 }
 
 .dark .prevent-services-input.ant-input::placeholder,
 .dark .prevent-services-input.ant-input-affix-wrapper input::placeholder,
-.dark .prevent-services-input.ant-input-textarea textarea::placeholder {
+.dark .prevent-services-input.ant-input-textarea textarea::placeholder,
+.dark .atlas-services-input.ant-input::placeholder,
+.dark .atlas-services-input.ant-input-affix-wrapper input::placeholder,
+.dark .atlas-services-input.ant-input-textarea textarea::placeholder {
   color: #93a6c3 !important;
 }
 
 .dark .prevent-services-input.ant-input-affix-wrapper .ant-input,
 .dark .prevent-services-input.ant-input-textarea textarea,
-.dark .prevent-services-number.ant-input-number input {
+.dark .atlas-services-input.ant-input-affix-wrapper .ant-input,
+.dark .atlas-services-input.ant-input-textarea textarea,
+.dark .prevent-services-number.ant-input-number input,
+.dark .atlas-services-number.ant-input-number input {
   color: #e2e8f0 !important;
   background: transparent !important;
 }
@@ -287,10 +341,19 @@ body {
   border-bottom-color: #28446d !important;
 }
 
+.dark .atlas-services-table .ant-table-thead > tr > th {
+  background: #10203a !important;
+  color: #dbeafe;
+  border-bottom-color: #28446d !important;
+}
+
 .dark .prevent-services-table .ant-table-tbody > tr > td {
   border-bottom-color: #1b3556 !important;
 }
 
+.dark .atlas-services-table .ant-table-tbody > tr > td {
+  border-bottom-color: #1b3556 !important;
+}
 .prevent-dashboard-hero {
   isolation: isolate;
 }
