@@ -12,11 +12,13 @@ import {
   notificationsService,
   type BackendNotification,
   type BackendNotificationCategory,
+  type BackendNotificationServiceType,
 } from '../services/notificationsService';
 
 export type NotificationCategory = 'financial' | 'technical';
 export type NotificationOrigin = 'manual' | 'automatic';
 type NotificationSource = 'client' | 'server';
+export type NotificationServiceType = 'AVCB' | 'CLCB' | 'OBRAS' | 'PROCESSOS_ADM';
 
 export interface NotificationItem {
   id: string;
@@ -25,6 +27,8 @@ export interface NotificationItem {
   timestamp: string;
   type: NotificationType;
   category: NotificationCategory;
+  serviceType?: NotificationServiceType;
+  amount?: number;
   origin: NotificationOrigin;
   ruleId?: string;
   read: boolean;
@@ -74,6 +78,61 @@ const resolveType = (notification: BackendNotification): NotificationType => {
 const mapBackendCategory = (category: BackendNotificationCategory): NotificationCategory =>
   category === 'TECNICA' ? 'technical' : 'financial';
 
+const mapBackendServiceType = (value?: BackendNotificationServiceType | null): NotificationServiceType | undefined =>
+  value === 'AVCB' || value === 'CLCB' || value === 'OBRAS' || value === 'PROCESSOS_ADM' ? value : undefined;
+
+const parseBrazilianMoney = (raw: string): number | null => {
+  const cleaned = raw
+    .replaceAll(/\s/g, '')
+    .replaceAll('R$', '')
+    .replaceAll('BRL', '')
+    .trim();
+
+  if (!cleaned) return null;
+
+  const normalized = cleaned.includes(',') && cleaned.includes('.')
+    ? cleaned.replaceAll('.', '').replace(',', '.')
+    : cleaned.includes(',')
+      ? cleaned.replace(',', '.')
+      : cleaned;
+
+  const value = Number(normalized.replaceAll(/[^\d.-]/g, ''));
+  return Number.isFinite(value) ? value : null;
+};
+
+const extractServiceType = (text: string): NotificationServiceType | undefined => {
+  const normalized = text.toUpperCase();
+
+  if (normalized.includes('AVCB')) return 'AVCB';
+  if (normalized.includes('CLCB')) return 'CLCB';
+  if (normalized.includes('OBRA') || normalized.includes('OBRAS')) return 'OBRAS';
+  if (
+    normalized.includes('PROCESSO') ||
+    normalized.includes('PROC') ||
+    normalized.includes('ADMINISTRATIV')
+  ) {
+    return 'PROCESSOS_ADM';
+  }
+
+  return undefined;
+};
+
+const extractAmount = (text: string): number | undefined => {
+  const candidates: string[] = [];
+  const brlMatches = text.match(/R\\$\\s*[-+]?\\s*[\\d.]+(?:,\\d{1,2})?/g);
+  if (brlMatches) candidates.push(...brlMatches);
+
+  const genericMatches = text.match(/\\b\\d{1,3}(?:\\.\\d{3})*(?:,\\d{1,2})\\b/g);
+  if (genericMatches) candidates.push(...genericMatches);
+
+  for (const raw of candidates) {
+    const parsed = parseBrazilianMoney(raw);
+    if (parsed !== null) return parsed;
+  }
+
+  return undefined;
+};
+
 const toNotificationItem = (notification: BackendNotification): NotificationItem => ({
   id: String(notification.id),
   title: notification.title,
@@ -81,6 +140,10 @@ const toNotificationItem = (notification: BackendNotification): NotificationItem
   timestamp: notification.lastActive ?? notification.createdAt,
   type: resolveType(notification),
   category: mapBackendCategory(notification.category),
+  serviceType: mapBackendServiceType(notification.serviceType)
+    ?? extractServiceType(`${notification.title} ${notification.message ?? ''}`),
+  amount: (typeof notification.amount === 'number' ? notification.amount : undefined)
+    ?? extractAmount(`${notification.title} ${notification.message ?? ''}`),
   origin: 'manual',
   read: notification.isRead,
   confirmedAt: notification.confirmedAt ?? undefined,
@@ -127,6 +190,7 @@ export const NotificationCenterProvider: React.FC<{ children: React.ReactNode }>
   }, []);
 
   const open = useCallback((params: OpenNotificationParams) => {
+    const textForExtraction = `${params.title} ${params.description ?? ''}`;
     const item: NotificationItem = {
       id: `local:${randomId()}`,
       title: params.title,
@@ -134,6 +198,8 @@ export const NotificationCenterProvider: React.FC<{ children: React.ReactNode }>
       timestamp: new Date().toISOString(),
       type: params.type ?? 'info',
       category: normalizeCategory(params.category),
+      serviceType: extractServiceType(textForExtraction),
+      amount: extractAmount(textForExtraction),
       origin: params.origin === 'automatic' ? 'automatic' : 'manual',
       ruleId: params.ruleId,
       read: false,

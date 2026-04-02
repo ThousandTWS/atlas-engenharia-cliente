@@ -20,6 +20,7 @@ import {
   ClockCircleOutlined,
   FilterOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { useNotificationCenter, type NotificationCategory, type NotificationItem } from '../../../core/notifications/NotificationCenterContext';
 import { notificationRuleCatalog } from '../../../core/notifications/notificationRules';
 
@@ -73,6 +74,7 @@ export const NotificationDrawer: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>('all');
   const { token } = theme.useToken();
+  const navigate = useNavigate();
   const {
     notifications,
     pendingConfirmationCount,
@@ -122,7 +124,21 @@ export const NotificationDrawer: React.FC = () => {
         open={open}
         onClose={() => setOpen(false)}
         className="atlas-notification-drawer atlas-services-drawer"
-        extra={<Tag color={pendingConfirmationCount > 0 ? 'gold' : 'green'}>{pendingConfirmationCount} pendentes</Tag>}
+        extra={(
+          <Space>
+            <Button
+              size="small"
+              className="atlas-services-button"
+              onClick={() => {
+                setOpen(false);
+                navigate('/notificacoes');
+              }}
+            >
+              Ver todas
+            </Button>
+            <Tag color={pendingConfirmationCount > 0 ? 'gold' : 'green'}>{pendingConfirmationCount} pendentes</Tag>
+          </Space>
+        )}
       >
         <Space direction="vertical" size={16} style={{ width: '100%' }}>
           <Card className="atlas-services-filter-card atlas-notification-summary-card" size="small">

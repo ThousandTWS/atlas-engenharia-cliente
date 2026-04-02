@@ -1,12 +1,15 @@
 import { apiRequest } from '../api/apiClient';
 
 export type BackendNotificationCategory = 'FINANCEIRA' | 'TECNICA';
+export type BackendNotificationServiceType = 'AVCB' | 'CLCB' | 'OBRAS' | 'PROCESSOS_ADM';
 
 export interface BackendNotification {
   id: number;
   title: string;
   message?: string;
   category: BackendNotificationCategory;
+  serviceType?: BackendNotificationServiceType | null;
+  amount?: number | null;
   createdAt: string;
   lastActive: string;
   isRead: boolean;
@@ -22,11 +25,19 @@ export interface BackendNotificationResponse {
   pendingConfirmationCount: number;
 }
 
-const toQueryString = (params: Record<string, string | number | boolean | undefined>) => {
+const toQueryString = (params: Record<string, unknown>) => {
   const query = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
-    if (value === undefined || value === '') {
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item === undefined || item === null || item === '') return;
+        query.append(key, String(item));
+      });
       return;
     }
 
@@ -38,9 +49,18 @@ const toQueryString = (params: Record<string, string | number | boolean | undefi
 };
 
 export const notificationsService = {
-  list(category?: BackendNotificationCategory) {
+  list(params?: {
+    page?: number;
+    pageSize?: number;
+    category?: BackendNotificationCategory;
+    serviceType?: BackendNotificationServiceType;
+    serviceTypes?: BackendNotificationServiceType[];
+    amountMin?: number;
+    amountMax?: number;
+    amountGreaterThanZero?: boolean;
+  }) {
     return apiRequest<BackendNotificationResponse>({
-      url: `/notifications${toQueryString({ page: 1, pageSize: 50, category })}`,
+      url: `/notifications${toQueryString({ page: 1, pageSize: 50, ...params })}`,
       method: 'GET',
     });
   },

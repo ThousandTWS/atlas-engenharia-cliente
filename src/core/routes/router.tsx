@@ -30,6 +30,7 @@ import { CadastrosHubPage } from '../../features/cadastros/pages/CadastrosHubPag
 import { BudgetRegisterPage } from '../../features/cadastros/pages/BudgetRegisterPage';
 import { ProvidersRegisterPage } from '../../features/cadastros/pages/ProvidersRegisterPage';
 import { ServiceClientRegisterPage } from '../../features/cadastros/pages/ServiceClientRegisterPage';
+import { NotificationsPage } from '../../features/notifications/pages/NotificationsPage';
 
 export const router = createBrowserRouter([
   {
@@ -67,6 +68,10 @@ export const router = createBrowserRouter([
       {
         path: 'profile',
         element: <ProfilePage />,
+      },
+      {
+        path: 'notificacoes',
+        element: <NotificationsPage />,
       },
       {
         path: 'obras',

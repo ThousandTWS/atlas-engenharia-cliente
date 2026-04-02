@@ -3,6 +3,7 @@ import { Divider, Layout, Menu, Drawer, ConfigProvider, Typography } from 'antd'
 import type { MenuProps } from 'antd';
 import {
   PieChartOutlined,
+  BellOutlined,
   AppstoreOutlined,
   SafetyCertificateOutlined,
   FireOutlined,
@@ -133,6 +134,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
       '/gestao-de-clientes',
       '/gestao-ads',
       '/acompanhamento-servicos',
+      '/notificacoes',
       '/cadastros',
       '/profile',
     ];
@@ -157,9 +159,9 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
           label: 'Insights',
         },
         {
-          key: '/processos',
-          icon: <AppstoreOutlined style={menuIconStyle} />,
-          label: 'Processos Adm',
+          key: '/notificacoes',
+          icon: <BellOutlined style={menuIconStyle} />,
+          label: 'Notificações',
         },
         {
           key: '/acompanhamento-servicos',
@@ -181,6 +183,11 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
       type: 'group',
       label: 'Painéis e Gestão',
       children: [
+        {
+          key: '/processos',
+          icon: <AppstoreOutlined style={menuIconStyle} />,
+          label: 'Processos Adm',
+        },
         {
           key: '/clcb',
           icon: <SafetyCertificateOutlined style={menuIconStyle} />,

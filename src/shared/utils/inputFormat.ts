@@ -1,5 +1,12 @@
 const onlyDigits = (value: string) => value.replace(/\D/g, '');
 
+export const formatCepBR = (raw: string): string => {
+  const digits = onlyDigits(String(raw || '')).slice(0, 8);
+  if (!digits) return '';
+  if (digits.length <= 5) return digits;
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+};
+
 export const formatPhoneBR = (raw: string): string => {
   const digits = onlyDigits(String(raw || ''));
   if (!digits) return '';
@@ -62,4 +69,4 @@ export const formatCpfCnpjBR = (raw: string): string => {
 
 export const normalizePhoneBR = (value: unknown) => formatPhoneBR(String(value ?? ''));
 export const normalizeCpfCnpjBR = (value: unknown) => formatCpfCnpjBR(String(value ?? ''));
-
+export const normalizeCepBR = (value: unknown) => formatCepBR(String(value ?? ''));

@@ -52,19 +52,21 @@ const statusOptions: { label: string; value: FinancialLaunchStatus }[] = [
 ];
 
 const defaultStatusByType: Record<FinancialLaunchType, FinancialLaunchStatus> = {
-  ENTRADA: 'A_CONFIRMAR',
-  SAIDA: 'A_PAGAR',
+  ENTRADA: 'PAGO',
+  SAIDA: 'PAGO',
 };
 
-const paymentMethodOptions = [
-  'PIX',
-  'Boleto',
-  'Transferência',
-  'Cartão',
-  'Dinheiro',
-  'Asaas',
-  'Inter',
-].map((value) => ({ label: value, value }));
+const paymentFormOptions = [
+  { label: 'Pix', value: 'PIX' },
+  { label: 'Boleto', value: 'Boleto' },
+  { label: 'Transferência', value: 'Transferência' },
+  { label: 'Cartão', value: 'Cartão' },
+  { label: 'Dinheiro', value: 'Dinheiro' },
+  { label: 'Pix (texto antigo)', value: 'Pix' },
+].map((item) => item);
+
+const platformOptions = ['Inter', 'Asaas'].map((value) => ({ label: value, value }));
+const companyOptions = ['Atlas', 'Felipe Rodrigues'].map((value) => ({ label: value, value }));
 
 export const LancamentoFormPage: React.FC = () => {
   const { message } = App.useApp();
@@ -83,7 +85,10 @@ export const LancamentoFormPage: React.FC = () => {
   const [serviceLoading, setServiceLoading] = useState(false);
   const [providerLoading, setProviderLoading] = useState(false);
 
+  const [selectedService, setSelectedService] = useState<ServiceRegistrationRecord | null>(null);
+
   const launchType = Form.useWatch<FinancialLaunchType>('tipo', form) || 'ENTRADA';
+  const selectedInstallmentNumber = Form.useWatch<number>('numeroParcela', form);
   const receiptFileList: UploadFile[] = selectedFile
     ? [{ uid: 'receipt', name: selectedFile.name, status: 'done' }]
     : [];
@@ -136,6 +141,10 @@ export const LancamentoFormPage: React.FC = () => {
           codigoServico: data.codigoServico || undefined,
           nomeCliente: data.nomeCliente || undefined,
           prestadorId: data.prestadorId || undefined,
+          numeroParcela: data.numeroParcela || undefined,
+          dataPrevistaParcela: data.dataPrevistaParcela ? dayjs(data.dataPrevistaParcela) : undefined,
+          plataforma: data.plataforma || undefined,
+          empresa: data.empresa || undefined,
         });
       } catch (error) {
         message.error(`Erro ao carregar lançamento: ${(error as Error).message}`);
@@ -173,6 +182,9 @@ export const LancamentoFormPage: React.FC = () => {
   const syncServiceFields = async (codigoServico?: string) => {
     if (!codigoServico) {
       form.setFieldValue('nomeCliente', undefined);
+      form.setFieldValue('numeroParcela', undefined);
+      form.setFieldValue('dataPrevistaParcela', undefined);
+      setSelectedService(null);
       return;
     }
 
@@ -180,6 +192,7 @@ export const LancamentoFormPage: React.FC = () => {
     const service = existing || (await fetchServices(codigoServico)).find((item) => item.code === codigoServico);
 
     if (service) {
+      setSelectedService(service);
       form.setFieldsValue({
         codigoServico: service.code,
         nomeCliente: service.companyName,
@@ -188,6 +201,9 @@ export const LancamentoFormPage: React.FC = () => {
     }
 
     form.setFieldValue('nomeCliente', undefined);
+    form.setFieldValue('numeroParcela', undefined);
+    form.setFieldValue('dataPrevistaParcela', undefined);
+    setSelectedService(null);
     message.warning(`Serviço ${codigoServico} não encontrado.`);
   };
 
@@ -197,8 +213,12 @@ export const LancamentoFormPage: React.FC = () => {
     descricao: String(values.descricao || '').trim(),
     data: (values.data as dayjs.Dayjs).format('YYYY-MM-DD'),
     valor: Number(values.valor || 0),
+    numeroParcela: values.numeroParcela ? Number(values.numeroParcela) : null,
+    dataPrevistaParcela: values.dataPrevistaParcela ? (values.dataPrevistaParcela as dayjs.Dayjs).format('YYYY-MM-DD') : null,
     formaPagamento: values.formaPagamento ? String(values.formaPagamento) : null,
-    metodoPagamento: values.metodoPagamento ? String(values.metodoPagamento) : null,
+    metodoPagamento: null,
+    plataforma: values.plataforma ? String(values.plataforma) : null,
+    empresa: values.empresa ? String(values.empresa) : null,
     codigoServico: values.codigoServico ? String(values.codigoServico) : null,
     nomeCliente: values.nomeCliente ? String(values.nomeCliente) : null,
     prestadorId: values.prestadorId ? Number(values.prestadorId) : null,
@@ -282,7 +302,7 @@ export const LancamentoFormPage: React.FC = () => {
           onFinish={(values) => void onFinish(values)}
           initialValues={{
             tipo: 'ENTRADA',
-            status: 'A_CONFIRMAR',
+            status: 'PAGO',
             data: dayjs(),
             valor: 0,
           }}
@@ -414,20 +434,72 @@ export const LancamentoFormPage: React.FC = () => {
 
                 <Row gutter={16}>
                   <Col xs={24} md={6}>
+                    <Form.Item name="numeroParcela" label="Parcela">
+                      <Select
+                        style={getFilterControlStyle(isDarkMode)}
+                        allowClear
+                        disabled={!selectedService?.installments?.length}
+                        placeholder={selectedService ? 'Selecione a parcela' : 'Selecione um serviço'}
+                        options={(selectedService?.installments || []).map((installment) => ({
+                          label: `${installment.number}ª parcela • ${dayjs(installment.date).format('DD/MM/YYYY')} • R$ ${Number(installment.value || 0).toFixed(2).replace('.', ',')}`,
+                          value: installment.number,
+                        }))}
+                        onChange={(value) => {
+                          if (!selectedService) return;
+                          const installment = (selectedService.installments || []).find((item) => item.number === value);
+                          if (!installment) return;
+                          form.setFieldsValue({
+                            valor: Number(installment.value || 0),
+                            dataPrevistaParcela: installment.date ? dayjs(installment.date) : undefined,
+                          });
+                        }}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={6}>
+                    <Form.Item name="dataPrevistaParcela" label="Data prevista da parcela">
+                      <DatePicker
+                        format="DD/MM/YYYY"
+                        style={getFilterControlStyle(isDarkMode, '100%')}
+                        disabled
+                        placeholder={selectedInstallmentNumber ? 'Preenchida pela parcela' : 'Selecione uma parcela'}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={6}>
                     <Form.Item name="formaPagamento" label="Forma de pagamento">
                       <Select
                         style={getFilterControlStyle(isDarkMode)}
                         allowClear
-                        options={paymentMethodOptions}
+                        options={paymentFormOptions}
                         placeholder="Forma"
                       />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={6}>
-                    <Form.Item name="metodoPagamento" label="Método">
-                      <Input
+                    <Form.Item name="plataforma" label="Banco / plataforma">
+                      <Select
                         style={getFilterControlStyle(isDarkMode)}
-                        placeholder="Ex: PIX chave, TED, boleto"
+                        allowClear
+                        showSearch
+                        mode="tags"
+                        options={platformOptions}
+                        placeholder="Inter, Asaas, etc."
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} md={6}>
+                    <Form.Item name="empresa" label="Empresa / CNPJ">
+                      <Select
+                        style={getFilterControlStyle(isDarkMode)}
+                        allowClear
+                        showSearch
+                        mode="tags"
+                        options={companyOptions}
+                        placeholder="Atlas, Felipe Rodrigues, etc."
                       />
                     </Form.Item>
                   </Col>
@@ -441,6 +513,42 @@ export const LancamentoFormPage: React.FC = () => {
                         style={getFilterControlStyle(isDarkMode)}
                         placeholder="Descreva o lançamento"
                       />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={6}>
+                    <Form.Item label="Valores" shouldUpdate>
+                      {() => {
+                        const providerId = form.getFieldValue('prestadorId') as number | undefined;
+                        const label = (() => {
+                          if (!selectedService) return 'Selecione um serviço';
+                          const gross = Number(selectedService.contractValue || 0);
+                          const discount = Number(selectedService.invoiceValue || 0);
+                          const net = Math.max(gross - discount, 0);
+
+                          const money = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
+
+                          if (launchType === 'ENTRADA') {
+                            return `Total: ${money(gross)} | Líquido: ${money(net)}`;
+                          }
+
+                          const link = providerId
+                            ? (selectedService.providers || []).find((p) => p.providerId === providerId)
+                            : null;
+                          if (!providerId || !link) {
+                            return `Total serviço: ${money(gross)}`;
+                          }
+                          const toPay = link.confirmed ? 0 : Number(link.provisionedValue || 0);
+                          return `Total serviço: ${money(gross)} | A pagar: ${money(toPay)}`;
+                        })();
+
+                        return (
+                          <Input
+                            disabled
+                            style={getFilterControlStyle(isDarkMode)}
+                            value={label}
+                          />
+                        );
+                      }}
                     </Form.Item>
                   </Col>
                 </Row>

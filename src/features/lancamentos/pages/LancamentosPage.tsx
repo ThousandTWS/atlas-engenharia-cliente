@@ -32,6 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { useCsvExport } from '../../../core/import-export/hooks';
+import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
 import {
   financialLaunchService,
   type FinancialImportRow,
@@ -514,7 +515,8 @@ export const LancamentosPage: React.FC = () => {
           </div>
           <Text type="secondary">{response.totalElements} registros</Text>
         </div>
-        <Table
+        <ExcelLikeTable
+          tableId={`lancamentos-financeiros-${activeTab}`}
           rowKey="id"
           loading={loading}
           dataSource={response.content}

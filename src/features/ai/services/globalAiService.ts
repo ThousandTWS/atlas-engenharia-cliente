@@ -20,7 +20,7 @@ interface GlobalAiStrategy {
   execute(params: SendGlobalAiMessageParams): Promise<string | null>;
 }
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() ?? 'AIzaSyDkl7qUpxBJUvt8D6KCD-iv1FXEZ_p9k54';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() ?? 'AIzaSyCQOP9PfQ2O3If4l0zKswZyZvGDai_L7LU';
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
 const GEMINI_BASE_URL = import.meta.env.VITE_GEMINI_API_BASE_URL?.trim() || 'https://generativelanguage.googleapis.com/v1beta';
 const N8N_AI_CHAT_URL = import.meta.env.VITE_N8N_AI_CHAT_URL?.trim() ?? '';

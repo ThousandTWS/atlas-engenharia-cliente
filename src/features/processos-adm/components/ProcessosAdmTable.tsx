@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Table,
   Tag,
   Space,
   Button,
@@ -14,8 +13,10 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { TableProps } from 'antd';
 import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
 import { htmlToPlainText } from '../../../core/utils/text';
+import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
 
 const { Text } = Typography;
 
@@ -40,6 +41,8 @@ export interface ProcessoAdm {
 interface ProcessosAdmTableProps {
   loading?: boolean;
   dataSource: ProcessoAdm[];
+  pagination?: TableProps<ProcessoAdm>['pagination'];
+  onChange?: TableProps<ProcessoAdm>['onChange'];
   onEdit: (record: ProcessoAdm) => void;
   onDelete: (id: number) => void;
   onView: (record: ProcessoAdm) => void;
@@ -48,6 +51,8 @@ interface ProcessosAdmTableProps {
 export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
   loading,
   dataSource,
+  pagination,
+  onChange,
   onEdit,
   onDelete,
   onView,
@@ -163,14 +168,14 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
   ];
 
   return (
-
-    <Table
+    <ExcelLikeTable
+      tableId="painel-processos-adm"
       columns={columns}
       dataSource={dataSource}
       rowKey="id"
       loading={loading}
       scroll={{ x: 1000 }}
-      pagination={{
+      pagination={pagination ?? {
         placement:["bottomCenter"],
         pageSize: 10,
         showSizeChanger: true,
@@ -182,6 +187,7 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
           borderRadius: '0 0 8px 8px'
         }
       }}
+      onChange={onChange}
     />
   );
 };
