@@ -59,12 +59,12 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
 }) => {
   const getSituacaoBadgeClass = (situacao: SituacaoProcesso) => {
     const classes: Record<SituacaoProcesso, string> = {
-      PENDENTE: 'atlas-status-badge-warning',
-      EM_ANDAMENTO: 'atlas-status-badge-info',
-      CONCLUIDO: 'atlas-status-badge-success',
-      CANCELADO: 'atlas-status-badge-danger',
+      PENDENTE: 'prevent-status-badge-warning',
+      EM_ANDAMENTO: 'prevent-status-badge-info',
+      CONCLUIDO: 'prevent-status-badge-success',
+      CANCELADO: 'prevent-status-badge-danger',
     };
-    return classes[situacao] || 'atlas-status-badge-neutral';
+    return classes[situacao] || 'prevent-status-badge-neutral';
   };
 
   const{isDarkMode} = useLayout();
@@ -101,9 +101,9 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
         <Tooltip title={htmlToPlainText(record.descricaoSituacao)}>
           <Tag
             variant="filled"
-            className={`atlas-status-badge ${getSituacaoBadgeClass(situacao)}`}
+            className={`prevent-status-badge ${getSituacaoBadgeClass(situacao)}`}
           >
-            <span className="atlas-status-badge-dot" />
+            <span className="prevent-status-badge-dot" />
             {situacao.replace('_', ' ')}
           </Tag>
         </Tooltip>

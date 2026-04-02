@@ -107,11 +107,11 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
 
   const favorableTrend = definition.inverseTrend ? trend <= 0 : trend >= 0;
   const trendIsUp = trend >= 0;
-  const trendBadgeClass = favorableTrend ? 'atlas-status-badge-success' : 'atlas-status-badge-danger';
+  const trendBadgeClass = favorableTrend ? 'prevent-status-badge-success' : 'prevent-status-badge-danger';
 
   return (
     <Card
-      className="atlas-metric-trend-card"
+      className="prevent-metric-trend-card"
       loading={loading}
       variant="borderless"
       style={{
@@ -149,9 +149,9 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
         </div>
 
         {definition.filters ? (
-          <div className="atlas-dashboard-chart-filters">
+          <div className="prevent-dashboard-chart-filters">
             <Select
-              className="atlas-dashboard-filter-select atlas-dashboard-filter-select-period"
+              className="prevent-dashboard-filter-select prevent-dashboard-filter-select-period"
               value={definition.filters.period}
               options={periodOptions}
               onChange={(value) => definition.filters?.onPeriodChange(value)}
@@ -159,7 +159,7 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
             />
 
             <Select
-              className="atlas-dashboard-filter-select"
+              className="prevent-dashboard-filter-select"
               value={definition.filters.grouping}
               options={groupingOptions}
               onChange={(value) => definition.filters?.onGroupingChange(value)}
@@ -168,7 +168,7 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
 
             {definition.filters.period === 'custom' ? (
               <DatePicker.RangePicker
-                className="atlas-dashboard-filter-range"
+                className="prevent-dashboard-filter-range"
                 value={definition.filters.customRange?.[0] && definition.filters.customRange?.[1]
                   ? [definition.filters.customRange[0], definition.filters.customRange[1]]
                   : null}
@@ -191,9 +191,9 @@ const MetricTrendCard: React.FC<{ definition: MetricTrendCardDefinition; loading
           </div>
           <Tag
             variant="filled"
-            className={`atlas-status-badge ${trendBadgeClass}`}
+            className={`prevent-status-badge ${trendBadgeClass}`}
           >
-            <span className="atlas-status-badge-dot" />
+            <span className="prevent-status-badge-dot" />
             {trendIsUp ? <ArrowUpOutlined /> : <ArrowDownOutlined />} {Math.abs(trend).toFixed(1)}%
           </Tag>
         </div>

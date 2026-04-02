@@ -411,7 +411,7 @@ export const LancamentosPage: React.FC = () => {
   }, [activeTab, fetchLancamentos, importOrigin, importRows, message]);
 
   return (
-    <div className="atlas-lancamentos-page" style={{ maxWidth: 1480, margin: '0 auto' }}>
+    <div className="prevent-lancamentos-page" style={{ maxWidth: 1480, margin: '0 auto' }}>
       <Breadcrumb
         items={[
           { title: <HomeOutlined />, href: '/' },
@@ -421,34 +421,34 @@ export const LancamentosPage: React.FC = () => {
         style={{ marginBottom: 16 }}
       />
 
-      <Card className="atlas-lancamentos-hero" bordered={false} style={{ marginBottom: 24 }}>
-        <div className="atlas-lancamentos-hero-grid">
+      <Card className="prevent-lancamentos-hero" bordered={false} style={{ marginBottom: 24 }}>
+        <div className="prevent-lancamentos-hero-grid">
           <div>
-            <Text className="atlas-lancamentos-kicker">Financeiro</Text>
+            <Text className="prevent-lancamentos-kicker">Financeiro</Text>
             <Title level={isMobile ? 3 : 2} style={{ margin: '10px 0 6px' }}>Lançamentos Financeiros</Title>
-            <Text className="atlas-lancamentos-hero-copy">
+            <Text className="prevent-lancamentos-hero-copy">
               Duas frentes claras: entradas de recebimento e saídas de pagamento, com importação e vínculo manual linha a linha.
             </Text>
           </div>
-          <div className="atlas-lancamentos-actions">
-            <Button className="atlas-services-button atlas-services-button-primary" type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/lancamentos/novo?tipo=${activeTab}`)}>+ Novo</Button>
-            <Button className="atlas-services-button" icon={<ImportOutlined />} onClick={() => { setImportOrigin('IMPORT_INTER'); setImportModalOpen(true); }}>Importar Inter</Button>
-            <Button className="atlas-services-button" icon={<InboxOutlined />} onClick={() => { setImportOrigin('IMPORT_ASAAS'); setImportModalOpen(true); }}>Importar Asaas</Button>
-            <Button className="atlas-services-button" icon={<DownloadOutlined />} loading={exporting} onClick={() => exportRows(response.content)}>Exportar</Button>
+          <div className="prevent-lancamentos-actions">
+            <Button className="prevent-services-button prevent-services-button-primary" type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/lancamentos/novo?tipo=${activeTab}`)}>+ Novo</Button>
+            <Button className="prevent-services-button" icon={<ImportOutlined />} onClick={() => { setImportOrigin('IMPORT_INTER'); setImportModalOpen(true); }}>Importar Inter</Button>
+            <Button className="prevent-services-button" icon={<InboxOutlined />} onClick={() => { setImportOrigin('IMPORT_ASAAS'); setImportModalOpen(true); }}>Importar Asaas</Button>
+            <Button className="prevent-services-button" icon={<DownloadOutlined />} loading={exporting} onClick={() => exportRows(response.content)}>Exportar</Button>
           </div>
         </div>
       </Card>
 
-      <Card className="atlas-lancamentos-workbench" bordered={false}>
-        <div className="atlas-lancamentos-topbar">
+      <Card className="prevent-lancamentos-workbench" bordered={false}>
+        <div className="prevent-lancamentos-topbar">
           <div>
-            <Text className="atlas-lancamentos-section-label">Estrutura</Text>
+            <Text className="prevent-lancamentos-section-label">Estrutura</Text>
             <Title level={4} style={{ margin: '4px 0 0' }}>
               {activeTab === 'ENTRADA' ? 'Entradas (recebimentos)' : 'Saídas (pagamentos)'}
             </Title>
           </div>
           <Tabs
-            className="atlas-lancamentos-tabs"
+            className="prevent-lancamentos-tabs"
             activeKey={activeTab}
             onChange={(key) => setActiveTab(key as FinancialLaunchType)}
             items={[
@@ -459,56 +459,56 @@ export const LancamentosPage: React.FC = () => {
         </div>
 
       <Card
-        className="atlas-services-filter-card atlas-lancamentos-filter-card"
+        className="prevent-services-filter-card prevent-lancamentos-filter-card"
         bordered={false}
         style={{ marginBottom: 16, background: isDarkMode ? '#0A0F1C' : '#FAFBFC' }}
       >
-        <Form className="atlas-lancamentos-filter-form" form={filtersForm} layout="vertical" onFinish={() => void fetchLancamentos()}>
-          <div className="atlas-lancamentos-filter-grid">
+        <Form className="prevent-lancamentos-filter-form" form={filtersForm} layout="vertical" onFinish={() => void fetchLancamentos()}>
+          <div className="prevent-lancamentos-filter-grid">
             <div>
               <Form.Item name="busca" label="Busca livre">
-                <Input className="atlas-services-input atlas-lancamentos-field" placeholder="Descrição, cliente, prestador..." />
+                <Input className="prevent-services-input prevent-lancamentos-field" placeholder="Descrição, cliente, prestador..." />
               </Form.Item>
             </div>
             <div>
               <Form.Item name="status" label="Status">
-                <Select className="atlas-services-select atlas-lancamentos-field" allowClear placeholder="Selecione" options={statusOptions} />
+                <Select className="prevent-services-select prevent-lancamentos-field" allowClear placeholder="Selecione" options={statusOptions} />
               </Form.Item>
             </div>
             <div>
               <Form.Item name="periodo" label="Período">
-                <RangePicker className="atlas-services-date atlas-lancamentos-field" style={{ width: '100%' }} placeholder={['Data inicial', 'Data final']} />
+                <RangePicker className="prevent-services-date prevent-lancamentos-field" style={{ width: '100%' }} placeholder={['Data inicial', 'Data final']} />
               </Form.Item>
             </div>
             <div>
               <Form.Item name="formaPagamento" label="Forma de pagamento">
-                <Input className="atlas-services-input atlas-lancamentos-field" placeholder="PIX, boleto..." />
+                <Input className="prevent-services-input prevent-lancamentos-field" placeholder="PIX, boleto..." />
               </Form.Item>
             </div>
             <div>
               <Form.Item name="codigoServico" label="Serviço">
-                <Input className="atlas-services-input atlas-lancamentos-field" placeholder="Código do serviço" />
+                <Input className="prevent-services-input prevent-lancamentos-field" placeholder="Código do serviço" />
               </Form.Item>
             </div>
           </div>
-          <Space className="atlas-lancamentos-filter-actions">
-            <Button className="atlas-services-button atlas-services-button-primary" type="primary" htmlType="submit">Filtrar</Button>
-            <Button className="atlas-services-button" onClick={() => { filtersForm.resetFields(); void fetchLancamentos(); }}>Limpar</Button>
+          <Space className="prevent-lancamentos-filter-actions">
+            <Button className="prevent-services-button prevent-services-button-primary" type="primary" htmlType="submit">Filtrar</Button>
+            <Button className="prevent-services-button" onClick={() => { filtersForm.resetFields(); void fetchLancamentos(); }}>Limpar</Button>
           </Space>
         </Form>
       </Card>
 
       <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card atlas-lancamentos-summary-card-total" bordered={false}><Statistic title="Total" value={resumo.total} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
-        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card atlas-lancamentos-summary-card-paid" bordered={false}><Statistic title="Pago" value={resumo.pago} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
-        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card atlas-lancamentos-summary-card-open" bordered={false}><Statistic title="A pagar" value={resumo.aPagar} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
-        <Col xs={24} md={6}><Card className="atlas-lancamentos-summary-card atlas-lancamentos-summary-card-forecast" bordered={false}><Statistic title="Previsto" value={resumo.previsto} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
+        <Col xs={24} md={6}><Card className="prevent-lancamentos-summary-card prevent-lancamentos-summary-card-total" bordered={false}><Statistic title="Total" value={resumo.total} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
+        <Col xs={24} md={6}><Card className="prevent-lancamentos-summary-card prevent-lancamentos-summary-card-paid" bordered={false}><Statistic title="Pago" value={resumo.pago} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
+        <Col xs={24} md={6}><Card className="prevent-lancamentos-summary-card prevent-lancamentos-summary-card-open" bordered={false}><Statistic title="A pagar" value={resumo.aPagar} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
+        <Col xs={24} md={6}><Card className="prevent-lancamentos-summary-card prevent-lancamentos-summary-card-forecast" bordered={false}><Statistic title="Previsto" value={resumo.previsto} formatter={(value) => formatCurrency(Number(value))} /></Card></Col>
       </Row>
 
-      <Card className="atlas-lancamentos-table-shell" bordered={false} styles={{ body: { padding: 0 } }}>
-        <div className="atlas-lancamentos-table-shell-header">
+      <Card className="prevent-lancamentos-table-shell" bordered={false} styles={{ body: { padding: 0 } }}>
+        <div className="prevent-lancamentos-table-shell-header">
           <div>
-            <Text className="atlas-lancamentos-section-label">Listagem</Text>
+            <Text className="prevent-lancamentos-section-label">Listagem</Text>
             <Title level={5} style={{ margin: '4px 0 0' }}>
               {activeTab === 'ENTRADA' ? 'Recebimentos cadastrados' : 'Pagamentos cadastrados'}
             </Title>

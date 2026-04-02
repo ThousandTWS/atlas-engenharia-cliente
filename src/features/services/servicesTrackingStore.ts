@@ -33,9 +33,9 @@ export interface ServiceTrackingMeta {
 type ServiceTrackingMetaMap = Record<string, ServiceTrackingMeta>;
 type ServiceTrackingHistoryMap = Record<string, ServiceHistoryEntry[]>;
 
-const CONFIG_STORAGE_KEY = 'atlas.service_tracking.config';
-const META_STORAGE_KEY = 'atlas.service_tracking.meta';
-const HISTORY_STORAGE_KEY = 'atlas.service_tracking.history';
+const CONFIG_STORAGE_KEY = 'prevent.service_tracking.config';
+const META_STORAGE_KEY = 'prevent.service_tracking.meta';
+const HISTORY_STORAGE_KEY = 'prevent.service_tracking.history';
 
 const defaultConfig: ServiceSituationConfig = {
   AVCB: [

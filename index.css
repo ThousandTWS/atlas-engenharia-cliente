@@ -6,52 +6,52 @@
 @theme {
 
     /* Primary - Copper Scale */
-    --color-atlas-copper-50: #FAF7F5;
-    --color-atlas-copper-100: #F5EDE8;
-    --color-atlas-copper-200: #E8D5C9;
-    --color-atlas-copper-300: #D4B8A5;
-    --color-atlas-copper-400: #C4967A;
-    --color-atlas-copper-500: #A67458;
-    --color-atlas-copper-600: #8B5E47;
-    --color-atlas-copper-700: #6F4A38;
-    --color-atlas-copper-800: #543829;
-    --color-atlas-copper-900: #3A271D;
+    --color-prevent-copper-50: #FAF7F5;
+    --color-prevent-copper-100: #F5EDE8;
+    --color-prevent-copper-200: #E8D5C9;
+    --color-prevent-copper-300: #D4B8A5;
+    --color-prevent-copper-400: #C4967A;
+    --color-prevent-copper-500: #A67458;
+    --color-prevent-copper-600: #8B5E47;
+    --color-prevent-copper-700: #6F4A38;
+    --color-prevent-copper-800: #543829;
+    --color-prevent-copper-900: #3A271D;
 
     /* Secondary - Navy Scale */
-    --color-atlas-navy-50: #E8EAF0;
-    --color-atlas-navy-100: #C5CAD9;
-    --color-atlas-navy-200: #9EA6C0;
-    --color-atlas-navy-300: #7782A7;
-    --color-atlas-navy-400: #586694;
-    --color-atlas-navy-500: #394B81;
-    --color-atlas-navy-600: #2A3A5C;
-    --color-atlas-navy-700: #1E2A47;
-    --color-atlas-navy-800: #141B2D;
-    --color-atlas-navy-900: #0A0F1C;
+    --color-prevent-navy-50: #E8EAF0;
+    --color-prevent-navy-100: #C5CAD9;
+    --color-prevent-navy-200: #9EA6C0;
+    --color-prevent-navy-300: #7782A7;
+    --color-prevent-navy-400: #586694;
+    --color-prevent-navy-500: #394B81;
+    --color-prevent-navy-600: #2A3A5C;
+    --color-prevent-navy-700: #1E2A47;
+    --color-prevent-navy-800: #141B2D;
+    --color-prevent-navy-900: #0A0F1C;
 
     /* Semantic Colors */
-    --color-atlas-success: #10B981;
-    --color-atlas-success-light: #D1FAE5;
-    --color-atlas-warning: #F59E0B;
-    --color-atlas-warning-light: #FEF3C7;
-    --color-atlas-error: #EF4444;
-    --color-atlas-error-light: #FEE2E2;
-    --color-atlas-info: #3B82F6;
-    --color-atlas-info-light: #DBEAFE;
+    --color-prevent-success: #10B981;
+    --color-prevent-success-light: #D1FAE5;
+    --color-prevent-warning: #F59E0B;
+    --color-prevent-warning-light: #FEF3C7;
+    --color-prevent-error: #EF4444;
+    --color-prevent-error-light: #FEE2E2;
+    --color-prevent-info: #3B82F6;
+    --color-prevent-info-light: #DBEAFE;
 
     /* Gradients */
-    --color-atlas-gradient-primary: linear-gradient(135deg, #C4967A 0%, #A67458 50%, #8B5E47 100%);
-    --color-atlas-gradient-sidebar: linear-gradient(180deg, #1E2A47 0%, #141B2D 100%);
-    --color-atlas-gradient-button: linear-gradient(135deg, #A67458 0%, #8B5E47 100%);
+    --color-prevent-gradient-primary: linear-gradient(135deg, #C4967A 0%, #A67458 50%, #8B5E47 100%);
+    --color-prevent-gradient-sidebar: linear-gradient(180deg, #1E2A47 0%, #141B2D 100%);
+    --color-prevent-gradient-button: linear-gradient(135deg, #A67458 0%, #8B5E47 100%);
 
     /* Typography */
-    --font-atlas-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-prevent-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
     /* Spacing */
-    --atlas-radius-sm: 6px;
-    --atlas-radius-md: 10px;
-    --atlas-radius-lg: 16px;
-    --atlas-radius-xl: 20px;
+    --prevent-radius-sm: 6px;
+    --prevent-radius-md: 10px;
+    --prevent-radius-lg: 16px;
+    --prevent-radius-xl: 20px;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));

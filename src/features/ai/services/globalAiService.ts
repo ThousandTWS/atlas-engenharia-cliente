@@ -53,7 +53,7 @@ const buildGeminiPayload = (params: SendGlobalAiMessageParams) => {
     systemInstruction: {
       parts: [{
         text: [
-          'Você é o Atlas AI, assistente corporativo multimodal para operações de engenharia e gestão.',
+          'Você é o Prevent AI, assistente corporativo multimodal para operações de oficina e gestão.',
           'Responda em português brasileiro, de forma objetiva e executável.',
           'Quando faltarem dados para executar ações, peça informações específicas.',
           'Você também sugere fluxos para imagem, vídeo, áudio, Google Search e Google Maps.',

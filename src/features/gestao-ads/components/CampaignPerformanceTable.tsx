@@ -307,7 +307,7 @@ export const CampaignPerformanceTable: React.FC = () => {
             Exportar CSV
           </Button>
           <Input
-            className="atlas-form-input"
+            className="prevent-form-input"
             allowClear
             placeholder="Buscar campanha ou tipo"
             prefix={<SearchOutlined />}

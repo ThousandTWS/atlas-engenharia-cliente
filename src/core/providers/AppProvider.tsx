@@ -32,11 +32,21 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   render() {
     if (this.state.hasError) {
+      const showStack = import.meta.env.DEV && Boolean(this.state.error?.stack);
       return (
         <div style={{ padding: '24px', textAlign: 'center' }}>
           <Alert
             message="Ocorreu um erro inesperado"
-            description={this.state.error?.message || "Por favor, tente recarregar a página."}
+            description={(
+              <div>
+                <div>{this.state.error?.message || "Por favor, tente recarregar a página."}</div>
+                {showStack && (
+                  <pre style={{ marginTop: 12, textAlign: 'left', whiteSpace: 'pre-wrap' }}>
+                    {this.state.error?.stack}
+                  </pre>
+                )}
+              </div>
+            )}
             type="error"
             showIcon
           />
