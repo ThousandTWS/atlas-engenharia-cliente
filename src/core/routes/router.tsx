@@ -4,9 +4,6 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { HomePage } from '../../features/home/pages/HomePage';
 import { LoginPage } from '../../features/auth/pages/LoginPage';
 import { RegisterPage } from '../../features/auth/pages/RegisterPage';
-import { ForgotPasswordPage } from '../../features/auth/pages/ForgotPasswordPage';
-import { ResetPasswordPage } from '../../features/auth/pages/ResetPasswordPage';
-import { VerifyEmailPage } from '../../features/auth/pages/VerifyEmailPage';
 import { ObrasPage } from '../../features/obras/pages/ObrasPage';
 import { ObraFormPage } from '../../features/obras/pages/ObraFormPage';
 import { ProcessosAdmPage } from '../../features/processos-adm/pages/ProcessosAdmPage';
@@ -30,6 +27,7 @@ import { CadastrosHubPage } from '../../features/cadastros/pages/CadastrosHubPag
 import { BudgetRegisterPage } from '../../features/cadastros/pages/BudgetRegisterPage';
 import { ProvidersRegisterPage } from '../../features/cadastros/pages/ProvidersRegisterPage';
 import { ServiceClientRegisterPage } from '../../features/cadastros/pages/ServiceClientRegisterPage';
+import { NotificationsPage } from '../../features/notifications/pages/NotificationsPage';
 
 export const router = createBrowserRouter([
   {
@@ -67,6 +65,10 @@ export const router = createBrowserRouter([
       {
         path: 'profile',
         element: <ProfilePage />,
+      },
+      {
+        path: 'notificacoes',
+        element: <NotificationsPage />,
       },
       {
         path: 'obras',
@@ -170,10 +172,8 @@ export const router = createBrowserRouter([
     path: 'auth',
     children: [
       { path: 'login', element: <LoginPage /> },
+      { path: 'signup', element: <RegisterPage /> },
       { path: 'register', element: <RegisterPage /> },
-      { path: 'forgot-password', element: <ForgotPasswordPage /> },
-      { path: 'reset-password', element: <ResetPasswordPage /> },
-      { path: 'verify-email', element: <VerifyEmailPage /> },
     ]
   },
 ]);

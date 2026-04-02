@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Table,
   Tag,
   Space,
   Button,
@@ -13,6 +12,7 @@ import type { ColumnsType } from "antd/es/table";
 import type { TablePaginationConfig } from "antd/es/table/interface";
 import { useLayout } from "../../../shared/components/layout/LayoutContext.tsx";
 import { htmlToPlainText } from "../../../core/utils/text";
+import { ExcelLikeTable } from "../../../shared/components/table/ExcelLikeTable";
 
 const { Text } = Typography;
 
@@ -136,7 +136,8 @@ export const CustosIndiretosTable: React.FC<CustosIndiretosTableProps> = ({
   ];
 
   return (
-    <Table
+    <ExcelLikeTable
+      tableId="custos-indiretos"
       columns={columns}
       dataSource={dataSource}
       rowKey="id"

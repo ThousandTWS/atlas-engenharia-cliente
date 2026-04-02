@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button, Card, Typography, Space, Breadcrumb, App } from "antd";
+import type { TableProps } from "antd";
 import {
   HomeOutlined,
   PlusOutlined,
@@ -24,15 +25,70 @@ import {
   pickNumericValue,
   toSeriesRecords,
 } from "../../../shared/utils/metricSeries";
+import { parseExcelNumberRange } from "../../../shared/utils/excelFilterParsers";
 
 const { Title, Text } = Typography;
 
 export const CLCBPage: React.FC = () => {
+  const DEFAULT_PAGE_SIZE = 10;
   const { message } = App.useApp();
   const navigate = useNavigate();
   const { isMobile } = useLayout();
   const [clcbs, setClcbs] = useState<CLCB[]>([]);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: DEFAULT_PAGE_SIZE,
+    total: 0,
+  });
+  const [tableFilters, setTableFilters] = useState<Record<string, (string | number | boolean)[] | null>>({});
+  const [tableSorter, setTableSorter] = useState<{ columnKey?: string; order?: 'ascend' | 'descend' } | null>(null);
+
+  const buildBackendFiltersFromTableFilters = useCallback((nextTableFilters: typeof tableFilters) => {
+    const backend: any = {};
+
+    const getKeys = (key: string) => {
+      const value = nextTableFilters[key];
+      if (!value || value.length === 0) return null;
+      return value.map(String);
+    };
+
+    const codigo = getKeys('codigo');
+    if (codigo) backend.codigoIn = codigo;
+
+    const nomeCliente = getKeys('nomeCliente');
+    if (nomeCliente) backend.nomeClienteIn = nomeCliente;
+
+    const situacao = getKeys('situacao');
+    if (situacao) backend.situacoes = situacao;
+
+    const contractMonths = getKeys('dataContrato');
+    if (contractMonths && contractMonths.length > 0) {
+      backend.dataContratoMes = contractMonths;
+    }
+
+    const valorRange = getKeys('valorContrato')?.find((value) => value.startsWith('range:'));
+    if (valorRange) {
+      const parsed = parseExcelNumberRange(valorRange);
+      if (parsed) {
+        if (parsed.onlyPositive) backend.valorContratoMaiorQueZero = true;
+        if (parsed.min !== null) backend.valorContratoMin = parsed.min;
+        if (parsed.max !== null) backend.valorContratoMax = parsed.max;
+      }
+    }
+
+    return backend as Record<string, any>;
+  }, []);
+
+  const buildBackendSortFromSorter = useCallback((sorter: typeof tableSorter) => {
+    if (!sorter?.columnKey || !sorter.order) return undefined;
+    const dir = sorter.order === 'ascend' ? 'asc' : 'desc';
+    const field = sorter.columnKey;
+
+    const allowed = new Set(['codigo', 'nomeCliente', 'situacao', 'valorContrato', 'dataContrato']);
+    if (!allowed.has(field)) return undefined;
+    return [`${field},${dir}`];
+  }, []);
 
   const cardIds = useMemo(() => ([
     "clcb-processos",
@@ -105,42 +161,82 @@ export const CLCBPage: React.FC = () => {
     ];
   }, [chartFilters, clcbs, setCustomRange, setGrouping, setPeriod]);
 
-  const fetchCLCBs = useCallback(async () => {
+  const fetchCLCBs = useCallback(async (
+    page = 1,
+    pageSize = DEFAULT_PAGE_SIZE,
+    tableState?: { filters: typeof tableFilters; sorter: typeof tableSorter },
+  ) => {
     setLoading(true);
     try {
-      const data = (await clcbService.getAll()) as any;
-      if (data && data.content) {
-        setClcbs(data.content);
-      } else {
-        setClcbs(Array.isArray(data) ? data : []);
-      }
+      const effectiveTableFilters = tableState?.filters ?? tableFilters;
+      const effectiveSorter = tableState?.sorter ?? tableSorter;
+      const backendTableFilters = buildBackendFiltersFromTableFilters(effectiveTableFilters);
+      const backendSort = buildBackendSortFromSorter(effectiveSorter);
+
+      const data = (await clcbService.getAll({
+        page: page - 1,
+        size: pageSize,
+        ...backendTableFilters,
+        sort: backendSort,
+      })) as any;
+
+      setClcbs(data?.content ?? []);
+      setPagination({
+        current: page,
+        pageSize,
+        total: data?.totalElements ?? 0,
+      });
     } catch (error: any) {
       message.error("Erro ao carregar CLCBs: " + error.message);
     } finally {
       setLoading(false);
     }
-  }, [message]);
+  }, [DEFAULT_PAGE_SIZE, buildBackendFiltersFromTableFilters, buildBackendSortFromSorter, message, tableFilters, tableSorter]);
 
   useEffect(() => {
-    fetchCLCBs();
+    fetchCLCBs(1, DEFAULT_PAGE_SIZE);
   }, [fetchCLCBs]);
 
   const handleDelete = async (id: number) => {
     try {
       await clcbService.delete(id);
       message.success("CLCB excluído com sucesso");
-      fetchCLCBs();
+      fetchCLCBs(pagination.current, pagination.pageSize);
     } catch (error: any) {
       message.error("Erro ao excluir CLCB: " + error.message);
     }
   };
 
   const handleOpenAddPage = () => {
-    navigate("/clcb/novo");
+    navigate("/cadastros/servicos?tipo=CLCB");
   };
 
   const handleEdit = (record: CLCB) => {
     navigate(`/clcb/${record.id}/editar`);
+  };
+
+  const handleTableChange: TableProps<any>['onChange'] = (nextPagination, nextFilters, nextSorter, extra) => {
+    const normalizedFilters: Record<string, (string | number | boolean)[] | null> = {};
+    Object.entries(nextFilters as any).forEach(([key, value]) => {
+      normalizedFilters[key] = (value ?? null) as any;
+    });
+    setTableFilters(normalizedFilters);
+
+    const sortValue = Array.isArray(nextSorter) ? nextSorter[0] : (nextSorter as any);
+    const nextSortState = sortValue?.order
+      ? { columnKey: String(sortValue.columnKey || sortValue.field || ''), order: sortValue.order }
+      : null;
+    setTableSorter(nextSortState);
+
+    const pageSize = (nextPagination as any)?.pageSize ?? pagination.pageSize;
+    const current = (nextPagination as any)?.current ?? pagination.current;
+    const shouldResetPage = extra?.action === 'filter' || extra?.action === 'sort';
+
+    fetchCLCBs(
+      shouldResetPage ? 1 : current,
+      pageSize,
+      { filters: normalizedFilters, sorter: nextSortState },
+    );
   };
 
   return (
@@ -198,6 +294,16 @@ export const CLCBPage: React.FC = () => {
       >
         <CLCBTable
           dataSource={clcbs}
+          loading={loading}
+          pagination={{
+            placement: ['bottomCenter'],
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showTotal: (total) => `Total de ${total} registros`,
+          }}
+          onChange={handleTableChange}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={(record) => message.info(`Visualizar CLCB: ${record.codigo}`)}

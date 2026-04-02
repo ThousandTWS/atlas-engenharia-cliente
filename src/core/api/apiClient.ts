@@ -3,11 +3,15 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { isCookieAuthMode } from '../config/auth';
 import { authSessionStore } from '../services/authSessionStore';
+import type { AuthSessionResponse, RefreshTokenDTO } from '../services/authService';
 
-export const API_BASE_URL = 'https://api-server.koyeb.app/api';
+export const API_BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() ||
+  'https://soft-aubry-tws-cloud-194a1c15.koyeb.apps/api';
 
 class ApiClient {
   private static instance: AxiosInstance;
+  private static refreshPromise: Promise<AuthSessionResponse> | null = null;
 
   private constructor() {}
 
@@ -34,7 +38,7 @@ class ApiClient {
           return config;
         }
 
-        const token = authSessionStore.getToken();
+        const token = authSessionStore.getAccessToken();
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -48,11 +52,53 @@ class ApiClient {
       async (error) => {
         const { response } = error;
 
-        if (response?.status === 401) {
-          console.warn('Authentication expired. Redirecting to login.');
-          authSessionStore.clear();
-          if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/login')) {
-            window.location.assign('/auth/login');
+        const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+
+        if (!isCookieAuthMode() && response?.status === 401 && originalRequest && !originalRequest._retry) {
+          const path = typeof originalRequest.url === 'string' ? originalRequest.url : '';
+          const isAuthEndpoint =
+            path.includes('/auth/login') ||
+            path.includes('/auth/signup') ||
+            path.includes('/auth/refresh') ||
+            path.includes('/auth/logout');
+
+          if (!isAuthEndpoint) {
+            originalRequest._retry = true;
+
+            try {
+              const currentRefreshToken = authSessionStore.getRefreshToken();
+              if (!currentRefreshToken) {
+                throw new Error('Sessão expirada');
+              }
+
+              if (!ApiClient.refreshPromise) {
+                ApiClient.refreshPromise = ApiClient.instance
+                  .post<AuthSessionResponse>('/auth/refresh', { refreshToken: currentRefreshToken } as RefreshTokenDTO)
+                  .then((refreshResponse) => {
+                    authSessionStore.setSession({
+                      accessToken: refreshResponse.data.accessToken,
+                      refreshToken: refreshResponse.data.refreshToken ?? null,
+                      user: refreshResponse.data.user,
+                      workshop: refreshResponse.data.workshop,
+                    });
+                    return refreshResponse.data;
+                  })
+                  .finally(() => {
+                    ApiClient.refreshPromise = null;
+                  });
+              }
+
+              const refreshed = await ApiClient.refreshPromise;
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${refreshed.accessToken}`;
+              }
+              return ApiClient.instance.request(originalRequest);
+            } catch {
+              authSessionStore.clear();
+              if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/login')) {
+                window.location.assign('/auth/login');
+              }
+            }
           }
         }
 

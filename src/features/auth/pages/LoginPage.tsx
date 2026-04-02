@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { Typography, Button, Form, Input, App } from 'antd';
-import { LoginOutlined, UserOutlined, LockOutlined } from '@ant-design/icons';
+import { LoginOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authService } from '../../../core/services/authService';
 import { AuthShell } from '../components/AuthShell';
-import { GoogleRecaptcha, type GoogleRecaptchaHandle } from '../components/GoogleRecaptcha';
 
 const { Text } = Typography;
 
 interface LoginFormValues {
-  username: string;
+  workshopSlug: string;
+  email: string;
   password: string;
 }
 
@@ -18,13 +18,6 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const recaptchaRef = React.useRef<GoogleRecaptchaHandle>(null);
-  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() ?? '6LduFpksAAAAAKykJOtL_V6ALwQ7mSn0cTd4usE6';
-  const isRecaptchaConfigured = Boolean(recaptchaSiteKey);
-  const handleCaptchaChange = React.useCallback((token: string | null) => {
-    setCaptchaToken(token);
-  }, []);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -50,22 +43,12 @@ export const LoginPage: React.FC = () => {
   }, [navigate]);
 
   const onFinish = async (values: LoginFormValues) => {
-    if (!isRecaptchaConfigured) {
-      message.error('reCAPTCHA nao configurado. Defina VITE_RECAPTCHA_SITE_KEY.');
-      return;
-    }
-
-    if (!captchaToken) {
-      message.warning('Confirme o reCAPTCHA para continuar.');
-      return;
-    }
-
     setLoading(true);
     try {
       await authService.login({
-        login: values.username,
+        workshopSlug: values.workshopSlug,
+        email: values.email,
         password: values.password,
-        recaptchaToken: captchaToken,
       });
       message.success('Login realizado com sucesso!');
 
@@ -76,7 +59,6 @@ export const LoginPage: React.FC = () => {
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao realizar login. Tente novamente.';
       message.error(errorMessage);
-      recaptchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -89,23 +71,31 @@ export const LoginPage: React.FC = () => {
       subtitle="Entre com suas credenciais corporativas para continuar."
       footer={(
         <>
-          <div className="atlas-auth-inline-actions">
-            <Text className="atlas-auth-footer-text">Nao possui conta?</Text>
-            <Link to="/auth/register" className="atlas-auth-link">Criar conta</Link>
-          </div>
-          <div className="atlas-auth-inline-actions">
-            <Link to="/auth/forgot-password" className="atlas-auth-link">Esqueci minha senha</Link>
+          <div className="prevent-auth-inline-actions">
+            <Text className="prevent-auth-footer-text">Nao possui conta?</Text>
+            <Link to="/auth/signup" className="prevent-auth-link">Criar oficina</Link>
           </div>
         </>
       )}
     >
       <Form name="login" onFinish={onFinish} layout="vertical" size="large">
         <Form.Item
-          name="username"
-          label="Usuario ou E-mail"
-          rules={[{ required: true, message: 'Por favor, insira seu usuario ou e-mail.' }]}
+          name="workshopSlug"
+          label="Oficina"
+          rules={[{ required: true, message: 'Informe o slug da oficina.' }]}
         >
-          <Input className="atlas-form-input" prefix={<UserOutlined />} placeholder="usuario@empresa.com" />
+          <Input className="prevent-form-input" placeholder="oficina-centro" autoCapitalize="none" autoCorrect="off" />
+        </Form.Item>
+
+        <Form.Item
+          name="email"
+          label="E-mail"
+          rules={[
+            { required: true, message: 'Por favor, insira seu e-mail.' },
+            { type: 'email', message: 'E-mail inválido.' },
+          ]}
+        >
+          <Input className="prevent-form-input" placeholder="ana@oficinacentro.com" autoCapitalize="none" autoCorrect="off" />
         </Form.Item>
 
         <Form.Item
@@ -113,15 +103,8 @@ export const LoginPage: React.FC = () => {
           label="Senha"
           rules={[{ required: true, message: 'Por favor, insira sua senha.' }]}
         >
-          <Input.Password className="atlas-form-input" prefix={<LockOutlined />} placeholder="Sua senha de acesso" />
+          <Input.Password className="prevent-form-input" prefix={<LockOutlined />} placeholder="Sua senha de acesso" />
         </Form.Item>
-
-        <GoogleRecaptcha
-          ref={recaptchaRef}
-          siteKey={recaptchaSiteKey}
-          onTokenChange={handleCaptchaChange}
-          theme="light"
-        />
 
         <Form.Item style={{ marginTop: 24, marginBottom: 8 }}>
           <Button
@@ -130,7 +113,6 @@ export const LoginPage: React.FC = () => {
             block
             icon={<LoginOutlined />}
             loading={loading}
-            disabled={!isRecaptchaConfigured || !captchaToken}
             size="large"
             style={{ height: 44, borderRadius: 8, fontWeight: 600 }}
           >

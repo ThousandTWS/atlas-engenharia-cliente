@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Table,
   Tag,
   Space,
   Button,
@@ -14,7 +13,9 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { TableProps } from 'antd';
 import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
+import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
 
 
 const { Text } = Typography;
@@ -37,10 +38,11 @@ interface ObrasTableProps {
     pageSize: number;
     total: number;
   };
-  onChange: (pagination: any) => void;
+  onChange: TableProps<Obra>['onChange'];
   onEdit: (record: Obra) => void;
   onDelete: (id: number) => void;
   onView: (record: Obra) => void;
+  loadFilterOptions?: (field: 'codigo' | 'nomeCliente' | 'servico' | 'situacao' | 'dataContrato') => Promise<{ key: string; label: string }[]>;
 }
 
 export const ObrasTable: React.FC<ObrasTableProps> = ({
@@ -51,6 +53,7 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
   onEdit,
   onDelete,
   onView,
+  loadFilterOptions,
 }) => {
   const getStatusColor = (status: Obra['situacao']) => {
     const colors = {
@@ -65,25 +68,37 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
   const {isDarkMode} = useLayout();
 
 
-  const columns: ColumnsType<Obra> = [
+  const columns = ([
     {
       title: 'Código',
       dataIndex: 'codigo',
       key: 'codigo',
       width: 120,
-      render: (text) => <Text strong>{text}</Text>,
+      render: (text: string) => <Text strong>{text}</Text>,
+      excel: {
+        mode: 'list',
+        optionsLoader: loadFilterOptions ? () => loadFilterOptions('codigo') : undefined,
+      },
     },
     {
       title: 'Cliente',
       dataIndex: 'nomeCliente',
       key: 'nomeCliente',
       ellipsis: true,
+      excel: {
+        mode: 'list',
+        optionsLoader: loadFilterOptions ? () => loadFilterOptions('nomeCliente') : undefined,
+      },
     },
     {
       title: 'Serviço',
       dataIndex: 'servico',
       key: 'servico',
       ellipsis: true,
+      excel: {
+        mode: 'list',
+        optionsLoader: loadFilterOptions ? () => loadFilterOptions('servico') : undefined,
+      },
     },
     {
       title: 'Status',
@@ -95,6 +110,10 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
           {status.replace('_', ' ')}
         </Tag>
       ),
+      excel: {
+        mode: 'list',
+        optionsLoader: loadFilterOptions ? () => loadFilterOptions('situacao') : undefined,
+      },
     },
     {
       title: 'Valor',
@@ -116,13 +135,17 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
       key: 'dataContrato',
       width: 120,
       render: (date: string) => new Date(date).toLocaleDateString('pt-BR'),
+      excel: {
+        mode: 'dateMonth',
+        optionsLoader: loadFilterOptions ? () => loadFilterOptions('dataContrato') : undefined,
+      },
     },
     {
       title: 'Ações',
       key: 'actions',
       fixed: 'right',
       width: 150,
-      render: (_, record) => (
+      render: (_: unknown, record: Obra) => (
         <Space size="middle">
           <Tooltip title="Visualizar">
             <Button
@@ -157,11 +180,11 @@ export const ObrasTable: React.FC<ObrasTableProps> = ({
         </Space>
       ),
     },
-  ];
+  ] as any) as ColumnsType<Obra>;
 
   return (
-
-    <Table
+    <ExcelLikeTable
+      tableId="painel-obras"
       columns={columns}
       dataSource={dataSource}
       rowKey="id"

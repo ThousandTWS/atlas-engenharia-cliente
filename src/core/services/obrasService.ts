@@ -1,6 +1,30 @@
 import apiClient from '../api/apiClient';
 import { publishResourceEvent } from '../realtime/liveProvider';
 
+const serializeQueryParams = (params: Record<string, unknown>) => {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item === undefined || item === null || item === '') {
+          return;
+        }
+        query.append(key, String(item));
+      });
+      return;
+    }
+
+    query.append(key, String(value));
+  });
+
+  return query.toString();
+};
+
 export interface Obra {
   id?: number;
   codigo?: string;
@@ -29,13 +53,21 @@ export interface ObrasPaginatedResponse {
 
 export interface ObrasFilters {
   codigo?: string;
+  codigoIn?: string[];
   nomeCliente?: string;
+  nomeClienteIn?: string[];
   endereco?: string;
   servico?: string;
+  servicoIn?: string[];
   situacao?: string;
+  situacoes?: string[];
   nf?: string;
   dataContratoInicio?: string;
   dataContratoFim?: string;
+  dataContratoMes?: string[];
+  valorContratoMin?: number;
+  valorContratoMax?: number;
+  valorContratoMaiorQueZero?: boolean;
   page?: number;
   size?: number;
   sort?: string[];
@@ -45,9 +77,24 @@ export const obrasService = {
   getAll: async (filters?: ObrasFilters) => {
     const response = await apiClient.get<ObrasPaginatedResponse>('/obras', {
       params: filters,
+      paramsSerializer: {
+        serialize: serializeQueryParams,
+      },
     });
     return response.data;
   },
+
+  getDistinct: async (payload: { field: string; limit?: number } & Omit<ObrasFilters, 'page' | 'size' | 'sort'>) => {
+    const { field, limit = 500, ...filters } = payload;
+    const response = await apiClient.get<string[]>('/obras/distinct', {
+      params: { field, limit, ...filters },
+      paramsSerializer: {
+        serialize: serializeQueryParams,
+      },
+    });
+    return response.data;
+  },
+
   getById: async (id: string | number) => {
     const response = await apiClient.get<Obra>(`/obras/${id}`);
     return response.data;

@@ -49,7 +49,7 @@ const matchesChannel = (subscriptionChannel: string, eventChannel: string) => {
 const matchesType = (types: LiveEventType[] | undefined, eventType: LiveEventType) =>
   !types || types.length === 0 || types.includes(eventType);
 
-class AtlasLiveProvider {
+class PreventLiveProvider {
   private subscriptions = new Map<string, SubscriptionEntry>();
 
   private broadcastChannel: BroadcastChannel | null = null;
@@ -62,7 +62,7 @@ class AtlasLiveProvider {
 
   constructor() {
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      this.broadcastChannel = new BroadcastChannel('atlas-live-events');
+      this.broadcastChannel = new BroadcastChannel('prevent-live-events');
       this.broadcastChannel.onmessage = (message: MessageEvent<LiveEvent>) => {
         this.emit(message.data);
       };
@@ -162,7 +162,7 @@ class AtlasLiveProvider {
   }
 }
 
-export const liveProvider = new AtlasLiveProvider();
+export const liveProvider = new PreventLiveProvider();
 
 type UseLiveSubscriptionParams = SubscribeParams;
 

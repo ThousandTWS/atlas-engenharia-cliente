@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Table,
   Tag,
   Space,
   Button,
@@ -14,8 +13,10 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { TableProps } from 'antd';
 import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
 import { htmlToPlainText } from '../../../core/utils/text';
+import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
 
 const { Text } = Typography;
 
@@ -40,6 +41,8 @@ export interface ProcessoAdm {
 interface ProcessosAdmTableProps {
   loading?: boolean;
   dataSource: ProcessoAdm[];
+  pagination?: TableProps<ProcessoAdm>['pagination'];
+  onChange?: TableProps<ProcessoAdm>['onChange'];
   onEdit: (record: ProcessoAdm) => void;
   onDelete: (id: number) => void;
   onView: (record: ProcessoAdm) => void;
@@ -48,18 +51,20 @@ interface ProcessosAdmTableProps {
 export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
   loading,
   dataSource,
+  pagination,
+  onChange,
   onEdit,
   onDelete,
   onView,
 }) => {
   const getSituacaoBadgeClass = (situacao: SituacaoProcesso) => {
     const classes: Record<SituacaoProcesso, string> = {
-      PENDENTE: 'atlas-status-badge-warning',
-      EM_ANDAMENTO: 'atlas-status-badge-info',
-      CONCLUIDO: 'atlas-status-badge-success',
-      CANCELADO: 'atlas-status-badge-danger',
+      PENDENTE: 'prevent-status-badge-warning',
+      EM_ANDAMENTO: 'prevent-status-badge-info',
+      CONCLUIDO: 'prevent-status-badge-success',
+      CANCELADO: 'prevent-status-badge-danger',
     };
-    return classes[situacao] || 'atlas-status-badge-neutral';
+    return classes[situacao] || 'prevent-status-badge-neutral';
   };
 
   const{isDarkMode} = useLayout();
@@ -96,9 +101,9 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
         <Tooltip title={htmlToPlainText(record.descricaoSituacao)}>
           <Tag
             variant="filled"
-            className={`atlas-status-badge ${getSituacaoBadgeClass(situacao)}`}
+            className={`prevent-status-badge ${getSituacaoBadgeClass(situacao)}`}
           >
-            <span className="atlas-status-badge-dot" />
+            <span className="prevent-status-badge-dot" />
             {situacao.replace('_', ' ')}
           </Tag>
         </Tooltip>
@@ -163,14 +168,14 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
   ];
 
   return (
-
-    <Table
+    <ExcelLikeTable
+      tableId="painel-processos-adm"
       columns={columns}
       dataSource={dataSource}
       rowKey="id"
       loading={loading}
       scroll={{ x: 1000 }}
-      pagination={{
+      pagination={pagination ?? {
         placement:["bottomCenter"],
         pageSize: 10,
         showSizeChanger: true,
@@ -182,6 +187,7 @@ export const ProcessosAdmTable: React.FC<ProcessosAdmTableProps> = ({
           borderRadius: '0 0 8px 8px'
         }
       }}
+      onChange={onChange}
     />
   );
 };

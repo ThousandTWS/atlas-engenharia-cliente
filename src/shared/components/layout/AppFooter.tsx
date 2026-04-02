@@ -7,7 +7,7 @@ export const AppFooter: React.FC = () => {
     const { isDarkMode } = useLayout();
   return (
     <Footer style={{ textAlign: 'center',  background: isDarkMode ? '#141B2D' : '#fff', }}>
-      Atlas Engenharia ©{new Date().getFullYear()} Developed by <a type={'primary'}>Atlas Engenharia Version 1.1.0</a>
+      Prevent Mecânica ©{new Date().getFullYear()} <a type={'primary'}>Prevent Mecânica</a>
     </Footer>
   );
 };

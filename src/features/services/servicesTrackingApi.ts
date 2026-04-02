@@ -9,6 +9,22 @@ export interface ServiceSituationConfigItem {
   order?: number | null;
   isDefault?: boolean;
   active?: boolean;
+  conditions?: ServiceSituationConditionItem[];
+}
+
+export interface ServiceSituationConditionItem {
+  id: number;
+  label: string;
+  order?: number | null;
+  active?: boolean;
+}
+
+export interface ServicePendingCondition {
+  id: number;
+  label: string;
+  done: boolean;
+  createdAt?: string;
+  doneAt?: string;
 }
 
 export type ServiceSituationConfig = Record<ServiceKind, ServiceSituationConfigItem[]>;
@@ -40,6 +56,13 @@ export interface TrackingServiceDto {
   recebido: number;
   custos: number;
   folderUrl: string;
+  pendencias?: Array<{
+    id: number;
+    label: string;
+    concluida: boolean;
+    createdAt?: string;
+    concluidaEm?: string;
+  }>;
 }
 
 interface TrackingServiceHistoryDto {
@@ -63,6 +86,12 @@ interface TrackingSituationConfigDto {
   ordem: number | null;
   situacaoInicial: boolean;
   ativo: boolean;
+  pendencias?: Array<{
+    id: number;
+    label: string;
+    order: number | null;
+    active: boolean;
+  }>;
 }
 
 export interface TrackingServicesFilters {
@@ -106,6 +135,20 @@ const mapSituationConfig = (item: TrackingSituationConfigDto): ServiceSituationC
   order: item.ordem,
   isDefault: item.situacaoInicial,
   active: item.ativo,
+  conditions: (item.pendencias || []).map((p) => ({
+    id: p.id,
+    label: p.label,
+    order: p.order,
+    active: p.active,
+  })),
+});
+
+const mapPendingCondition = (item: any): ServicePendingCondition => ({
+  id: item.id,
+  label: item.label,
+  done: Boolean(item.concluida),
+  createdAt: item.createdAt || '',
+  doneAt: item.concluidaEm || '',
 });
 
 export const servicesTrackingApi = {
@@ -180,5 +223,44 @@ export const servicesTrackingApi = {
 
   async deleteSituationConfig(id: number) {
     await apiClient.delete(`/acompanhamento-servicos/situacoes/${id}`);
+  },
+
+  async createSituationCondition(situacaoConfigId: number, payload: { label: string; order?: number | null; active?: boolean }) {
+    const response = await apiClient.post<any>(`/acompanhamento-servicos/situacoes/${situacaoConfigId}/pendencias`, {
+      id: null,
+      label: payload.label,
+      order: payload.order ?? null,
+      active: payload.active ?? true,
+    });
+    return {
+      id: response.data.id,
+      label: response.data.label,
+      order: response.data.order ?? null,
+      active: Boolean(response.data.active),
+    } satisfies ServiceSituationConditionItem;
+  },
+
+  async updateSituationCondition(conditionId: number, payload: { label: string; order?: number | null; active?: boolean }) {
+    const response = await apiClient.put<any>(`/acompanhamento-servicos/situacoes/pendencias/${conditionId}`, {
+      id: conditionId,
+      label: payload.label,
+      order: payload.order ?? null,
+      active: payload.active ?? true,
+    });
+    return {
+      id: response.data.id,
+      label: response.data.label,
+      order: response.data.order ?? null,
+      active: Boolean(response.data.active),
+    } satisfies ServiceSituationConditionItem;
+  },
+
+  async deleteSituationCondition(conditionId: number) {
+    await apiClient.delete(`/acompanhamento-servicos/situacoes/pendencias/${conditionId}`);
+  },
+
+  async concludePendingCondition(pendingId: number) {
+    const response = await apiClient.post<any>(`/acompanhamento-servicos/pendencias/${pendingId}/concluir`);
+    return mapPendingCondition(response.data);
   },
 };

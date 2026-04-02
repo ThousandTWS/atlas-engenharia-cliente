@@ -185,7 +185,7 @@ export const ProcessoAdmFormPage: React.FC = () => {
           </Title>
           <Text type="secondary">Cadastro de dados contratuais, documentação e controle financeiro.</Text>
         </Space>
-        <Button className="atlas-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/processos')} style={{ width: isMobile ? '100%' : 'auto' }}>
+        <Button className="prevent-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/processos')} style={{ width: isMobile ? '100%' : 'auto' }}>
           Voltar
         </Button>
       </div>
@@ -414,15 +414,15 @@ export const ProcessoAdmFormPage: React.FC = () => {
                     <Space size={[12, 10]} wrap>
                       <div>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>Contrato</Text>
-                        <Tag variant="filled" className="atlas-status-badge atlas-status-badge-info" style={{ marginInlineEnd: 0 }}>
-                          <span className="atlas-status-badge-dot" />
+                        <Tag variant="filled" className="prevent-status-badge prevent-status-badge-info" style={{ marginInlineEnd: 0 }}>
+                          <span className="prevent-status-badge-dot" />
                           {formatCurrencyValue(valorContrato)}
                         </Tag>
                       </div>
                       <div>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>Custos</Text>
-                        <Tag variant="filled" className="atlas-status-badge atlas-status-badge-danger" style={{ marginInlineEnd: 0 }}>
-                          <span className="atlas-status-badge-dot" />
+                        <Tag variant="filled" className="prevent-status-badge prevent-status-badge-danger" style={{ marginInlineEnd: 0 }}>
+                          <span className="prevent-status-badge-dot" />
                           {formatCurrencyValue(custos)}
                         </Tag>
                       </div>
@@ -430,10 +430,10 @@ export const ProcessoAdmFormPage: React.FC = () => {
                         <Text type="secondary" style={{ display: 'block', marginBottom: 6, fontSize: 12 }}>Saldo Líquido</Text>
                         <Tag
                           variant="filled"
-                          className={`atlas-status-badge ${saldoLiquido < 0 ? 'atlas-status-badge-danger' : 'atlas-status-badge-success'}`}
+                          className={`prevent-status-badge ${saldoLiquido < 0 ? 'prevent-status-badge-danger' : 'prevent-status-badge-success'}`}
                           style={{ marginInlineEnd: 0 }}
                         >
-                          <span className="atlas-status-badge-dot" />
+                          <span className="prevent-status-badge-dot" />
                           {formatCurrencyValue(saldoLiquido)}
                         </Tag>
                       </div>

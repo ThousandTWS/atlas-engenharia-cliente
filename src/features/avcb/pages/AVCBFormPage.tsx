@@ -126,7 +126,7 @@ export const AVCBFormPage: React.FC = () => {
           </Title>
           <Text type="secondary">Gerenciamento de Auto de Vistoria do Corpo de Bombeiros.</Text>
         </Space>
-        <Button className="atlas-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/avcb')} style={{ width: isMobile ? '100%' : 'auto' }}>
+        <Button className="prevent-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/avcb')} style={{ width: isMobile ? '100%' : 'auto' }}>
           Voltar
         </Button>
       </div>
@@ -146,10 +146,10 @@ export const AVCBFormPage: React.FC = () => {
           scrollToFirstError
         >
           <Row gutter={[24, 0]} style={{ alignItems: 'stretch' }}>
-            <Col xs={24} lg={14} className="atlas-equal-height-col">
+            <Col xs={24} lg={14} className="prevent-equal-height-col">
               <Card
                 title={<span><FireOutlined /> Informações do Processo</span>}
-                className="atlas-equal-height-card"
+                className="prevent-equal-height-card"
                 style={{
                   marginBottom: 24,
                   borderRadius: 8,
@@ -198,10 +198,10 @@ export const AVCBFormPage: React.FC = () => {
               </Card>
             </Col>
 
-            <Col xs={24} lg={10} className="atlas-equal-height-col">
+            <Col xs={24} lg={10} className="prevent-equal-height-col">
               <Card
                 title={<span><DollarOutlined /> Informações Financeiras</span>}
-                className="atlas-equal-height-card"
+                className="prevent-equal-height-card"
                 style={{
                   marginBottom: 24,
                   borderRadius: 8,

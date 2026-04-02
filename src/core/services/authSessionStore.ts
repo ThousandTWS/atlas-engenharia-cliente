@@ -1,26 +1,30 @@
-import type { User } from './authService';
+import type { User, Workshop } from './authService';
 
-const AUTH_TOKEN_KEY = 'auth.token';
+const AUTH_ACCESS_TOKEN_KEY = 'auth.access_token';
 const AUTH_REFRESH_TOKEN_KEY = 'auth.refresh_token';
 const AUTH_USER_KEY = 'auth.user';
+const AUTH_WORKSHOP_KEY = 'auth.workshop';
 
 interface AuthSessionState {
-  token: string | null;
+  accessToken: string | null;
   refreshToken: string | null;
   user: User | null;
+  workshop: Workshop | null;
 }
 
 interface AuthSessionUpdate {
-  token?: string | null;
+  accessToken?: string | null;
   refreshToken?: string | null;
   user?: User | null;
+  workshop?: Workshop | null;
 }
 
 let hasHydratedFromSessionStorage = false;
 let inMemoryState: AuthSessionState = {
-  token: null,
+  accessToken: null,
   refreshToken: null,
   user: null,
+  workshop: null,
 };
 
 const canUseSessionStorage = (): boolean => {
@@ -72,15 +76,28 @@ const parseStoredUser = (rawUser: string | null): User | null => {
   }
 };
 
+const parseStoredWorkshop = (rawWorkshop: string | null): Workshop | null => {
+  if (!rawWorkshop) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawWorkshop) as Workshop;
+  } catch {
+    return null;
+  }
+};
+
 const hydrate = (): void => {
   if (hasHydratedFromSessionStorage) {
     return;
   }
 
   inMemoryState = {
-    token: readSessionValue(AUTH_TOKEN_KEY),
+    accessToken: readSessionValue(AUTH_ACCESS_TOKEN_KEY),
     refreshToken: readSessionValue(AUTH_REFRESH_TOKEN_KEY),
     user: parseStoredUser(readSessionValue(AUTH_USER_KEY)),
+    workshop: parseStoredWorkshop(readSessionValue(AUTH_WORKSHOP_KEY)),
   };
 
   hasHydratedFromSessionStorage = true;
@@ -90,9 +107,9 @@ export const authSessionStore = {
   setSession: (update: AuthSessionUpdate): void => {
     hydrate();
 
-    if ('token' in update) {
-      inMemoryState.token = update.token ?? null;
-      writeSessionValue(AUTH_TOKEN_KEY, inMemoryState.token);
+    if ('accessToken' in update) {
+      inMemoryState.accessToken = update.accessToken ?? null;
+      writeSessionValue(AUTH_ACCESS_TOKEN_KEY, inMemoryState.accessToken);
     }
 
     if ('refreshToken' in update) {
@@ -107,18 +124,27 @@ export const authSessionStore = {
         inMemoryState.user ? JSON.stringify(inMemoryState.user) : null
       );
     }
+
+    if ('workshop' in update) {
+      inMemoryState.workshop = update.workshop ?? null;
+      writeSessionValue(
+        AUTH_WORKSHOP_KEY,
+        inMemoryState.workshop ? JSON.stringify(inMemoryState.workshop) : null
+      );
+    }
   },
 
   clear: (): void => {
-    inMemoryState = { token: null, refreshToken: null, user: null };
-    writeSessionValue(AUTH_TOKEN_KEY, null);
+    inMemoryState = { accessToken: null, refreshToken: null, user: null, workshop: null };
+    writeSessionValue(AUTH_ACCESS_TOKEN_KEY, null);
     writeSessionValue(AUTH_REFRESH_TOKEN_KEY, null);
     writeSessionValue(AUTH_USER_KEY, null);
+    writeSessionValue(AUTH_WORKSHOP_KEY, null);
   },
 
-  getToken: (): string | null => {
+  getAccessToken: (): string | null => {
     hydrate();
-    return inMemoryState.token;
+    return inMemoryState.accessToken;
   },
 
   getRefreshToken: (): string | null => {
@@ -129,5 +155,10 @@ export const authSessionStore = {
   getUser: (): User | null => {
     hydrate();
     return inMemoryState.user;
+  },
+
+  getWorkshop: (): Workshop | null => {
+    hydrate();
+    return inMemoryState.workshop;
   },
 };

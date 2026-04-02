@@ -5,6 +5,7 @@ import {
   Breadcrumb,
   Button,
   Card,
+  Checkbox,
   Col,
   DatePicker,
   Drawer,
@@ -15,7 +16,6 @@ import {
   Row,
   Select,
   Space,
-  Table,
   Tabs,
   Tag,
   Timeline,
@@ -36,11 +36,16 @@ import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { formatPhoneBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
 import { htmlToPlainText } from '../../../core/utils/text';
+import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
+import { pdfTemplatesService } from '../../../core/services/pdfTemplatesService';
+import { renderPdfTemplate, toSafeTextVar } from '../../../shared/utils/pdfTemplate';
 import {
   servicesTrackingApi,
   type ServiceHistoryEntry,
   type ServiceKind,
+  type ServicePendingCondition,
   type ServiceSituationConfig,
+  type ServiceSituationConditionItem,
   type ServiceSituationConfigItem,
   type TrackingServiceDto,
   type TrackingServiceUpdatePayload,
@@ -70,6 +75,7 @@ interface UnifiedServiceRow {
   costs: number;
   folderUrl: string;
   editPath: string;
+  pendingConditions: ServicePendingCondition[];
 }
 
 interface InlineEditState {
@@ -86,7 +92,7 @@ interface InspectionSchedule {
 
 type InspectionScheduleMap = Record<string, InspectionSchedule>;
 
-const INSPECTION_STORAGE_KEY = 'atlas.service_tracking.inspection_schedule';
+const INSPECTION_STORAGE_KEY = 'prevent.service_tracking.inspection_schedule';
 
 const readInspectionScheduleMap = (): InspectionScheduleMap => {
   if (typeof window === 'undefined') return {};
@@ -164,6 +170,13 @@ const mapServiceRow = (item: TrackingServiceDto): UnifiedServiceRow => ({
   received: Number(item.recebido || 0),
   costs: Number(item.custos || 0),
   folderUrl: item.folderUrl || '',
+  pendingConditions: (item.pendencias || []).map((p) => ({
+    id: p.id,
+    label: p.label,
+    done: Boolean(p.concluida),
+    createdAt: p.createdAt || '',
+    doneAt: p.concluidaEm || '',
+  })),
   editPath: item.tipoServico === 'AVCB'
     ? `/avcb/${item.origemId}/editar`
     : item.tipoServico === 'CLCB'
@@ -213,11 +226,22 @@ export const ServicesTrackingPage: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inlineEdit, setInlineEdit] = useState<InlineEditState | null>(null);
   const [drawerForm] = Form.useForm();
+  const [conditionModalOpen, setConditionModalOpen] = useState(false);
+  const [conditionEditing, setConditionEditing] = useState<{
+    type: ServiceKind;
+    situationId: number;
+    condition?: ServiceSituationConditionItem | null;
+  } | null>(null);
+  const [conditionForm] = Form.useForm();
   const [inspectionScheduleMap, setInspectionScheduleMap] = useState<InspectionScheduleMap>(() => readInspectionScheduleMap());
   const [inspectionModalOpen, setInspectionModalOpen] = useState(false);
   const [inspectionDraftStart, setInspectionDraftStart] = useState<dayjs.Dayjs | null>(null);
   const [inspectionDraftLocation, setInspectionDraftLocation] = useState('');
   const [lastDrawerSituation, setLastDrawerSituation] = useState('');
+  const [reportTemplateModalOpen, setReportTemplateModalOpen] = useState(false);
+  const [reportTemplateLoading, setReportTemplateLoading] = useState(false);
+  const [reportTemplateName, setReportTemplateName] = useState('');
+  const [reportTemplateHtml, setReportTemplateHtml] = useState('');
 
   const drawerSituation = Form.useWatch<string>('situation', drawerForm) || '';
 
@@ -396,6 +420,12 @@ export const ServicesTrackingPage: React.FC = () => {
   };
 
   const applySituationChange = async (row: UnifiedServiceRow, nextSituation: string, changeDescription: string) => {
+    const hasPending = (row.pendingConditions || []).some((item) => !item.done);
+    if (hasPending && nextSituation !== row.situation) {
+      message.error('Não é possível trocar a situação enquanto houver pendências em aberto.');
+      throw new Error('Pendências em aberto.');
+    }
+
     const detail = await servicesTrackingApi.updateSituation(row.id, nextSituation, changeDescription);
     const nextRow = mapServiceRow(detail.service);
     replaceRow(nextRow);
@@ -405,6 +435,19 @@ export const ServicesTrackingPage: React.FC = () => {
     }));
     message.success('Situacao atualizada.');
     return nextRow;
+  };
+
+  const concludePendingCondition = async (row: UnifiedServiceRow, pendingId: number) => {
+    try {
+      await servicesTrackingApi.concludePendingCondition(pendingId);
+      const detail = await servicesTrackingApi.getById(row.id);
+      const nextRow = mapServiceRow(detail.service);
+      replaceRow(nextRow);
+      setHistoryMap((current) => ({ ...current, [nextRow.key]: detail.history }));
+      message.success('Pendência concluída.');
+    } catch (error: any) {
+      message.error(error.message || 'Erro ao concluir pendência.');
+    }
   };
 
   const saveInlineEdit = async (row: UnifiedServiceRow) => {
@@ -437,6 +480,13 @@ export const ServicesTrackingPage: React.FC = () => {
       return;
     }
 
+    const pendingOpen = (drawerRow.pendingConditions || []).some((item) => !item.done);
+    if (pendingOpen && values.situation !== drawerRow.situation) {
+      message.error('Conclua as pendências antes de alterar a situação.');
+      drawerForm.setFieldValue('situation', drawerRow.situation);
+      return;
+    }
+
     const nextRow: UnifiedServiceRow = {
       ...drawerRow,
       clientName: values.clientName,
@@ -454,7 +504,12 @@ export const ServicesTrackingPage: React.FC = () => {
     };
 
     try {
-      const savedRow = await persistRow(nextRow, 'Cadastro atualizado com sucesso.');
+      const shouldUseSituationEndpoint = nextRow.situation !== drawerRow.situation;
+      const baseRow = shouldUseSituationEndpoint
+        ? await applySituationChange(drawerRow, nextRow.situation, nextRow.description || 'Mudança de situação no acompanhamento')
+        : drawerRow;
+
+      const savedRow = await persistRow({ ...baseRow, ...nextRow }, 'Cadastro atualizado com sucesso.');
       const detail = await servicesTrackingApi.getById(savedRow.id);
       setHistoryMap((current) => ({
         ...current,
@@ -470,45 +525,41 @@ export const ServicesTrackingPage: React.FC = () => {
       const detail = await servicesTrackingApi.getReport(row.id);
       const reportRow = mapServiceRow(detail.service);
 
+      let templateHtmlRaw = '';
+      try {
+        const template = await pdfTemplatesService.getByKey('service_report');
+        templateHtmlRaw = template.html;
+      } catch {
+        templateHtmlRaw = '';
+      }
+
+      const html = templateHtmlRaw
+        ? renderPdfTemplate(templateHtmlRaw, {
+          code: toSafeTextVar(reportRow.code),
+          client_name: toSafeTextVar(reportRow.clientName),
+          generated_at: toSafeTextVar(dayjs().format('DD/MM/YYYY HH:mm')),
+          service_type: toSafeTextVar(reportRow.serviceType === 'PROCESSOS_ADM' ? 'Proc. Adm.' : reportRow.serviceType),
+          subtype: toSafeTextVar(reportRow.subtype || '-'),
+          situation: toSafeTextVar(reportRow.situation || '-'),
+          pending_conditions: toSafeTextVar((reportRow.pendingConditions || []).filter((p) => !p.done).map((p) => p.label).join(', ') || '-'),
+          description: toSafeTextVar(reportRow.description || '-'),
+          phone: toSafeTextVar(reportRow.phone || '-'),
+          contract_value: toSafeTextVar(formatCurrency(reportRow.contractValue)),
+          contract_date: toSafeTextVar(reportRow.contractDate ? dayjs(reportRow.contractDate).format('DD/MM/YYYY') : '-'),
+          payment_condition: toSafeTextVar(reportRow.paymentCondition || '-'),
+          receivable: toSafeTextVar(formatCurrency(reportRow.receivable)),
+          received: toSafeTextVar(formatCurrency(reportRow.received)),
+          costs: toSafeTextVar(formatCurrency(reportRow.costs)),
+          folder_url: toSafeTextVar(reportRow.folderUrl || '-'),
+        })
+        : '';
+
       const printWindow = window.open('', '_blank', 'width=900,height=900');
       if (!printWindow) {
         message.error('O navegador bloqueou a abertura da janela de impressao.');
         return;
       }
-
-      printWindow.document.write(`
-        <html lang="pt-BR">
-          <head>
-            <title>Relatorio ${reportRow.code}</title>
-            <style>
-              body { font-family: "Segoe UI", sans-serif; padding: 24px; color: #0f172a; }
-              h1 { margin: 0 0 8px; }
-              p { margin: 0 0 24px; color: #475569; }
-              table { width: 100%; border-collapse: collapse; }
-              td { border: 1px solid #dbe7f6; padding: 10px 12px; }
-              td:first-child { width: 240px; font-weight: 700; background: #f8fbff; }
-            </style>
-          </head>
-          <body>
-            <h1>${reportRow.code} - ${reportRow.clientName}</h1>
-            <p>Relatorio exportado em ${dayjs().format('DD/MM/YYYY HH:mm')}</p>
-            <table>
-              <tr><td>Tipo de servico</td><td>${reportRow.serviceType}</td></tr>
-              <tr><td>Subtipo</td><td>${reportRow.subtype || '-'}</td></tr>
-              <tr><td>Situacao</td><td>${reportRow.situation}</td></tr>
-              <tr><td>Descricao</td><td>${reportRow.description || '-'}</td></tr>
-              <tr><td>Telefone</td><td>${reportRow.phone || '-'}</td></tr>
-              <tr><td>Valor do contrato</td><td>${formatCurrency(reportRow.contractValue)}</td></tr>
-              <tr><td>Data do contrato</td><td>${reportRow.contractDate ? dayjs(reportRow.contractDate).format('DD/MM/YYYY') : '-'}</td></tr>
-              <tr><td>Condicao de pagamento</td><td>${reportRow.paymentCondition || '-'}</td></tr>
-              <tr><td>A receber</td><td>${formatCurrency(reportRow.receivable)}</td></tr>
-              <tr><td>Recebido</td><td>${formatCurrency(reportRow.received)}</td></tr>
-              <tr><td>Custos</td><td>${formatCurrency(reportRow.costs)}</td></tr>
-              <tr><td>Pasta associada</td><td>${reportRow.folderUrl || '-'}</td></tr>
-            </table>
-          </body>
-        </html>
-      `);
+      printWindow.document.write(html || '<html><body><p>Template de PDF não configurado.</p></body></html>');
       printWindow.document.close();
       printWindow.focus();
       printWindow.print();
@@ -560,6 +611,67 @@ export const ServicesTrackingPage: React.FC = () => {
     }
   };
 
+  const openCreateCondition = (type: ServiceKind, situation: ServiceSituationConfigItem) => {
+    setConditionEditing({ type, situationId: situation.id, condition: null });
+    conditionForm.resetFields();
+    conditionForm.setFieldsValue({
+      label: 'NOVA_PENDENCIA',
+      active: true,
+      order: (situation.conditions?.length || 0) + 1,
+    });
+    setConditionModalOpen(true);
+  };
+
+  const openEditCondition = (type: ServiceKind, situation: ServiceSituationConfigItem, condition: ServiceSituationConditionItem) => {
+    setConditionEditing({ type, situationId: situation.id, condition });
+    conditionForm.setFieldsValue({
+      label: condition.label,
+      active: condition.active ?? true,
+      order: condition.order ?? null,
+    });
+    setConditionModalOpen(true);
+  };
+
+  const deleteCondition = async (conditionId: number) => {
+    try {
+      await servicesTrackingApi.deleteSituationCondition(conditionId);
+      await loadSituationConfig();
+      message.success('Pendencia removida.');
+    } catch (error: any) {
+      message.error(error.message);
+      await loadSituationConfig();
+    }
+  };
+
+  const saveCondition = async (values: any) => {
+    if (!conditionEditing) {
+      return;
+    }
+    try {
+      if (conditionEditing.condition?.id) {
+        await servicesTrackingApi.updateSituationCondition(conditionEditing.condition.id, {
+          label: String(values.label || '').toUpperCase(),
+          order: values.order ?? null,
+          active: Boolean(values.active),
+        });
+      } else {
+        await servicesTrackingApi.createSituationCondition(conditionEditing.situationId, {
+          label: String(values.label || '').toUpperCase(),
+          order: values.order ?? null,
+          active: Boolean(values.active),
+        });
+      }
+      await loadSituationConfig();
+      setConditionModalOpen(false);
+      setConditionEditing(null);
+      conditionForm.resetFields();
+      message.success('Pendencia salva.');
+    } catch (error: any) {
+      message.error(error.message);
+      await loadSituationConfig();
+    }
+  };
+
   const openSettings = async () => {
     setSettingsLoading(true);
     setSettingsOpen(true);
@@ -567,6 +679,35 @@ export const ServicesTrackingPage: React.FC = () => {
       await loadSituationConfig();
     } finally {
       setSettingsLoading(false);
+    }
+  };
+
+  const openReportTemplateEditor = async () => {
+    setReportTemplateLoading(true);
+    setReportTemplateModalOpen(true);
+    try {
+      const template = await pdfTemplatesService.getByKey('service_report');
+      setReportTemplateName(template.name || 'Relatório do Acompanhamento');
+      setReportTemplateHtml(template.html || '');
+    } catch (error: any) {
+      setReportTemplateName('Relatório do Acompanhamento');
+      setReportTemplateHtml('');
+      message.error(error.message || 'Nao foi possivel carregar o template.');
+    } finally {
+      setReportTemplateLoading(false);
+    }
+  };
+
+  const saveReportTemplate = async () => {
+    try {
+      setReportTemplateLoading(true);
+      await pdfTemplatesService.upsert('service_report', { name: reportTemplateName || 'Relatório', html: reportTemplateHtml || '' });
+      message.success('Template salvo.');
+      setReportTemplateModalOpen(false);
+    } catch (error: any) {
+      message.error(error.message || 'Erro ao salvar template.');
+    } finally {
+      setReportTemplateLoading(false);
     }
   };
 
@@ -605,7 +746,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 180,
       render: (_, row) => (
         <Select
-          className="atlas-services-select"
+          className="prevent-services-select"
           size="small"
           value={inlineEdit?.key === row.key && inlineEdit.field === 'subtype' ? inlineEdit.value : row.subtype}
           options={(DEFAULT_SUBTYPE_OPTIONS[row.serviceType] ?? []).map((item) => ({ label: item, value: item }))}
@@ -622,8 +763,36 @@ export const ServicesTrackingPage: React.FC = () => {
       key: 'situation',
       width: 180,
       render: (_, row) => (
+<<<<<<< HEAD
+        <Space direction="vertical" size={6} style={{ width: '100%' }}>
+          <Select
+            className="atlas-services-select"
+            size="small"
+            value={inlineEdit?.key === row.key && inlineEdit.field === 'situation' ? inlineEdit.value : row.situation}
+            options={(situationConfig[row.serviceType] ?? []).map((item) => ({ label: item.label, value: item.label }))}
+            style={{ width: '100%' }}
+            onFocus={() => setInlineEdit({ key: row.key, field: 'situation', value: row.situation })}
+            onChange={(value) => setInlineEdit({ key: row.key, field: 'situation', value })}
+            onBlur={() => saveInlineEdit(row)}
+          />
+          <Space size={[6, 6]} wrap>
+            {(row.pendingConditions || []).filter((item) => !item.done).map((item) => (
+              <Tag
+                key={item.id}
+                closable
+                onClose={(event) => {
+                  event.preventDefault();
+                  void concludePendingCondition(row, item.id);
+                }}
+              >
+                {item.label}
+              </Tag>
+            ))}
+          </Space>
+        </Space>
+=======
         <Select
-          className="atlas-services-select"
+          className="prevent-services-select"
           size="small"
           value={inlineEdit?.key === row.key && inlineEdit.field === 'situation' ? inlineEdit.value : row.situation}
           options={(situationConfig[row.serviceType] ?? []).map((item) => ({ label: item.label, value: item.label }))}
@@ -632,6 +801,7 @@ export const ServicesTrackingPage: React.FC = () => {
           onChange={(value) => setInlineEdit({ key: row.key, field: 'situation', value })}
           onBlur={() => saveInlineEdit(row)}
         />
+>>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
       ),
     },
     {
@@ -648,7 +818,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 260,
       render: (_, row) => (
         <Input
-          className="atlas-services-input"
+          className="prevent-services-input"
           size="small"
           value={inlineEdit?.key === row.key && inlineEdit.field === 'description' ? inlineEdit.value : row.description}
           placeholder="Descricao livre"
@@ -711,7 +881,7 @@ export const ServicesTrackingPage: React.FC = () => {
       width: 160,
       render: (_, row) => (
         <Space>
-          <Button className="atlas-services-button" size="small" icon={<EditOutlined />} onClick={() => void openDrawer(row)}>
+          <Button className="prevent-services-button" size="small" icon={<EditOutlined />} onClick={() => void openDrawer(row)}>
             Detalhes
           </Button>
         </Space>
@@ -720,7 +890,7 @@ export const ServicesTrackingPage: React.FC = () => {
   ];
 
   return (
-    <div className="atlas-services-page" style={{ maxWidth: 1600, margin: '0 auto' }}>
+    <div className="prevent-services-page" style={{ maxWidth: 1600, margin: '0 auto' }}>
       <Breadcrumb
         items={[
           { title: <HomeOutlined />, href: '/' },
@@ -738,16 +908,27 @@ export const ServicesTrackingPage: React.FC = () => {
         </Space>
 
         <Space wrap>
-          <Button className="atlas-services-button" icon={<PlusOutlined />} onClick={() => navigate('/obras/novo')}>Novo servico</Button>
+<<<<<<< HEAD
+          <Button
+            className="atlas-services-button"
+            icon={<PlusOutlined />}
+            onClick={() => navigate(typeFilter === 'ALL' ? '/cadastros/servicos' : `/cadastros/servicos?tipo=${typeFilter}`)}
+          >
+            Novo servico
+          </Button>
           <Button className="atlas-services-button" icon={<SettingOutlined />} onClick={() => void openSettings()}>Configurar situacoes</Button>
+=======
+          <Button className="prevent-services-button" icon={<PlusOutlined />} onClick={() => navigate('/obras/novo')}>Novo servico</Button>
+          <Button className="prevent-services-button" icon={<SettingOutlined />} onClick={() => void openSettings()}>Configurar situacoes</Button>
+>>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
         </Space>
       </div>
 
-      <Card className="atlas-services-filter-card" style={{ borderRadius: 14, marginBottom: 20 }} styles={{ body: { padding: 16 } }}>
+      <Card className="prevent-services-filter-card" style={{ borderRadius: 14, marginBottom: 20 }} styles={{ body: { padding: 16 } }}>
         <Row gutter={[12, 12]} align="middle">
           <Col xs={24} md={8}>
             <Select
-              className="atlas-services-select"
+              className="prevent-services-select"
               value={typeFilter}
               options={[{ label: 'Todos os tipos', value: 'ALL' }, ...SERVICE_TYPE_OPTIONS]}
               onChange={(value) => setTypeFilter(value)}
@@ -756,23 +937,30 @@ export const ServicesTrackingPage: React.FC = () => {
           </Col>
           <Col xs={24} md={10}>
             <Input
-              className="atlas-services-input"
+              className="prevent-services-input"
               placeholder="Buscar por codigo, cliente, telefone, subtipo ou situacao"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
             />
           </Col>
           <Col xs={24} md={6} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-            <Tag className="atlas-dashboard-meta-chip" bordered={false}>
+            <Tag className="prevent-dashboard-meta-chip" bordered={false}>
               {filteredRows.length} servico(s)
             </Tag>
           </Col>
         </Row>
       </Card>
 
+<<<<<<< HEAD
       <Card className="atlas-services-table-card" style={{ borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
-        <Table
+        <ExcelLikeTable
+          tableId="acompanhamento-servicos"
           className="atlas-services-table"
+=======
+      <Card className="prevent-services-table-card" style={{ borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
+        <Table
+          className="prevent-services-table"
+>>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
           rowKey="key"
           loading={loading}
           columns={columns}
@@ -791,7 +979,7 @@ export const ServicesTrackingPage: React.FC = () => {
       </Card>
 
       <Drawer
-        className="atlas-services-drawer"
+        className="prevent-services-drawer"
         open={Boolean(drawerRow)}
         onClose={() => setDrawerRow(null)}
         width={820}
@@ -807,88 +995,127 @@ export const ServicesTrackingPage: React.FC = () => {
                   <Form layout="vertical" form={drawerForm} onFinish={saveDrawer}>
                     {(() => {
                       const availableSituations = (situationConfig[drawerRow.serviceType] ?? []).map((item) => ({ label: item.label, value: item.label }));
+                      const hasPending = (drawerRow.pendingConditions || []).some((item) => !item.done);
 
                       return (
                         <>
                           <Row gutter={16}>
                             <Col span={12}>
                               <Form.Item name="clientName" label="Nome do cliente" rules={[{ required: true }]}>
-                                <Input className="atlas-services-input" />
+                                <Input className="prevent-services-input" />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR}>
-                                <Input className="atlas-services-input" />
+                                <Input className="prevent-services-input" />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="serviceType" label="Tipo de servico" rules={[{ required: true }]}>
-                                <Select className="atlas-services-select" options={SERVICE_TYPE_OPTIONS} disabled />
+                                <Select className="prevent-services-select" options={SERVICE_TYPE_OPTIONS} disabled />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="subtype" label="Subtipo">
-                                <Input className="atlas-services-input" />
+                                <Input className="prevent-services-input" />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="situation" label="Situacao" rules={[{ required: true }]}>
-                                <Select className="atlas-services-select" options={availableSituations} />
+<<<<<<< HEAD
+                                <Select className="atlas-services-select" options={availableSituations} disabled={hasPending} />
+=======
+                                <Select className="prevent-services-select" options={availableSituations} />
+>>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                               </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                              <Space size={[6, 6]} wrap>
+                                {(drawerRow.pendingConditions || []).filter((item) => !item.done).map((item) => (
+                                  <Tag
+                                    key={item.id}
+                                    closable
+                                    onClose={(event) => {
+                                      event.preventDefault();
+                                      void concludePendingCondition(drawerRow, item.id);
+                                    }}
+                                  >
+                                    {item.label}
+                                  </Tag>
+                                ))}
+                                {(drawerRow.pendingConditions || []).filter((item) => !item.done).length
+                                  ? <Text type="secondary">Conclua as pendencias para liberar troca de situacao.</Text>
+                                  : null}
+                              </Space>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="contractDate" label="Data do contrato">
-                                <DatePicker className="atlas-services-date" style={{ width: '100%' }} format="DD/MM/YYYY" />
+                                <DatePicker className="prevent-services-date" style={{ width: '100%' }} format="DD/MM/YYYY" />
                               </Form.Item>
                             </Col>
                             <Col span={24}>
                               <Form.Item name="description" label="Descricao">
-                                <Input.TextArea className="atlas-services-input" rows={3} />
+                                <Input.TextArea className="prevent-services-input" rows={3} />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="contractValue" label="Valor do contrato">
-                                <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                                <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="paymentCondition" label="Condicao de pagamento">
-                                <Input className="atlas-services-input" />
+                                <Input className="prevent-services-input" />
                               </Form.Item>
                             </Col>
                             <Col span={8}>
                               <Form.Item name="receivable" label="A receber">
-                                <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                                <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                               </Form.Item>
                             </Col>
                             <Col span={8}>
                               <Form.Item name="received" label="Recebido">
-                                <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                                <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                               </Form.Item>
                             </Col>
                             <Col span={8}>
                               <Form.Item name="costs" label="Custos">
-                                <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
+                                <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
                               </Form.Item>
                             </Col>
                             <Col span={24}>
                               <Form.Item name="folderUrl" label="Atalho da pasta">
-                                <Input className="atlas-services-input" placeholder="https://... ou caminho da pasta" />
+                                <Input className="prevent-services-input" placeholder="https://... ou caminho da pasta" />
                               </Form.Item>
                             </Col>
                           </Row>
 
                           <Space wrap>
+<<<<<<< HEAD
                             <Button className="atlas-services-button atlas-services-button-primary" type="primary" htmlType="submit" icon={<SaveOutlined />}>Salvar</Button>
+                            <Button className="atlas-services-button" onClick={() => void openReportTemplateEditor()}>
+                              Modelo PDF
+                            </Button>
                             <Button className="atlas-services-button" icon={<FilePdfOutlined />} onClick={() => void exportRowPdf(drawerRow)}>Gerar PDF</Button>
+=======
+                            <Button className="prevent-services-button prevent-services-button-primary" type="primary" htmlType="submit" icon={<SaveOutlined />}>Salvar</Button>
+                            <Button className="prevent-services-button" icon={<FilePdfOutlined />} onClick={() => void exportRowPdf(drawerRow)}>Gerar PDF</Button>
+>>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                             {isInspectionSituation(drawerSituation) ? (
-                              <Button className="atlas-services-button" icon={<CalendarOutlined />} onClick={openInspectionOnGoogleCalendar}>
+                              <Button className="prevent-services-button" icon={<CalendarOutlined />} onClick={openInspectionOnGoogleCalendar}>
                                 Agendar vistoria
                               </Button>
                             ) : null}
-                            <Button className="atlas-services-button" icon={<EditOutlined />} onClick={() => navigate(drawerRow.editPath)}>Abrir cadastro completo</Button>
+<<<<<<< HEAD
+                            <Button className="atlas-services-button" icon={<EditOutlined />} onClick={() => navigate(drawerRow.editPath)}>Abrir cadastro do painel</Button>
+                            <Button className="atlas-services-button" onClick={() => navigate(`/cadastros/servicos?tipo=${drawerRow.serviceType}&codigo=${encodeURIComponent(drawerRow.code)}`)}>
+                              Atalho: cadastro unico
+                            </Button>
+=======
+                            <Button className="prevent-services-button" icon={<EditOutlined />} onClick={() => navigate(drawerRow.editPath)}>Abrir cadastro completo</Button>
+>>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                             {drawerRow.folderUrl ? (
-                              <Button className="atlas-services-button" icon={<FolderOpenOutlined />} onClick={() => window.open(drawerRow.folderUrl, '_blank', 'noopener,noreferrer')}>
+                              <Button className="prevent-services-button" icon={<FolderOpenOutlined />} onClick={() => window.open(drawerRow.folderUrl, '_blank', 'noopener,noreferrer')}>
                                 Abrir pasta
                               </Button>
                             ) : null}
@@ -922,7 +1149,7 @@ export const ServicesTrackingPage: React.FC = () => {
       </Drawer>
 
       <Modal
-        className="atlas-services-modal"
+        className="prevent-services-modal"
         open={settingsOpen}
         onCancel={() => setSettingsOpen(false)}
         footer={null}
@@ -936,10 +1163,80 @@ export const ServicesTrackingPage: React.FC = () => {
             children: (
               <Space direction="vertical" size={12} style={{ width: '100%' }}>
                 {(situationConfig[serviceType.value] ?? []).map((item) => (
+<<<<<<< HEAD
+                  <div key={item.id} style={{ padding: 10, border: '1px solid #dbe7f6', borderRadius: 12, background: '#f8fbff' }}>
+                    <Row gutter={8} align="middle">
+                      <Col flex="auto">
+                        <Input
+                          className="atlas-services-input"
+                          value={item.label}
+                          onChange={(event) => {
+                            setSituationConfig((current) => ({
+                              ...current,
+                              [serviceType.value]: current[serviceType.value].map((currentItem) => (
+                                currentItem.id === item.id
+                                  ? { ...currentItem, label: event.target.value.toUpperCase() }
+                                  : currentItem
+                              )),
+                            }));
+                          }}
+                          onBlur={() => void updateSituationItem(
+                            serviceType.value,
+                            {
+                              ...item,
+                              label: situationConfig[serviceType.value].find((currentItem) => currentItem.id === item.id)?.label || item.label,
+                            },
+                            {},
+                            'Situacao atualizada.'
+                          )}
+                        />
+                      </Col>
+                      <Col>
+                        <Button
+                          type={item.isDefault ? 'primary' : 'default'}
+                          onClick={() => void updateSituationItem(serviceType.value, item, { isDefault: true }, 'Situacao inicial atualizada.')}
+                        >
+                          Inicial
+                        </Button>
+                      </Col>
+                      <Col>
+                        <Button
+                          danger
+                          onClick={() => void deleteSituation(item)}
+                        >
+                          Excluir
+                        </Button>
+                      </Col>
+                    </Row>
+
+                    <div style={{ marginTop: 10 }}>
+                      <Text strong>Pendências</Text>
+                      <Space size={[6, 6]} wrap style={{ marginTop: 6 }}>
+                        {(item.conditions || []).filter((cond) => cond.active !== false).map((cond) => (
+                          <Tag
+                            key={cond.id}
+                            closable
+                            onClose={(event) => {
+                              event.preventDefault();
+                              void deleteCondition(cond.id);
+                            }}
+                            onClick={() => openEditCondition(serviceType.value, item, cond)}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            {cond.label}
+                          </Tag>
+                        ))}
+                        <Button type="link" onClick={() => openCreateCondition(serviceType.value, item)}>
+                          + Adicionar pendência
+                        </Button>
+                      </Space>
+                    </div>
+                  </div>
+=======
                   <Row key={item.id} gutter={8} align="middle">
                     <Col flex="auto">
                       <Input
-                        className="atlas-services-input"
+                        className="prevent-services-input"
                         value={item.label}
                         onChange={(event) => {
                           setSituationConfig((current) => ({
@@ -979,10 +1276,11 @@ export const ServicesTrackingPage: React.FC = () => {
                       </Button>
                     </Col>
                   </Row>
+>>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
                 ))}
 
                 <Button
-                  className="atlas-services-button"
+                  className="prevent-services-button"
                   loading={settingsLoading}
                   icon={<PlusOutlined />}
                   onClick={() => void addSituation(serviceType.value)}
@@ -996,7 +1294,80 @@ export const ServicesTrackingPage: React.FC = () => {
       </Modal>
 
       <Modal
+<<<<<<< HEAD
         className="atlas-services-modal"
+        open={conditionModalOpen}
+        onCancel={() => {
+          setConditionModalOpen(false);
+          setConditionEditing(null);
+          conditionForm.resetFields();
+        }}
+        footer={null}
+        title={conditionEditing?.condition ? 'Editar pendência' : 'Nova pendência'}
+      >
+        <Form form={conditionForm} layout="vertical" onFinish={saveCondition}>
+          <Form.Item name="label" label="Nome" rules={[{ required: true, message: 'Informe o nome' }]}>
+            <Input className="atlas-services-input" />
+          </Form.Item>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="order" label="Ordem (opcional)">
+                <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={1} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="active" label=" " valuePropName="checked">
+                <Checkbox>Ativa</Checkbox>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Space wrap>
+            <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>Salvar</Button>
+            {conditionEditing?.condition?.id ? (
+              <Button danger onClick={() => void deleteCondition(conditionEditing.condition!.id)}>
+                Excluir
+              </Button>
+            ) : null}
+          </Space>
+        </Form>
+      </Modal>
+
+      <Modal
+        className="atlas-services-modal"
+        open={reportTemplateModalOpen}
+        onCancel={() => setReportTemplateModalOpen(false)}
+        onOk={() => void saveReportTemplate()}
+        okText="Salvar template"
+        cancelText="Cancelar"
+        confirmLoading={reportTemplateLoading}
+        width={960}
+        title="Modelo de PDF: Relatório do acompanhamento"
+      >
+        <Space direction="vertical" size={10} style={{ width: '100%' }}>
+          <Text type="secondary">
+            Placeholders: {'{{code}}'}, {'{{client_name}}'}, {'{{pending_conditions}}'}, etc.
+          </Text>
+          <Input
+            className="atlas-services-input"
+            placeholder="Nome do template"
+            value={reportTemplateName}
+            onChange={(event) => setReportTemplateName(event.target.value)}
+          />
+          <Input.TextArea
+            className="atlas-services-input"
+            rows={18}
+            placeholder="<html>...</html>"
+            value={reportTemplateHtml}
+            onChange={(event) => setReportTemplateHtml(event.target.value)}
+          />
+        </Space>
+      </Modal>
+
+      <Modal
+        className="atlas-services-modal"
+=======
+        className="prevent-services-modal"
+>>>>>>> a83b56842a452950a5cb851a59c5a9f1df2c6207
         open={inspectionModalOpen}
         onCancel={() => setInspectionModalOpen(false)}
         title="Agendar vistoria no Google"
@@ -1011,7 +1382,7 @@ export const ServicesTrackingPage: React.FC = () => {
           <div>
             <Text strong>Data e horario</Text>
             <DatePicker
-              className="atlas-services-date"
+              className="prevent-services-date"
               style={{ width: '100%', marginTop: 6 }}
               showTime
               format="DD/MM/YYYY HH:mm"
@@ -1022,7 +1393,7 @@ export const ServicesTrackingPage: React.FC = () => {
           <div>
             <Text strong>Local (opcional)</Text>
             <Input
-              className="atlas-services-input"
+              className="prevent-services-input"
               style={{ marginTop: 6 }}
               value={inspectionDraftLocation}
               onChange={(event) => setInspectionDraftLocation(event.target.value)}

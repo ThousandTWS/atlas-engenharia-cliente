@@ -15,7 +15,7 @@ const clsx = (...parts: Array<unknown>) =>
     .filter(Boolean)
     .join(' ');
 
-const STYLE_TAG_ID = 'atlas-bootstrap-theme';
+const STYLE_TAG_ID = 'prevent-bootstrap-theme';
 
 type DesignToken = ReturnType<typeof theme.getDesignToken>;
 
@@ -55,21 +55,21 @@ const buildCss = (token: DesignToken) => {
   const colorText = (token as any).colorText || 'rgba(0,0,0,.88)';
 
   return `
-    .atlas-bs-boxBorder{border:${lineWidth} ${lineType} color-mix(in srgb, ${colorBorder} 80%, #000);}
-    .atlas-bs-alertRoot{color:${colorInfoText};text-shadow:0 1px 0 rgba(255,255,255,.8);}
+    .prevent-bs-boxBorder{border:${lineWidth} ${lineType} color-mix(in srgb, ${colorBorder} 80%, #000);}
+    .prevent-bs-alertRoot{color:${colorInfoText};text-shadow:0 1px 0 rgba(255,255,255,.8);}
 
-    .atlas-bs-modalContainer{padding:0;border-radius:${borderRadiusLG};}
-    .atlas-bs-modalHeader{border-bottom:${lineWidth} ${lineType} ${colorSplit};padding:${padding} ${paddingLG};}
-    .atlas-bs-modalBody{padding:${padding} ${paddingLG};}
-    .atlas-bs-modalFooter{border-top:${lineWidth} ${lineType} ${colorSplit};padding:${padding} ${paddingLG};background-color:${colorBgContainerDisabled};box-shadow:inset 0 1px 0 ${colorBgContainer};}
+    .prevent-bs-modalContainer{padding:0;border-radius:${borderRadiusLG};}
+    .prevent-bs-modalHeader{border-bottom:${lineWidth} ${lineType} ${colorSplit};padding:${padding} ${paddingLG};}
+    .prevent-bs-modalBody{padding:${padding} ${paddingLG};}
+    .prevent-bs-modalFooter{border-top:${lineWidth} ${lineType} ${colorSplit};padding:${padding} ${paddingLG};background-color:${colorBgContainerDisabled};box-shadow:inset 0 1px 0 ${colorBgContainer};}
 
-    .atlas-bs-buttonRoot{background-image:linear-gradient(to bottom, transparent, rgba(0,0,0,.2));box-shadow:inset 0 1px 0 rgba(255,255,255,.15);transition:none;border-color:rgba(0,0,0,.3);text-shadow:0 -1px 0 rgba(0,0,0,.2);}
-    .atlas-bs-buttonRoot:hover,.atlas-bs-buttonRoot:active{background-image:linear-gradient(rgba(0,0,0,.15) 100%);}
-    .atlas-bs-buttonRoot:active{box-shadow:inset 0 1px 3px rgba(0,0,0,.15);}
-    .atlas-bs-buttonColorDefault{text-shadow:none;color:${colorText};border-bottom-color:rgba(0,0,0,.5);}
+    .prevent-bs-buttonRoot{background-image:linear-gradient(to bottom, transparent, rgba(0,0,0,.2));box-shadow:inset 0 1px 0 rgba(255,255,255,.15);transition:none;border-color:rgba(0,0,0,.3);text-shadow:0 -1px 0 rgba(0,0,0,.2);}
+    .prevent-bs-buttonRoot:hover,.prevent-bs-buttonRoot:active{background-image:linear-gradient(rgba(0,0,0,.15) 100%);}
+    .prevent-bs-buttonRoot:active{box-shadow:inset 0 1px 3px rgba(0,0,0,.15);}
+    .prevent-bs-buttonColorDefault{text-shadow:none;color:${colorText};border-bottom-color:rgba(0,0,0,.5);}
 
-	    .atlas-bs-popupBox{border-radius:${borderRadiusLG};background-color:${colorBgContainer};}
-	    .atlas-bs-popupBox ul{padding-inline:0;}
+	    .prevent-bs-popupBox{border-radius:${borderRadiusLG};background-color:${colorBgContainer};}
+	    .prevent-bs-popupBox ul{padding-inline:0;}
 
 	    /* Dropdown / Select overlays (portal) */
 	    .ant-dropdown, .ant-select-dropdown, .ant-color-picker-panel, .ant-popover .ant-popover-inner{
@@ -91,12 +91,12 @@ const buildCss = (token: DesignToken) => {
 	      background-image:linear-gradient(to bottom, ${colorPrimaryHover}, ${colorPrimary});
 	      color:${colorTextLightSolid};
 	    }
-	    .atlas-bs-switchRoot{box-shadow:inset 0 1px 3px rgba(0,0,0,.4);}
+	    .prevent-bs-switchRoot{box-shadow:inset 0 1px 3px rgba(0,0,0,.4);}
 	
-	    .atlas-bs-progressTrack{background-image:linear-gradient(to bottom, ${colorPrimaryHover}, ${colorPrimary});border-radius:${borderRadiusSM};}
-	    .atlas-bs-progressRail{border-radius:${borderRadiusSM};}
-	    .atlas-bs-progress .ant-progress-inner{border-radius:${borderRadiusSM};}
-	    .atlas-bs-progress .ant-progress-bg{background-image:linear-gradient(to bottom, ${colorPrimaryHover}, ${colorPrimary}) !important;}
+	    .prevent-bs-progressTrack{background-image:linear-gradient(to bottom, ${colorPrimaryHover}, ${colorPrimary});border-radius:${borderRadiusSM};}
+	    .prevent-bs-progressRail{border-radius:${borderRadiusSM};}
+	    .prevent-bs-progress .ant-progress-inner{border-radius:${borderRadiusSM};}
+	    .prevent-bs-progress .ant-progress-bg{background-image:linear-gradient(to bottom, ${colorPrimaryHover}, ${colorPrimary}) !important;}
 	  `.trim();
 };
 
@@ -176,25 +176,25 @@ const useBootstrapTheme = (): ConfigProviderProps => {
       },
       modal: {
         classNames: {
-          container: clsx('atlas-bs-boxBorder', 'atlas-bs-modalContainer'),
-          header: 'atlas-bs-modalHeader',
-          body: 'atlas-bs-modalBody',
-          footer: 'atlas-bs-modalFooter',
+          container: clsx('prevent-bs-boxBorder', 'prevent-bs-modalContainer'),
+          header: 'prevent-bs-modalHeader',
+          body: 'prevent-bs-modalBody',
+          footer: 'prevent-bs-modalFooter',
         },
       },
       button: {
         classNames: ({ props }: any) => ({
-          root: clsx('atlas-bs-buttonRoot', props?.color === 'default' && 'atlas-bs-buttonColorDefault'),
+          root: clsx('prevent-bs-buttonRoot', props?.color === 'default' && 'prevent-bs-buttonColorDefault'),
         }),
       },
 	      alert: {
-	        className: 'atlas-bs-alertRoot',
+	        className: 'prevent-bs-alertRoot',
 	      },
 	      switch: {
-	        className: 'atlas-bs-switchRoot',
+	        className: 'prevent-bs-switchRoot',
 	      },
 	      progress: {
-	        className: 'atlas-bs-progress',
+	        className: 'prevent-bs-progress',
 	      },
 	    }),
 	    [themeConfig],

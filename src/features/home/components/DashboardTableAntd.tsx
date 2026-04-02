@@ -166,10 +166,10 @@ export const DashboardTableAntd: React.FC = () => {
       render: (status: string) => (
         <Tag
           variant="filled"
-          className={`atlas-status-badge ${resolveStatusBadgeClass(status)}`}
+          className={`prevent-status-badge ${resolveStatusBadgeClass(status)}`}
           style={{ marginInlineEnd: 0 }}
         >
-          <span className="atlas-status-badge-dot" />
+          <span className="prevent-status-badge-dot" />
           {status.replace(/_/g, ' ')}
         </Tag>
       ),
@@ -206,7 +206,7 @@ export const DashboardTableAntd: React.FC = () => {
       }}
       styles={{ body: { padding: '24px' } }}
     >
-      <div className="atlas-dashboard-table-header">
+      <div className="prevent-dashboard-table-header">
         <div>
           <Space direction="vertical" size={4}>
             <Title level={4} style={{ margin: 0 }}>Atividades Recentes</Title>
@@ -216,8 +216,8 @@ export const DashboardTableAntd: React.FC = () => {
           </Space>
         </div>
 
-        <div className="atlas-dashboard-table-tools">
-          <Tag className="atlas-dashboard-meta-chip" bordered={false}>
+        <div className="prevent-dashboard-table-tools">
+          <Tag className="prevent-dashboard-meta-chip" bordered={false}>
             <ClockCircleOutlined /> {filteredData.length} registros visíveis
           </Tag>
 

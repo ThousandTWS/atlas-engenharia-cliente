@@ -1,191 +1,116 @@
 import apiClient from '../api/apiClient';
-import { isCookieAuthMode } from '../config/auth';
 import { notifyUserUpdated } from '../events/userObserver';
 import { authSessionStore } from './authSessionStore';
 
-// ==========================================
-// Interfaces de Usuário e Autenticação
-// ==========================================
+export type UserRole = 'OWNER' | 'ADMIN' | 'MEMBER' | string;
+
+export interface Workshop {
+  id: string | number;
+  name: string;
+  slug: string;
+  logoUrl?: string | null;
+  sidebarImageUrl?: string | null;
+}
 
 export interface User {
   id: string | number;
-  nomeCompleto: string;
+  fullName: string;
   email: string;
-  username: string;
-  telefone: string;
-  profilePictureUrl?: string;
-  role: string;
-  enabled: boolean;
-}
-
-// ==========================================
-// DTOs de Request
-// ==========================================
-
-export interface RegisterDTO {
-  nomeCompleto: string;
-  email: string;
-  username: string;
-  telefone: string;
-  confirmarEmail: string;
-  password: string;
-  confirmarPassword: string;
-  recaptchaToken?: string;
+  role: UserRole;
+  profilePhotoUrl?: string | null;
 }
 
 export interface LoginDTO {
-  login: string;
+  workshopSlug: string;
+  email: string;
   password: string;
-  recaptchaToken?: string;
 }
 
-export interface VerifyEmailDTO {
-  email: string;
-  code: string;
-}
-
-export interface ForgotPasswordDTO {
-  email: string;
-}
-
-export interface ResetPasswordDTO {
-  email: string;
-  code: string;
-  newPassword: string;
-  confirmNewPassword: string;
+export interface SignupDTO {
+  workshopName: string;
+  workshopSlug: string;
+  ownerName: string;
+  ownerEmail: string;
+  ownerPassword: string;
 }
 
 export interface RefreshTokenDTO {
   refreshToken: string;
 }
 
-// ==========================================
-// DTOs de Response
-// ==========================================
-
-export interface TokenResponse {
-  token?: string;
+export interface AuthSessionResponse {
+  accessToken: string;
   refreshToken?: string;
+  tokenType: 'Bearer' | string;
+  expiresIn: number;
+  workshop: Workshop;
+  user: User;
 }
 
-export interface AuthResponse {
-  user?: User;
-  token?: string;
-  refreshToken?: string;
+export interface AuthMeResponse {
+  workshop: Workshop;
+  user: User;
 }
 
 const isCompleteUser = (value: Partial<User>): value is User =>
   value.id !== undefined &&
   value.id !== null &&
-  typeof value.nomeCompleto === 'string' &&
+  typeof value.fullName === 'string' &&
   typeof value.email === 'string' &&
-  typeof value.username === 'string' &&
-  typeof value.telefone === 'string' &&
-  typeof value.role === 'string' &&
-  typeof value.enabled === 'boolean';
-
-// ==========================================
-// Auth Service
-// ==========================================
+  typeof value.role === 'string';
 
 export const authService = {
   /**
-   * Fazer login
-   * Autentica o usuário e retorna um token JWT e um refresh token
+   * Criar uma nova oficina + usuário proprietário
    */
-  login: async (credentials: LoginDTO): Promise<AuthResponse> => {
-    console.log('authService.login: Iniciando chamada à API');
-    const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
-    console.log('authService.login: Resposta da API recebida', response.data);
-
-    if (isCookieAuthMode()) {
-      authSessionStore.setSession({
-        token: null,
-        refreshToken: null,
-        user: response.data.user ?? null,
-      });
-
-      notifyUserUpdated(authSessionStore.getUser());
-      return response.data;
-    }
-
-    if (response.data.token) {
-      console.log('authService.login: Token encontrado, armazenando...');
-      authSessionStore.setSession({
-        token: response.data.token,
-        refreshToken: response.data.refreshToken ?? null,
-        user: response.data.user ?? null,
-      });
-
-      notifyUserUpdated(authSessionStore.getUser());
-    } else {
-      console.error('authService.login: Token NÃO encontrado na resposta');
-    }
-
+  signup: async (data: SignupDTO): Promise<AuthSessionResponse> => {
+    const response = await apiClient.post<AuthSessionResponse>('/auth/signup', data);
+    authSessionStore.setSession({
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken ?? null,
+      user: response.data.user,
+      workshop: response.data.workshop,
+    });
+    notifyUserUpdated(response.data.user);
     return response.data;
   },
 
   /**
-   * Registrar novo usuário
-   * Cria uma nova conta e envia código de verificação por email
+   * Autenticar um usuário dentro de uma oficina
    */
-  register: async (userData: RegisterDTO): Promise<string> => {
-    const response = await apiClient.post<string>('/auth/register', userData);
+  login: async (credentials: LoginDTO): Promise<AuthSessionResponse> => {
+    const response = await apiClient.post<AuthSessionResponse>('/auth/login', credentials);
+    authSessionStore.setSession({
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken ?? null,
+      user: response.data.user,
+      workshop: response.data.workshop,
+    });
+    notifyUserUpdated(response.data.user);
     return response.data;
   },
 
   /**
-   * Validar email
-   * Valida o cadastro usando o código enviado por email
+   * Renovar sessão (rotaciona refresh token)
    */
-  verifyEmail: async (data: VerifyEmailDTO): Promise<string> => {
-    const response = await apiClient.post<string>('/auth/verify-email', data);
-    return response.data;
-  },
-
-  /**
-   * Esqueci a senha
-   * Envia um código de redefinição para o email do usuário
-   */
-  forgotPassword: async (email: string): Promise<string> => {
-    const response = await apiClient.post<string>('/auth/forgot-password', { email } as ForgotPasswordDTO);
-    return response.data;
-  },
-
-  /**
-   * Redefinir senha
-   * Redefine a senha do usuário usando o código recebido
-   */
-  resetPassword: async (data: ResetPasswordDTO): Promise<string> => {
-    const response = await apiClient.post<string>('/auth/reset-password', data);
-    return response.data;
-  },
-
-  /**
-   * Atualizar token de acesso
-   * Gera um novo token JWT usando um refresh token válido
-   */
-  refreshToken: async (): Promise<TokenResponse> => {
-    if (isCookieAuthMode()) {
-      const response = await apiClient.post<TokenResponse>('/auth/refresh-token');
-      return response.data;
-    }
-
+  refreshSession: async (): Promise<AuthSessionResponse> => {
     const currentRefreshToken = authSessionStore.getRefreshToken();
-    
     if (!currentRefreshToken) {
       throw new Error('Refresh token não encontrado');
     }
 
-    const response = await apiClient.post<TokenResponse>('/auth/refresh-token', {
+    const response = await apiClient.post<AuthSessionResponse>('/auth/refresh', {
       refreshToken: currentRefreshToken,
     } as RefreshTokenDTO);
 
     authSessionStore.setSession({
-      token: response.data.token,
-      refreshToken: response.data.refreshToken ?? currentRefreshToken,
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken ?? null,
+      user: response.data.user,
+      workshop: response.data.workshop,
     });
 
+    notifyUserUpdated(response.data.user);
     return response.data;
   },
 
@@ -194,13 +119,14 @@ export const authService = {
    */
   logout: async (): Promise<void> => {
     try {
-      // Chamar endpoint de logout para limpar cookies HttpOnly no backend
-      await apiClient.post('/auth/logout');
+      const currentRefreshToken = authSessionStore.getRefreshToken();
+      if (currentRefreshToken) {
+        await apiClient.post('/auth/logout', { refreshToken: currentRefreshToken } as RefreshTokenDTO);
+      }
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     } finally {
       authSessionStore.clear();
-      
       notifyUserUpdated(null);
     }
   },
@@ -212,21 +138,33 @@ export const authService = {
     return authSessionStore.getUser();
   },
 
+  getCurrentWorkshop: (): Workshop | null => {
+    return authSessionStore.getWorkshop();
+  },
+
   /**
-   * Hidratar sessão com backend (modo cookie)
+   * Obter sessão atual no backend
    */
   hydrateSession: async (): Promise<boolean> => {
-    if (authService.getCurrentUser()) {
+    if (authService.getCurrentUser() && authService.getCurrentWorkshop()) {
       return true;
     }
 
-    if (!isCookieAuthMode()) {
-      return authService.isAuthenticated();
+    if (authSessionStore.getRefreshToken() && !authSessionStore.getAccessToken()) {
+      try {
+        await authService.refreshSession();
+        return true;
+      } catch {
+        authSessionStore.clear();
+        notifyUserUpdated(null);
+        return false;
+      }
     }
 
     try {
-      const response = await apiClient.get<User>('/profile');
-      authService.setCurrentUser(response.data);
+      const response = await apiClient.get<AuthMeResponse>('/auth/me');
+      authSessionStore.setSession({ user: response.data.user, workshop: response.data.workshop });
+      notifyUserUpdated(response.data.user);
       return true;
     } catch {
       authSessionStore.clear();
@@ -243,12 +181,15 @@ export const authService = {
     notifyUserUpdated(user);
   },
 
+  setCurrentWorkshop: (workshop: Workshop | null): void => {
+    authSessionStore.setSession({ workshop });
+  },
+
   /**
    * Atualizar dados do usuário na sessão
    */
   updateLocalUser: (userData: Partial<User>): User | null => {
     const currentUser = authService.getCurrentUser();
-    console.log('authService.updateLocalUser: Updating user with:', userData);
     const updatedUser = currentUser
       ? { ...currentUser, ...userData }
       : isCompleteUser(userData)
@@ -256,13 +197,10 @@ export const authService = {
         : null;
 
     if (!updatedUser) {
-      console.warn('authService.updateLocalUser: No current user and partial payload is not enough to create one');
       return null;
     }
 
     authSessionStore.setSession({ user: updatedUser });
-    console.log('authService.updateLocalUser: New user data saved to session store:', updatedUser);
-
     notifyUserUpdated(updatedUser);
     return updatedUser;
   },
@@ -271,24 +209,15 @@ export const authService = {
    * Verificar se o usuário está autenticado
    */
   isAuthenticated: (): boolean => {
-    const token = authSessionStore.getToken();
-    const user = authSessionStore.getUser();
-    const isAuth = isCookieAuthMode() ? !!user : !!token;
-    
-    console.log('authService.isAuthenticated:', { 
-      isAuth,
-      hasToken: !!token, 
-      hasUser: !!user 
-    });
-    
-    return isAuth;
+    const token = authSessionStore.getAccessToken();
+    return Boolean(token);
   },
 
   /**
    * Obter o token de acesso atual
    */
-  getToken: (): string | null => {
-    return authSessionStore.getToken();
+  getAccessToken: (): string | null => {
+    return authSessionStore.getAccessToken();
   },
 
   /**
@@ -296,5 +225,47 @@ export const authService = {
    */
   getRefreshToken: (): string | null => {
     return authSessionStore.getRefreshToken();
+  },
+
+  /**
+   * Upload: logo da oficina autenticada
+   */
+  updateWorkshopLogo: async (file: File): Promise<AuthMeResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<AuthMeResponse>('/auth/me/workshop-logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    authSessionStore.setSession({ workshop: response.data.workshop, user: response.data.user });
+    notifyUserUpdated(response.data.user);
+    return response.data;
+  },
+
+  /**
+   * Upload: imagem da sidebar da oficina autenticada
+   */
+  updateSidebarImage: async (file: File): Promise<AuthMeResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<AuthMeResponse>('/auth/me/sidebar-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    authSessionStore.setSession({ workshop: response.data.workshop, user: response.data.user });
+    notifyUserUpdated(response.data.user);
+    return response.data;
+  },
+
+  /**
+   * Upload: foto de perfil do usuário autenticado
+   */
+  updateProfilePhoto: async (file: File): Promise<AuthMeResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<AuthMeResponse>('/auth/me/profile-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    authSessionStore.setSession({ workshop: response.data.workshop, user: response.data.user });
+    notifyUserUpdated(response.data.user);
+    return response.data;
   },
 };

@@ -1,16 +1,20 @@
 import { useCallback, useState } from 'react';
-import { buildCsv, downloadCsv, parseCsvToRecords, type CsvRecord } from './csv';
+import { buildCsv, downloadCsv, parseCsvToRecords, type CsvDelimiter, type CsvRecord } from './csv';
 
 interface UseCsvExportOptions<TItem> {
   filename: string;
   mapData: (item: TItem) => CsvRecord;
   columns?: string[];
+  delimiter?: CsvDelimiter;
+  includeBom?: boolean;
 }
 
 export const useCsvExport = <TItem,>({
   filename,
   mapData,
   columns,
+  delimiter = ';',
+  includeBom = true,
 }: UseCsvExportOptions<TItem>) => {
   const [exporting, setExporting] = useState(false);
 
@@ -19,12 +23,12 @@ export const useCsvExport = <TItem,>({
 
     try {
       const mappedRows = rows.map(mapData);
-      const csv = buildCsv(mappedRows, columns);
+      const csv = buildCsv(mappedRows, columns, { delimiter, includeBom });
       downloadCsv(csv, filename);
     } finally {
       setExporting(false);
     }
-  }, [columns, filename, mapData]);
+  }, [columns, delimiter, filename, includeBom, mapData]);
 
   return { exportRows, exporting };
 };

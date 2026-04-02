@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Table,
   Tag,
   Space,
   Button,
@@ -14,8 +13,10 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { TableProps } from 'antd';
 import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
 import { htmlToPlainText } from '../../../core/utils/text';
+import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
 
 const { Text } = Typography;
 
@@ -35,6 +36,8 @@ export type AVCB = {
 interface AVCBTableProps {
   loading?: boolean;
   dataSource: AVCB[];
+  pagination?: TableProps<AVCB>['pagination'];
+  onChange?: TableProps<AVCB>['onChange'];
   onEdit: (record: AVCB) => void;
   onDelete: (id: number) => void;
   onView: (record: AVCB) => void;
@@ -43,6 +46,8 @@ interface AVCBTableProps {
 export const AVCBTable: React.FC<AVCBTableProps> = ({
   loading,
   dataSource,
+  pagination,
+  onChange,
   onEdit,
   onDelete,
   onView,
@@ -164,14 +169,14 @@ export const AVCBTable: React.FC<AVCBTableProps> = ({
   ];
 
   return (
-
-    <Table
+    <ExcelLikeTable
+      tableId="painel-avcb"
       columns={columns}
       dataSource={dataSource}
       rowKey="id"
       loading={loading}
       scroll={{ x: 1000 }}
-      pagination={{
+      pagination={pagination ?? {
         pageSize: 10,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} registros`,
@@ -182,6 +187,7 @@ export const AVCBTable: React.FC<AVCBTableProps> = ({
           borderRadius: '0 0 8px 8px'
         }
       }}
+      onChange={onChange}
     />
   );
 };

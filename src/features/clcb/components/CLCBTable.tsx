@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Table,
   Tag,
   Space,
   Button,
@@ -14,7 +13,9 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { TableProps } from 'antd';
 import {useLayout} from "../../../shared/components/layout/LayoutContext.tsx";
+import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
 
 const { Text } = Typography;
 
@@ -37,6 +38,8 @@ export type CLCB = {
 interface CLCBTableProps {
   loading?: boolean;
   dataSource: CLCB[];
+  pagination?: TableProps<CLCB>['pagination'];
+  onChange?: TableProps<CLCB>['onChange'];
   onEdit: (record: CLCB) => void;
   onDelete: (id: number) => void;
   onView: (record: CLCB) => void;
@@ -45,6 +48,8 @@ interface CLCBTableProps {
 export const CLCBTable: React.FC<CLCBTableProps> = ({
   loading,
   dataSource,
+  pagination,
+  onChange,
   onEdit,
   onDelete,
   onView,
@@ -155,25 +160,26 @@ export const CLCBTable: React.FC<CLCBTableProps> = ({
   ];
 
   return (
-
-    <Table
+    <ExcelLikeTable
+      tableId="painel-clcb"
       columns={columns}
       dataSource={dataSource}
       rowKey="id"
       loading={loading}
       scroll={{ x: 1000 }}
-      pagination={{
+      pagination={pagination ?? {
         placement:["bottomCenter"],
         pageSize: 10,
         showSizeChanger: true,
         showTotal: (total) => `Total de ${total} registros`,
         style: {
-        backgroundColor: isDarkMode ? '#0A0F1C' : '#FAFBFC',
-        margin: 0,
-        padding: '16px',
-        borderRadius: '0 0 8px 8px'
-      }
+          backgroundColor: isDarkMode ? '#0A0F1C' : '#FAFBFC',
+          margin: 0,
+          padding: '16px',
+          borderRadius: '0 0 8px 8px'
+        }
       }}
+      onChange={onChange}
     />
   );
 };

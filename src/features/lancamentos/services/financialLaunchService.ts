@@ -18,8 +18,12 @@ export interface FinancialLaunch {
   descricao: string;
   data: string;
   valor: number;
+  numeroParcela?: number | null;
+  dataPrevistaParcela?: string | null;
   formaPagamento?: string | null;
   metodoPagamento?: string | null;
+  plataforma?: string | null;
+  empresa?: string | null;
   comprovanteUrl?: string | null;
   comprovanteNomeArquivo?: string | null;
   observacao?: string | null;
@@ -71,8 +75,12 @@ export interface FinancialLaunchPayload {
   descricao: string;
   data: string;
   valor: number;
+  numeroParcela?: number | null;
+  dataPrevistaParcela?: string | null;
   formaPagamento?: string | null;
   metodoPagamento?: string | null;
+  plataforma?: string | null;
+  empresa?: string | null;
   observacao?: string | null;
 }
 

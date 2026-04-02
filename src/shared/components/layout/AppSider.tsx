@@ -3,6 +3,7 @@ import { Divider, Layout, Menu, Drawer, ConfigProvider, Typography } from 'antd'
 import type { MenuProps } from 'antd';
 import {
   PieChartOutlined,
+  BellOutlined,
   AppstoreOutlined,
   SafetyCertificateOutlined,
   FireOutlined,
@@ -133,6 +134,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
       '/gestao-de-clientes',
       '/gestao-ads',
       '/acompanhamento-servicos',
+      '/notificacoes',
       '/cadastros',
       '/profile',
     ];
@@ -157,9 +159,9 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
           label: 'Insights',
         },
         {
-          key: '/processos',
-          icon: <AppstoreOutlined style={menuIconStyle} />,
-          label: 'Processos Adm',
+          key: '/notificacoes',
+          icon: <BellOutlined style={menuIconStyle} />,
+          label: 'Notificações',
         },
         {
           key: '/acompanhamento-servicos',
@@ -181,6 +183,11 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
       type: 'group',
       label: 'Painéis e Gestão',
       children: [
+        {
+          key: '/processos',
+          icon: <AppstoreOutlined style={menuIconStyle} />,
+          label: 'Processos Adm',
+        },
         {
           key: '/clcb',
           icon: <SafetyCertificateOutlined style={menuIconStyle} />,
@@ -255,7 +262,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
 
   const menuContent = (
     <div
-      className="atlas-sider-scroll-area"
+      className="prevent-sider-scroll-area"
       style={{
         height: '100%',
         overflowY: 'auto',
@@ -277,8 +284,8 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
          }}
        >
          <img
-           src={isDarkMode ? '/White_Atlas_Logo.svg' : '/Black_Atlas_Logo.svg'}
-           alt="Logo Atlas Engenharia"
+           src={isDarkMode ? '/White_Prevent_Logo.svg' : '/Black_Prevent_Logo.svg'}
+           alt="Logo Prevent Mecânica"
            style={{
              width: !effectiveCollapsed ? sidebarProfileConfig.logoExpandedWidth : sidebarProfileConfig.logoCollapsedWidth,
              transition: 'width 0.2s ease',
@@ -369,7 +376,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
 
   return (
     <Sider
-      className="atlas-app-sider"
+      className="prevent-app-sider"
       collapsible={sidebarProfile !== 'tv'}
       collapsed={effectiveCollapsed}
       onCollapse={(value) => setCollapsed(value)}

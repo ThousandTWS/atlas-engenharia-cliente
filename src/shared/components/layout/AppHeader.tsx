@@ -59,8 +59,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     }
   };
 
-  const userName = user?.nomeCompleto || user?.email || 'Admin';
-  const profilePicture = user?.profilePictureUrl;
+  const userName = user?.fullName || user?.email || 'Admin';
+  const profilePicture = user?.profilePhotoUrl ?? undefined;
 
   const iconButtonStyle: React.CSSProperties = {
     width: 36,
@@ -141,7 +141,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </Tooltip>
         )}
 
-        <Tooltip title="Atlas AI Global">
+        <Tooltip title="Prevent AI">
           <Button
             type="text"
             icon={<RobotOutlined style={{ fontSize: '18px', color: '#4285F4' }} />}

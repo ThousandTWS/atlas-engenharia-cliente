@@ -1,6 +1,30 @@
 import apiClient from '../api/apiClient';
 import { publishResourceEvent } from '../realtime/liveProvider';
 
+const serializeQueryParams = (params: Record<string, unknown>) => {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item === undefined || item === null || item === '') {
+          return;
+        }
+        query.append(key, String(item));
+      });
+      return;
+    }
+
+    query.append(key, String(value));
+  });
+
+  return query.toString();
+};
+
 export interface BaseModule {
   id?: number | string;
   // Campos comuns a módulos tipo AVCB/CLCB
@@ -42,6 +66,9 @@ export const createGenericService = <T extends BaseModule>(endpoint: string) => 
     // Se o endpoint for um dos que agora suportam paginação no backend
     const response = await apiClient.get<PaginatedResponse<T> | T[]>(endpoint, {
       params: filters,
+      paramsSerializer: {
+        serialize: serializeQueryParams,
+      },
     });
     return response.data;
   },
