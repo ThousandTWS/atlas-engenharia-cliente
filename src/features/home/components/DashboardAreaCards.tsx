@@ -332,7 +332,7 @@ export const DashboardAreaCards: React.FC = () => {
 
   return (
     <Space direction="vertical" size={18} style={{ width: '100%' }}>
-      <div className="prevent-overview-grid prevent-overview-grid-full">
+      <div className="atlas-overview-grid atlas-overview-grid-full">
         {summaryCards.map((card) => {
           const trendIsPositive = card.inverseTrend ? card.trend <= 0 : card.trend >= 0;
 
@@ -341,15 +341,15 @@ export const DashboardAreaCards: React.FC = () => {
               key={card.id}
               loading={loading}
               variant="borderless"
-              className="prevent-overview-stat-card"
+              className="atlas-overview-stat-card"
               styles={{ body: { padding: 'clamp(14px, 1.4vw, 18px)' } }}
             >
-              <div className="prevent-overview-stat-top">
+              <div className="atlas-overview-stat-top">
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   {card.title}
                 </Text>
                 <span
-                  className="prevent-overview-stat-icon"
+                  className="atlas-overview-stat-icon"
                   style={{ background: `${card.color}14`, color: card.color }}
                 >
                   {card.icon}
@@ -360,12 +360,12 @@ export const DashboardAreaCards: React.FC = () => {
                 {formatMetric(card.value, card.type)}
               </Title>
 
-              <div className="prevent-overview-stat-foot">
+              <div className="atlas-overview-stat-foot">
                 <Tag
-                  className={`prevent-status-badge ${trendIsPositive ? 'prevent-status-badge-success' : 'prevent-status-badge-danger'}`}
+                  className={`atlas-status-badge ${trendIsPositive ? 'atlas-status-badge-success' : 'atlas-status-badge-danger'}`}
                   bordered={false}
                 >
-                  <span className="prevent-status-badge-dot" />
+                  <span className="atlas-status-badge-dot" />
                   {card.trend >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />} {Math.abs(card.trend).toFixed(1)}%
                 </Tag>
                 <Text type="secondary" style={{ fontSize: 12 }}>
@@ -410,37 +410,37 @@ export const DashboardAreaCards: React.FC = () => {
               xs={24}
               md={12}
               xl={index === chartBlocks.length - 1 ? 24 : 12}
-              className="prevent-overview-column"
+              className="atlas-overview-column"
             >
               <Card
                 loading={loading}
                 variant="borderless"
-                className="prevent-overview-activity-card prevent-chart-block-card"
+                className="atlas-overview-activity-card atlas-chart-block-card"
                 styles={{ body: { padding: 'clamp(16px, 1.6vw, 22px)' } }}
               >
-                <div className="prevent-overview-activity-head">
+                <div className="atlas-overview-activity-head">
                   <div>
                     <Text type="secondary" style={{ fontSize: 12 }}>{block.eyebrow}</Text>
                     <Title level={4} style={{ margin: '4px 0 2px', fontSize: 'clamp(1.05rem, 1.4vw, 1.35rem)' }}>
                       {block.title}
                     </Title>
-                    <Text className="prevent-chart-block-total">
+                    <Text className="atlas-chart-block-total">
                       {formatMetric(total, block.valueType)}
                     </Text>
                   </div>
 
                   <Tag
-                    className={`prevent-status-badge ${trendPositive ? 'prevent-status-badge-success' : 'prevent-status-badge-danger'}`}
+                    className={`atlas-status-badge ${trendPositive ? 'atlas-status-badge-success' : 'atlas-status-badge-danger'}`}
                     bordered={false}
                   >
-                    <span className="prevent-status-badge-dot" />
+                    <span className="atlas-status-badge-dot" />
                     {trend >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />} {Math.abs(trend).toFixed(1)}%
                   </Tag>
                 </div>
 
-                <div className="prevent-overview-activity-toolbar">
+                <div className="atlas-overview-activity-toolbar">
                   <Select
-                    className="prevent-dashboard-filter-select prevent-dashboard-filter-select-period"
+                    className="atlas-dashboard-filter-select atlas-dashboard-filter-select-period"
                     value={blockFilters.period}
                     options={periodOptions}
                     onChange={(value) => updateChartFilters(block.key, {
@@ -453,7 +453,7 @@ export const DashboardAreaCards: React.FC = () => {
                   />
 
                   <Select
-                    className="prevent-dashboard-filter-select"
+                    className="atlas-dashboard-filter-select"
                     value={blockFilters.grouping}
                     options={groupingOptions}
                     onChange={(value) => updateChartFilters(block.key, { grouping: value })}
@@ -462,7 +462,7 @@ export const DashboardAreaCards: React.FC = () => {
 
                   {blockFilters.period === 'custom' ? (
                     <DatePicker.RangePicker
-                      className="prevent-dashboard-filter-range"
+                      className="atlas-dashboard-filter-range"
                       value={blockFilters.customRange?.[0] && blockFilters.customRange?.[1]
                         ? [blockFilters.customRange[0], blockFilters.customRange[1]]
                         : null}
@@ -474,7 +474,7 @@ export const DashboardAreaCards: React.FC = () => {
                   ) : null}
                 </div>
 
-                <div className="prevent-overview-chart-area" style={{ marginTop: 18 }}>
+                <div className="atlas-overview-chart-area" style={{ marginTop: 18 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={block.data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barCategoryGap="28%">
                       <CartesianGrid vertical={false} strokeDasharray="4 8" stroke={isDarkMode ? '#1f314d' : '#e2e8f0'} />

@@ -94,10 +94,10 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       render: (val: number) => (
         <Tag
           variant="filled"
-          className="prevent-status-badge prevent-status-badge-info"
+          className="atlas-status-badge atlas-status-badge-info"
           style={{ marginInlineEnd: 0 }}
         >
-          <span className="prevent-status-badge-dot" />
+          <span className="atlas-status-badge-dot" />
           {formatCurrency(val)}
         </Tag>
       ),
@@ -112,10 +112,10 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       render: (val: number) => (
         <Tag
           variant="filled"
-          className="prevent-status-badge prevent-status-badge-danger"
+          className="atlas-status-badge atlas-status-badge-danger"
           style={{ marginInlineEnd: 0 }}
         >
-          <span className="prevent-status-badge-dot" />
+          <span className="atlas-status-badge-dot" />
           {formatCurrency(val)}
         </Tag>
       ),
@@ -129,12 +129,12 @@ export const LancamentosTable: React.FC<LancamentosTableProps> = ({
       render: (val: number) => (
         <Tag
           variant="filled"
-          className={`prevent-status-badge ${
-            val > 0 ? 'prevent-status-badge-success' : val < 0 ? 'prevent-status-badge-danger' : 'prevent-status-badge-neutral'
+          className={`atlas-status-badge ${
+            val > 0 ? 'atlas-status-badge-success' : val < 0 ? 'atlas-status-badge-danger' : 'atlas-status-badge-neutral'
           }`}
           style={{ marginInlineEnd: 0 }}
         >
-          <span className="prevent-status-badge-dot" />
+          <span className="atlas-status-badge-dot" />
           {formatCurrency(val)}
         </Tag>
       ),

@@ -4,6 +4,9 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { HomePage } from '../../features/home/pages/HomePage';
 import { LoginPage } from '../../features/auth/pages/LoginPage';
 import { RegisterPage } from '../../features/auth/pages/RegisterPage';
+import { VerifyEmailPage } from '../../features/auth/pages/VerifyEmailPage';
+import { ForgotPasswordPage } from '../../features/auth/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '../../features/auth/pages/ResetPasswordPage';
 import { ObrasPage } from '../../features/obras/pages/ObrasPage';
 import { ObraFormPage } from '../../features/obras/pages/ObraFormPage';
 import { ProcessosAdmPage } from '../../features/processos-adm/pages/ProcessosAdmPage';
@@ -172,8 +175,10 @@ export const router = createBrowserRouter([
     path: 'auth',
     children: [
       { path: 'login', element: <LoginPage /> },
-      { path: 'signup', element: <RegisterPage /> },
       { path: 'register', element: <RegisterPage /> },
+      { path: 'verify-email', element: <VerifyEmailPage /> },
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
     ]
   },
 ]);

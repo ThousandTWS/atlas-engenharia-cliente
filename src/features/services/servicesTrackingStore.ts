@@ -33,9 +33,13 @@ export interface ServiceTrackingMeta {
 type ServiceTrackingMetaMap = Record<string, ServiceTrackingMeta>;
 type ServiceTrackingHistoryMap = Record<string, ServiceHistoryEntry[]>;
 
-const CONFIG_STORAGE_KEY = 'prevent.service_tracking.config';
-const META_STORAGE_KEY = 'prevent.service_tracking.meta';
-const HISTORY_STORAGE_KEY = 'prevent.service_tracking.history';
+const CONFIG_STORAGE_KEY = 'atlas.service_tracking.config';
+const META_STORAGE_KEY = 'atlas.service_tracking.meta';
+const HISTORY_STORAGE_KEY = 'atlas.service_tracking.history';
+
+const LEGACY_CONFIG_STORAGE_KEY = 'prevent.service_tracking.config';
+const LEGACY_META_STORAGE_KEY = 'prevent.service_tracking.meta';
+const LEGACY_HISTORY_STORAGE_KEY = 'prevent.service_tracking.history';
 
 const defaultConfig: ServiceSituationConfig = {
   AVCB: [
@@ -65,19 +69,6 @@ const defaultConfig: ServiceSituationConfig = {
   ],
 };
 
-const safeRead = <T>(key: string, fallback: T): T => {
-  if (typeof window === 'undefined') {
-    return fallback;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) as T : fallback;
-  } catch {
-    return fallback;
-  }
-};
-
 const safeWrite = <T>(key: string, value: T) => {
   if (typeof window === 'undefined') {
     return;
@@ -86,22 +77,48 @@ const safeWrite = <T>(key: string, value: T) => {
   window.localStorage.setItem(key, JSON.stringify(value));
 };
 
+const safeReadWithLegacy = <T>(key: string, legacyKey: string | null, fallback: T): T => {
+  if (typeof window === 'undefined') {
+    return fallback;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (raw) {
+      return JSON.parse(raw) as T;
+    }
+
+    if (legacyKey) {
+      const legacyRaw = window.localStorage.getItem(legacyKey);
+      if (legacyRaw) {
+        const value = JSON.parse(legacyRaw) as T;
+        safeWrite(key, value);
+        return value;
+      }
+    }
+  } catch {
+    return fallback;
+  }
+
+  return fallback;
+};
+
 export const getSituationConfig = (): ServiceSituationConfig =>
-  safeRead<ServiceSituationConfig>(CONFIG_STORAGE_KEY, defaultConfig);
+  safeReadWithLegacy<ServiceSituationConfig>(CONFIG_STORAGE_KEY, LEGACY_CONFIG_STORAGE_KEY, defaultConfig);
 
 export const saveSituationConfig = (config: ServiceSituationConfig) => {
   safeWrite(CONFIG_STORAGE_KEY, config);
 };
 
 export const getTrackingMetaMap = (): ServiceTrackingMetaMap =>
-  safeRead<ServiceTrackingMetaMap>(META_STORAGE_KEY, {});
+  safeReadWithLegacy<ServiceTrackingMetaMap>(META_STORAGE_KEY, LEGACY_META_STORAGE_KEY, {});
 
 export const saveTrackingMetaMap = (metaMap: ServiceTrackingMetaMap) => {
   safeWrite(META_STORAGE_KEY, metaMap);
 };
 
 export const getTrackingHistoryMap = (): ServiceTrackingHistoryMap =>
-  safeRead<ServiceTrackingHistoryMap>(HISTORY_STORAGE_KEY, {});
+  safeReadWithLegacy<ServiceTrackingHistoryMap>(HISTORY_STORAGE_KEY, LEGACY_HISTORY_STORAGE_KEY, {});
 
 export const saveTrackingHistoryMap = (historyMap: ServiceTrackingHistoryMap) => {
   safeWrite(HISTORY_STORAGE_KEY, historyMap);

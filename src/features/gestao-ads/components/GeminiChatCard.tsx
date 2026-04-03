@@ -197,7 +197,7 @@ export const GeminiChatCard: React.FC = () => {
             placeholder="Pergunte sobre orçamento, conversão, testes A/B, segmentação e otimização de campanha..."
             autoSize={{ minRows: 3, maxRows: 6 }}
             disabled={sending || loadingContext}
-            className="prevent-form-input"
+            className="atlas-form-input"
             style={{ border: 'none', boxShadow: 'none' }}
             onPressEnter={(event) => {
               if (!event.shiftKey) {

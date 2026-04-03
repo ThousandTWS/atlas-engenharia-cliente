@@ -1,7 +1,6 @@
 import React from 'react';
-import { Avatar, Breadcrumb, Button, Card, Col, Divider, Row, Typography, Upload, App } from 'antd';
-import { HomeOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons';
-import type { UploadProps } from 'antd';
+import { Avatar, Breadcrumb, Card, Col, Divider, Row, Typography, App } from 'antd';
+import { HomeOutlined, UserOutlined } from '@ant-design/icons';
 import { authService } from '../../../core/services/authService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 
@@ -10,9 +9,7 @@ const { Title, Text } = Typography;
 export const ProfilePage: React.FC = () => {
   const { message } = App.useApp();
   const { isDarkMode, isMobile } = useLayout();
-  const [isLoading, setIsLoading] = React.useState(false);
   const [user, setUser] = React.useState(authService.getCurrentUser());
-  const workshop = authService.getCurrentWorkshop();
 
   React.useEffect(() => {
     let isMounted = true;
@@ -54,27 +51,7 @@ export const ProfilePage: React.FC = () => {
     boxShadow: isDarkMode ? '0 12px 30px #00000040' : '0 10px 28px #0f172a14',
   };
 
-  const uploadProps: UploadProps = {
-    showUploadList: false,
-    accept: 'image/*',
-    beforeUpload: () => false,
-    customRequest: async (options) => {
-      try {
-        setIsLoading(true);
-        const file = options.file as File;
-        const response = await authService.updateProfilePhoto(file);
-        setUser(response.user);
-        message.success('Foto de perfil atualizada com sucesso!');
-        options.onSuccess?.(response, new XMLHttpRequest());
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer upload da foto.';
-        message.error(errorMessage);
-        options.onError?.(error as Error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-  };
+  void message;
 
   return (
     <div style={{ padding: isMobile ? 12 : 20 }}>
@@ -107,7 +84,7 @@ export const ProfilePage: React.FC = () => {
               <Avatar
                 size={isMobile ? 72 : 84}
                 icon={<UserOutlined />}
-                src={user?.profilePhotoUrl ?? undefined}
+                src={user?.profilePictureUrl ?? undefined}
                 style={{
                   backgroundColor: isDarkMode ? '#1E2A47' : '#E2E8F0',
                   border: `3px solid ${isDarkMode ? '#1E2A47' : '#FFFFFF'}`,
@@ -117,20 +94,16 @@ export const ProfilePage: React.FC = () => {
             <Col flex="auto">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <Title level={4} style={{ margin: 0, color: palette.strongText }}>
-                  {user?.fullName || 'Usuário'}
+                  {user?.nomeCompleto || 'Usuário'}
                 </Title>
                 <Text style={{ color: palette.mutedText }}>{user?.email || '-'}</Text>
                 <Text style={{ color: palette.mutedText }}>
-                  {workshop ? `Oficina: ${workshop.name} (${workshop.slug})` : 'Oficina: -'}
+                  {user?.username ? `Usuário: ${user.username}` : 'Usuário: -'}
+                </Text>
+                <Text style={{ color: palette.mutedText }}>
+                  {user?.telefone ? `Telefone: ${user.telefone}` : 'Telefone: -'}
                 </Text>
               </div>
-            </Col>
-            <Col flex="none">
-              <Upload {...uploadProps}>
-                <Button icon={<UploadOutlined />} loading={isLoading} style={{ borderRadius: 8 }}>
-                  Alterar foto
-                </Button>
-              </Upload>
             </Col>
           </Row>
         </div>
@@ -149,4 +122,3 @@ export const ProfilePage: React.FC = () => {
     </div>
   );
 };
-

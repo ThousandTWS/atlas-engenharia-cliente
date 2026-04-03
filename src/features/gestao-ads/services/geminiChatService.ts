@@ -77,7 +77,7 @@ const buildDirectGeminiPayload = (params: SendGeminiMessageParams) => {
   return {
     systemInstruction: {
       parts: [{
-        text: 'Você é um analista sênior de tráfego pago da Prevent Mecânica. Responda em português, de forma objetiva e executável.',
+        text: 'Você é um analista sênior de tráfego pago da Atlas Engenharia. Responda em português, de forma objetiva e executável.',
       }],
     },
     contents: [

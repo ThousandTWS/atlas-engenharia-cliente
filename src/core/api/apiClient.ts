@@ -3,15 +3,15 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { isCookieAuthMode } from '../config/auth';
 import { authSessionStore } from '../services/authSessionStore';
-import type { AuthSessionResponse, RefreshTokenDTO } from '../services/authService';
+import type { RefreshTokenDTO, TokenResponse } from '../services/authService';
 
 export const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() ||
-  'https://soft-aubry-tws-cloud-194a1c15.koyeb.apps/api';
+  'https://api-server.koyeb.app/api';
 
 class ApiClient {
   private static instance: AxiosInstance;
-  private static refreshPromise: Promise<AuthSessionResponse> | null = null;
+  private static refreshPromise: Promise<TokenResponse> | null = null;
 
   private constructor() {}
 
@@ -58,8 +58,7 @@ class ApiClient {
           const path = typeof originalRequest.url === 'string' ? originalRequest.url : '';
           const isAuthEndpoint =
             path.includes('/auth/login') ||
-            path.includes('/auth/signup') ||
-            path.includes('/auth/refresh') ||
+            path.includes('/auth/refresh-token') ||
             path.includes('/auth/logout');
 
           if (!isAuthEndpoint) {
@@ -73,13 +72,12 @@ class ApiClient {
 
               if (!ApiClient.refreshPromise) {
                 ApiClient.refreshPromise = ApiClient.instance
-                  .post<AuthSessionResponse>('/auth/refresh', { refreshToken: currentRefreshToken } as RefreshTokenDTO)
+                  .post<TokenResponse>('/auth/refresh-token', { refreshToken: currentRefreshToken } as RefreshTokenDTO)
                   .then((refreshResponse) => {
                     authSessionStore.setSession({
-                      accessToken: refreshResponse.data.accessToken,
-                      refreshToken: refreshResponse.data.refreshToken ?? null,
-                      user: refreshResponse.data.user,
-                      workshop: refreshResponse.data.workshop,
+                      accessToken: refreshResponse.data.token ?? null,
+                      refreshToken: refreshResponse.data.refreshToken ?? currentRefreshToken,
+                      user: refreshResponse.data.user ?? null,
                     });
                     return refreshResponse.data;
                   })
@@ -90,7 +88,7 @@ class ApiClient {
 
               const refreshed = await ApiClient.refreshPromise;
               if (originalRequest.headers) {
-                originalRequest.headers.Authorization = `Bearer ${refreshed.accessToken}`;
+                originalRequest.headers.Authorization = `Bearer ${refreshed.token}`;
               }
               return ApiClient.instance.request(originalRequest);
             } catch {

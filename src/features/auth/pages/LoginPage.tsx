@@ -1,22 +1,18 @@
 import React, { useState } from 'react';
-import { Typography, Button, Form, Input, App } from 'antd';
+import { Button, Form, Input, App } from 'antd';
 import { LoginOutlined, LockOutlined } from '@ant-design/icons';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../../core/services/authService';
 import { AuthShell } from '../components/AuthShell';
 
-const { Text } = Typography;
-
 interface LoginFormValues {
-  workshopSlug: string;
-  email: string;
+  login: string;
   password: string;
 }
 
 export const LoginPage: React.FC = () => {
   const { message } = App.useApp();
   const navigate = useNavigate();
-  const location = useLocation();
   const [loading, setLoading] = useState(false);
 
   React.useEffect(() => {
@@ -46,16 +42,11 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       await authService.login({
-        workshopSlug: values.workshopSlug,
-        email: values.email,
+        login: values.login,
         password: values.password,
       });
       message.success('Login realizado com sucesso!');
-
-      setTimeout(() => {
-        const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
-        navigate(from, { replace: true });
-      }, 100);
+      navigate('/', { replace: true });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao realizar login. Tente novamente.';
       message.error(errorMessage);
@@ -70,32 +61,24 @@ export const LoginPage: React.FC = () => {
       title="Acessar Plataforma"
       subtitle="Entre com suas credenciais corporativas para continuar."
       footer={(
-        <>
-          <div className="prevent-auth-inline-actions">
-            <Text className="prevent-auth-footer-text">Nao possui conta?</Text>
-            <Link to="/auth/signup" className="prevent-auth-link">Criar oficina</Link>
-          </div>
-        </>
+        <div className="atlas-auth-inline-actions" style={{ justifyContent: 'space-between' }}>
+          <span style={{ display: 'inline-flex', gap: 8, flexWrap: 'wrap' }}>
+            <span className="atlas-auth-footer-text">Não possui conta?</span>
+            <Link to="/auth/register" className="atlas-auth-link">Criar conta</Link>
+          </span>
+          <Link to="/auth/forgot-password" className="atlas-auth-link">Esqueci a senha</Link>
+        </div>
       )}
     >
       <Form name="login" onFinish={onFinish} layout="vertical" size="large">
         <Form.Item
-          name="workshopSlug"
-          label="Oficina"
-          rules={[{ required: true, message: 'Informe o slug da oficina.' }]}
-        >
-          <Input className="prevent-form-input" placeholder="oficina-centro" autoCapitalize="none" autoCorrect="off" />
-        </Form.Item>
-
-        <Form.Item
-          name="email"
-          label="E-mail"
+          name="login"
+          label="Login"
           rules={[
-            { required: true, message: 'Por favor, insira seu e-mail.' },
-            { type: 'email', message: 'E-mail inválido.' },
+            { required: true, message: 'Por favor, insira seu login (usuário ou e-mail).' },
           ]}
         >
-          <Input className="prevent-form-input" placeholder="ana@oficinacentro.com" autoCapitalize="none" autoCorrect="off" />
+          <Input className="atlas-form-input" placeholder="seu.usuario ou seuemail@empresa.com" autoCapitalize="none" autoCorrect="off" />
         </Form.Item>
 
         <Form.Item
@@ -103,7 +86,7 @@ export const LoginPage: React.FC = () => {
           label="Senha"
           rules={[{ required: true, message: 'Por favor, insira sua senha.' }]}
         >
-          <Input.Password className="prevent-form-input" prefix={<LockOutlined />} placeholder="Sua senha de acesso" />
+          <Input.Password className="atlas-form-input" prefix={<LockOutlined />} placeholder="Sua senha de acesso" />
         </Form.Item>
 
         <Form.Item style={{ marginTop: 24, marginBottom: 8 }}>

@@ -122,8 +122,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   ];
 
   return (
-    <div className="prevent-rich-editor">
-      <div className="prevent-rich-editor-toolbar">
+    <div className="atlas-rich-editor">
+      <div className="atlas-rich-editor-toolbar">
         <Space size={4} wrap>
           {toolbarItems.map((item) => (
             <Tooltip key={item.key} title={item.label}>
@@ -131,7 +131,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 size="small"
                 type="text"
                 disabled={disabled}
-                className="prevent-rich-editor-btn"
+                className="atlas-rich-editor-btn"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => executeCommand(item.command)}
               >
@@ -145,7 +145,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <div
         ref={editorRef}
         contentEditable={!disabled}
-        className="prevent-rich-editor-content"
+        className="atlas-rich-editor-content"
         data-placeholder={placeholder}
         suppressContentEditableWarning
         aria-label={placeholder}

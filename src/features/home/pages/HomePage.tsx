@@ -9,9 +9,9 @@ const { Title, Text } = Typography;
 
 export const HomePage = () => {
   return (
-    <div className="prevent-dashboard-page">
-      <div className="prevent-dashboard-shell">
-        <div className="prevent-dashboard-topbar">
+    <div className="atlas-dashboard-page">
+      <div className="atlas-dashboard-shell">
+        <div className="atlas-dashboard-topbar">
           <div>
             <Breadcrumb
               items={[
@@ -32,8 +32,8 @@ export const HomePage = () => {
             </Space>
           </div>
 
-          <div className="prevent-dashboard-topbar-meta">
-            <Tag className="prevent-dashboard-meta-chip" bordered={false}>
+          <div className="atlas-dashboard-topbar-meta">
+            <Tag className="atlas-dashboard-meta-chip" bordered={false}>
               <CalendarOutlined /> {dayjs().format('DD/MM/YYYY')}
             </Tag>
           </div>
@@ -45,7 +45,7 @@ export const HomePage = () => {
           </Col>
         </Row>
 
-        <section className="prevent-dashboard-section" id="prevent-dashboard-charts">
+        <section className="atlas-dashboard-section" id="atlas-dashboard-charts">
           <ExecutiveDashboard />
         </section>
       </div>

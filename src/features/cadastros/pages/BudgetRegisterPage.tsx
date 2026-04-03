@@ -208,16 +208,16 @@ export const BudgetRegisterPage: React.FC = () => {
           <Title level={2} style={{ margin: 0 }}>Cadastro de Orcamento</Title>
           <Text type="secondary">Registro inicial antes da conversao em servico.</Text>
         </Space>
-        <Button type="primary" icon={<PlusOutlined />} className="prevent-services-button prevent-services-button-primary" onClick={openCreate}>
+        <Button type="primary" icon={<PlusOutlined />} className="atlas-services-button atlas-services-button-primary" onClick={openCreate}>
           Novo orcamento
         </Button>
       </div>
 
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Card className="prevent-services-filter-card">
+          <Card className="atlas-services-filter-card">
             <Input
-              className="prevent-services-input"
+              className="atlas-services-input"
               placeholder="Buscar por codigo, telefone, tipo, valor ou data"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
@@ -225,9 +225,9 @@ export const BudgetRegisterPage: React.FC = () => {
           </Card>
         </Col>
         <Col span={24}>
-          <Card className="prevent-services-table-card">
+          <Card className="atlas-services-table-card">
             <Space style={{ marginBottom: 16 }}>
-              <Tag className="prevent-dashboard-meta-chip" bordered={false}>{filtered.length} orcamento(s)</Tag>
+              <Tag className="atlas-dashboard-meta-chip" bordered={false}>{filtered.length} orcamento(s)</Tag>
             </Space>
             <ExcelLikeTable tableId="orcamentos" rowKey="id" loading={loading} columns={columns} dataSource={filtered} pagination={{ pageSize: 10 }} />
           </Card>
@@ -239,7 +239,7 @@ export const BudgetRegisterPage: React.FC = () => {
         onClose={() => setDrawerOpen(false)}
         width={520}
         title={editingRecord ? 'Editar orcamento' : 'Novo orcamento'}
-        className="prevent-services-drawer"
+        className="atlas-services-drawer"
       >
         <Form form={form} layout="vertical" onFinish={onFinish}>
           <Form.Item name="name" label="Nome" rules={[{ required: true, message: 'Informe o nome' }]}>
@@ -251,10 +251,10 @@ export const BudgetRegisterPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item name="phone" label="Telefone" normalize={normalizePhoneBR} rules={[{ required: true, message: 'Informe o telefone' }]}>
-            <Input className="prevent-services-input" />
+            <Input className="atlas-services-input" />
           </Form.Item>
           <Form.Item name="serviceType" label="Tipo de servico" rules={[{ required: true, message: 'Selecione o tipo' }]}>
-            <Select className="prevent-services-select" options={SERVICE_TYPE_OPTIONS} />
+            <Select className="atlas-services-select" options={SERVICE_TYPE_OPTIONS} />
           </Form.Item>
           <Form.Item name="situation" label="Situacao" rules={[{ required: true, message: 'Selecione a situacao' }]}>
             <Select
@@ -306,10 +306,10 @@ export const BudgetRegisterPage: React.FC = () => {
             />
           </Form.Item>
           <Form.Item name="totalValue" label="Valor total" rules={[{ required: true, message: 'Informe o valor total' }]}>
-            <InputNumber className="prevent-services-number" style={{ width: '100%' }} min={0} />
+            <InputNumber className="atlas-services-number" style={{ width: '100%' }} min={0} />
           </Form.Item>
 
-          <Button htmlType="submit" type="primary" icon={<SaveOutlined />} className="prevent-services-button prevent-services-button-primary">
+          <Button htmlType="submit" type="primary" icon={<SaveOutlined />} className="atlas-services-button atlas-services-button-primary">
             Salvar orcamento
           </Button>
         </Form>

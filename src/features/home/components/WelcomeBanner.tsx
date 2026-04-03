@@ -7,7 +7,7 @@ export const WelcomeBanner: React.FC = () => {
 
   return (
     <Card
-      className="prevent-dashboard-brand-banner"
+      className="atlas-dashboard-brand-banner"
       variant="borderless"
       style={{
         background: isDarkMode
@@ -22,15 +22,15 @@ export const WelcomeBanner: React.FC = () => {
       }}
       styles={{ body: { padding: 0 } }}
     >
-      <div className="prevent-dashboard-brand-glow prevent-dashboard-brand-glow-left" />
-      <div className="prevent-dashboard-brand-glow prevent-dashboard-brand-glow-right" />
+      <div className="atlas-dashboard-brand-glow atlas-dashboard-brand-glow-left" />
+      <div className="atlas-dashboard-brand-glow atlas-dashboard-brand-glow-right" />
 
-      <div className="prevent-dashboard-brand-banner-inner">
+      <div className="atlas-dashboard-brand-banner-inner">
         <Image
           preview={false}
-          src={isDarkMode ? '/White_Prevent_Logo.svg' : '/White_Prevent_Logo.svg'}
-          alt="Prevent Mecânica"
-          className="prevent-dashboard-brand-logo"
+          src={isDarkMode ? '/atlas-logo-white.svg' : '/atlas-logo-black.svg'}
+          alt="Atlas Engenharia"
+          className="atlas-dashboard-brand-logo"
         />
       </div>
     </Card>

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Typography, App, Row, Col } from 'antd';
-import { UserOutlined, MailOutlined, LockOutlined, ShopOutlined, UserAddOutlined } from '@ant-design/icons';
+import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined, UserAddOutlined, IdcardOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '../../../core/services/authService';
-import type { SignupDTO } from '../../../core/services/authService';
+import { authService, type RegisterDTO } from '../../../core/services/authService';
 import { AuthShell } from '../components/AuthShell';
 
 const { Text } = Typography;
@@ -13,20 +12,15 @@ export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const onFinish = async (values: SignupDTO & { confirmOwnerPassword?: string }) => {
+  const onFinish = async (values: RegisterDTO) => {
     setLoading(true);
     try {
-      if (values.confirmOwnerPassword && values.ownerPassword !== values.confirmOwnerPassword) {
-        message.error('As senhas não coincidem.');
-        return;
-      }
-
-      await authService.signup(values);
-      message.success('Oficina criada com sucesso!');
-      navigate('/', { replace: true });
+      await authService.register(values);
+      message.success('Cadastro criado! Enviamos um código para seu e-mail.');
+      navigate('/auth/verify-email', { replace: true, state: { email: values.email } });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao realizar cadastro.';
-      message.error(`Erro ao realizar cadastro: ${errorMessage}`);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -35,12 +29,12 @@ export const RegisterPage: React.FC = () => {
   return (
     <AuthShell
       contextLabel="Cadastro"
-      title="Criar Oficina"
-      subtitle="Crie a oficina e o usuário proprietário para começar."
+      title="Criar conta"
+      subtitle="Crie sua conta e valide seu e-mail para acessar."
       footer={(
-        <div className="prevent-auth-inline-actions">
-          <Text className="prevent-auth-footer-text">Ja possui conta?</Text>
-          <Link to="/auth/login" className="prevent-auth-link">Fazer login</Link>
+        <div className="atlas-auth-inline-actions">
+          <Text className="atlas-auth-footer-text">Já possui conta?</Text>
+          <Link to="/auth/login" className="atlas-auth-link">Fazer login</Link>
         </div>
       )}
     >
@@ -48,79 +42,99 @@ export const RegisterPage: React.FC = () => {
         <Row gutter={14}>
           <Col span={24}>
             <Form.Item
-              name="workshopName"
-              label="Nome da Oficina"
-              rules={[{ required: true, message: 'Informe o nome da oficina.' }]}
+              name="nomeCompleto"
+              label="Nome completo"
+              rules={[{ required: true, message: 'Informe seu nome completo.' }]}
             >
-              <Input className="prevent-form-input" prefix={<ShopOutlined />} placeholder="Oficina Centro" />
+              <Input className="atlas-form-input" prefix={<IdcardOutlined />} placeholder="Seu nome completo" />
             </Form.Item>
           </Col>
 
           <Col xs={24} md={12}>
             <Form.Item
-              name="workshopSlug"
-              label="Slug da Oficina"
-              rules={[{ required: true, message: 'Informe o slug da oficina.' }]}
-            >
-              <Input className="prevent-form-input" placeholder="oficina-centro" autoCapitalize="none" autoCorrect="off" />
-            </Form.Item>
-          </Col>
-
-          <Col xs={24} md={12}>
-            <Form.Item
-              name="ownerName"
-              label="Nome do Proprietário"
-              rules={[{ required: true, message: 'Informe o nome do proprietário.' }]}
-            >
-              <Input className="prevent-form-input" prefix={<UserOutlined />} placeholder="Ana Souza" />
-            </Form.Item>
-          </Col>
-
-          <Col xs={24} md={12}>
-            <Form.Item
-              name="ownerEmail"
-              label="E-mail do Proprietário"
+              name="email"
+              label="E-mail"
               rules={[
-                { required: true, message: 'Por favor, insira seu e-mail.' },
-                { type: 'email', message: 'Por favor, insira um e-mail valido.' },
+                { required: true, message: 'Informe seu e-mail.' },
+                { type: 'email', message: 'E-mail inválido.' },
               ]}
             >
-              <Input className="prevent-form-input" prefix={<MailOutlined />} placeholder="ana@oficinacentro.com" autoCapitalize="none" autoCorrect="off" />
+              <Input className="atlas-form-input" prefix={<MailOutlined />} placeholder="seuemail@empresa.com" autoCapitalize="none" autoCorrect="off" />
             </Form.Item>
           </Col>
 
           <Col xs={24} md={12}>
             <Form.Item
-              name="ownerPassword"
-              label="Senha do Proprietário"
+              name="confirmarEmail"
+              label="Confirmar e-mail"
+              dependencies={['email']}
               rules={[
-                { required: true, message: 'Por favor, insira sua senha.' },
-                { min: 6, message: 'A senha deve ter pelo menos 6 caracteres.' },
-              ]}
-            >
-              <Input.Password className="prevent-form-input" prefix={<LockOutlined />} placeholder="Senha" />
-            </Form.Item>
-          </Col>
-
-          <Col xs={24} md={12}>
-            <Form.Item
-              name="confirmOwnerPassword"
-              label="Confirmar Senha"
-              dependencies={['ownerPassword']}
-              rules={[
-                { required: true, message: 'Por favor, confirme sua senha.' },
+                { required: true, message: 'Confirme seu e-mail.' },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
-                    if (!value || getFieldValue('ownerPassword') === value) {
+                    if (!value || getFieldValue('email') === value) {
                       return Promise.resolve();
                     }
-
-                    return Promise.reject(new Error('As senhas nao coincidem.'));
+                    return Promise.reject(new Error('Os e-mails não coincidem.'));
                   },
                 }),
               ]}
             >
-              <Input.Password className="prevent-form-input" prefix={<LockOutlined />} placeholder="Confirme a senha" />
+              <Input className="atlas-form-input" prefix={<MailOutlined />} placeholder="Confirme seu e-mail" autoCapitalize="none" autoCorrect="off" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="username"
+              label="Usuário"
+              rules={[{ required: true, message: 'Informe seu usuário.' }]}
+            >
+              <Input className="atlas-form-input" prefix={<UserOutlined />} placeholder="seu.usuario" autoCapitalize="none" autoCorrect="off" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="telefone"
+              label="Telefone"
+              rules={[{ required: true, message: 'Informe seu telefone.' }]}
+            >
+              <Input className="atlas-form-input" prefix={<PhoneOutlined />} placeholder="(11) 99999-9999" autoCapitalize="none" autoCorrect="off" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="password"
+              label="Senha"
+              rules={[
+                { required: true, message: 'Informe sua senha.' },
+                { min: 6, message: 'A senha deve ter pelo menos 6 caracteres.' },
+              ]}
+            >
+              <Input.Password className="atlas-form-input" prefix={<LockOutlined />} placeholder="Senha" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="confirmarPassword"
+              label="Confirmar senha"
+              dependencies={['password']}
+              rules={[
+                { required: true, message: 'Confirme sua senha.' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue('password') === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('As senhas não coincidem.'));
+                  },
+                }),
+              ]}
+            >
+              <Input.Password className="atlas-form-input" prefix={<LockOutlined />} placeholder="Confirme a senha" />
             </Form.Item>
           </Col>
         </Row>
@@ -135,10 +149,11 @@ export const RegisterPage: React.FC = () => {
             loading={loading}
             style={{ height: 44, borderRadius: 8, fontWeight: 600 }}
           >
-            Criar Oficina
+            Criar conta
           </Button>
         </Form.Item>
       </Form>
     </AuthShell>
   );
 };
+

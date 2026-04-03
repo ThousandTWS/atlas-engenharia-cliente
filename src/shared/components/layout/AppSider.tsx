@@ -262,7 +262,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
 
   const menuContent = (
     <div
-      className="prevent-sider-scroll-area"
+      className="atlas-sider-scroll-area"
       style={{
         height: '100%',
         overflowY: 'auto',
@@ -284,8 +284,8 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
          }}
        >
          <img
-           src={isDarkMode ? '/White_Prevent_Logo.svg' : '/Black_Prevent_Logo.svg'}
-           alt="Logo Prevent Mecânica"
+           src={isDarkMode ? '/atlas-logo-white.svg' : '/atlas-logo-black.svg'}
+           alt="Logo Atlas Engenharia"
            style={{
              width: !effectiveCollapsed ? sidebarProfileConfig.logoExpandedWidth : sidebarProfileConfig.logoCollapsedWidth,
              transition: 'width 0.2s ease',
@@ -376,7 +376,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
 
   return (
     <Sider
-      className="prevent-app-sider"
+      className="atlas-app-sider"
       collapsible={sidebarProfile !== 'tv'}
       collapsed={effectiveCollapsed}
       onCollapse={(value) => setCollapsed(value)}

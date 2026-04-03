@@ -62,17 +62,17 @@ export const CadastrosHubPage: React.FC = () => {
 
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={24} md={8}>
-          <Card className="prevent-services-filter-card" loading={loading}>
+          <Card className="atlas-services-filter-card" loading={loading}>
             <Statistic title="Orçamentos cadastrados" value={budgets.length} prefix={<DollarOutlined />} />
           </Card>
         </Col>
         <Col xs={24} md={8}>
-          <Card className="prevent-services-filter-card" loading={loading}>
+          <Card className="atlas-services-filter-card" loading={loading}>
             <Statistic title="Serviços registrados" value={services.length} prefix={<SolutionOutlined />} />
           </Card>
         </Col>
         <Col xs={24} md={8}>
-          <Card className="prevent-services-filter-card" loading={loading}>
+          <Card className="atlas-services-filter-card" loading={loading}>
             <Statistic title="Prestadores cadastrados" value={providers.length} prefix={<TeamOutlined />} />
           </Card>
         </Col>
@@ -80,7 +80,7 @@ export const CadastrosHubPage: React.FC = () => {
 
       <Row gutter={[18, 18]}>
         <Col xs={24} lg={8}>
-          <Card className="prevent-services-table-card" style={{ height: '100%' }}>
+          <Card className="atlas-services-table-card" style={{ height: '100%' }}>
             <Space direction="vertical" size={10} style={{ width: '100%' }}>
               <Space size={10}>
                 <WalletOutlined />
@@ -88,14 +88,14 @@ export const CadastrosHubPage: React.FC = () => {
               </Space>
               <Text type="secondary">Registre propostas antes de virar serviço e vincule depois pelo código.</Text>
               <Text strong>Volume atual: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(budgetTotal)}</Text>
-              <Button type="primary" className="prevent-services-button prevent-services-button-primary" onClick={() => navigate('/cadastros/orcamentos')}>
+              <Button type="primary" className="atlas-services-button atlas-services-button-primary" onClick={() => navigate('/cadastros/orcamentos')}>
                 Abrir orçamentos
               </Button>
             </Space>
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card className="prevent-services-table-card" style={{ height: '100%' }}>
+          <Card className="atlas-services-table-card" style={{ height: '100%' }}>
             <Space direction="vertical" size={10} style={{ width: '100%' }}>
               <Space size={10}>
                 <SolutionOutlined />
@@ -103,14 +103,14 @@ export const CadastrosHubPage: React.FC = () => {
               </Space>
               <Text type="secondary">Tela única com dados do cliente, serviço, financeiro e prestadores.</Text>
               <Text strong>Sequência automática por tipo e validação de parcelas.</Text>
-              <Button type="primary" className="prevent-services-button prevent-services-button-primary" onClick={() => navigate('/cadastros/servicos')}>
+              <Button type="primary" className="atlas-services-button atlas-services-button-primary" onClick={() => navigate('/cadastros/servicos')}>
                 Abrir cadastro único
               </Button>
             </Space>
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card className="prevent-services-table-card" style={{ height: '100%' }}>
+          <Card className="atlas-services-table-card" style={{ height: '100%' }}>
             <Space direction="vertical" size={10} style={{ width: '100%' }}>
               <Space size={10}>
                 <TeamOutlined />
@@ -118,7 +118,7 @@ export const CadastrosHubPage: React.FC = () => {
               </Space>
               <Text type="secondary">Base rápida de prestadores com dados de pagamento sem obrigatoriedade.</Text>
               <Text strong>Acesso direto também pelo cadastro de serviço.</Text>
-              <Button type="primary" className="prevent-services-button prevent-services-button-primary" onClick={() => navigate('/cadastros/prestadores')}>
+              <Button type="primary" className="atlas-services-button atlas-services-button-primary" onClick={() => navigate('/cadastros/prestadores')}>
                 Abrir prestadores
               </Button>
             </Space>

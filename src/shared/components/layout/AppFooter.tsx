@@ -7,7 +7,7 @@ export const AppFooter: React.FC = () => {
     const { isDarkMode } = useLayout();
   return (
     <Footer style={{ textAlign: 'center',  background: isDarkMode ? '#141B2D' : '#fff', }}>
-      Prevent Mecânica ©{new Date().getFullYear()} <a type={'primary'}>Prevent Mecânica</a>
+      Atlas Engenharia ©{new Date().getFullYear()} <a type={'primary'}>Atlas Engenharia</a>
     </Footer>
   );
 };

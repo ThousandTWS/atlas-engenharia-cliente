@@ -113,7 +113,7 @@ export const ClienteFormPage: React.FC = () => {
           </Title>
           <Text type="secondary">Dados cadastrais, contato e endereço do cliente.</Text>
         </Space>
-        <Button className="prevent-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/gestao-de-clientes')} style={{ width: isMobile ? '100%' : 'auto' }}>
+        <Button className="atlas-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/gestao-de-clientes')} style={{ width: isMobile ? '100%' : 'auto' }}>
           Voltar
         </Button>
       </div>

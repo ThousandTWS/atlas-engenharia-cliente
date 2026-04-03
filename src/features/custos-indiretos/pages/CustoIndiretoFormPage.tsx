@@ -126,7 +126,7 @@ export const CustoIndiretoFormPage: React.FC = () => {
           </Title>
           <Text type="secondary">Gerencie despesas administrativas e operacionais fixas.</Text>
         </Space>
-        <Button className="prevent-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/custos-indiretos')} style={{ width: isMobile ? '100%' : 'auto' }}>
+        <Button className="atlas-back-button" icon={<ArrowLeftOutlined />} onClick={() => navigate('/custos-indiretos')} style={{ width: isMobile ? '100%' : 'auto' }}>
           Voltar
         </Button>
       </div>
