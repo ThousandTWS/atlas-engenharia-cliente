@@ -20,7 +20,7 @@ interface GlobalAiStrategy {
   execute(params: SendGlobalAiMessageParams): Promise<string | null>;
 }
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() ?? 'AIzaSyCQOP9PfQ2O3If4l0zKswZyZvGDai_L7LU';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() ?? '';
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
 const GEMINI_BASE_URL = import.meta.env.VITE_GEMINI_API_BASE_URL?.trim() || 'https://generativelanguage.googleapis.com/v1beta';
 const N8N_AI_CHAT_URL = import.meta.env.VITE_N8N_AI_CHAT_URL?.trim() ?? '';
@@ -164,7 +164,7 @@ class AdsChatStrategy implements GlobalAiStrategy {
 
 class DirectGeminiStrategy implements GlobalAiStrategy {
   canHandle(_params: SendGlobalAiMessageParams): boolean {
-    return true;
+    return Boolean(GEMINI_API_KEY);
   }
 
   execute(params: SendGlobalAiMessageParams): Promise<string> {
@@ -189,5 +189,5 @@ export const sendGlobalAiMessage = async (params: SendGlobalAiMessageParams): Pr
     return answer;
   }
 
-  throw new Error('Nenhum provedor de IA retornou resposta.');
+  throw new Error('Atlas AI não configurada. Defina VITE_GEMINI_API_KEY ou VITE_N8N_AI_CHAT_URL.');
 };

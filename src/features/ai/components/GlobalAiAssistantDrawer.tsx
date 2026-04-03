@@ -284,6 +284,12 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
       .trim();
   }, []);
 
+  const aiConfigured = useMemo(() => {
+    const geminiKey = (import.meta.env.VITE_GEMINI_API_KEY ?? "").trim();
+    const n8nUrl = (import.meta.env.VITE_N8N_AI_CHAT_URL ?? "").trim();
+    return Boolean(geminiKey || n8nUrl);
+  }, []);
+
   return (
     <Drawer
       title={
@@ -338,6 +344,25 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
             label: "Chat",
             children: (
               <Space orientation="vertical" size={12} style={{ width: "100%" }}>
+                {!aiConfigured ? (
+                  <Card
+                    size="small"
+                    style={{
+                      borderRadius: 12,
+                      border: `1px solid ${isDarkMode ? "#2A3A5C" : "#E2E8F0"}`,
+                      background: isDarkMode ? "#0F172A" : "#FFFFFF",
+                    }}
+                    styles={{ body: { padding: 12 } }}
+                  >
+                    <Space orientation="vertical" size={4} style={{ width: "100%" }}>
+                      <Text strong>Atlas AI não configurada</Text>
+                      <Text type="secondary">
+                        Configure `VITE_GEMINI_API_KEY` (Gemini) ou `VITE_N8N_AI_CHAT_URL` (n8n) para habilitar o chat.
+                      </Text>
+                    </Space>
+                  </Card>
+                ) : null}
+
                 <Space wrap>
                   {QUICK_PROMPTS.map((prompt) => (
                     <Button
@@ -345,7 +370,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                       size="small"
                       className="ads-refresh-button"
                       onClick={() => sendPrompt(prompt)}
-                      disabled={sending}
+                      disabled={sending || !aiConfigured}
                     >
                       {prompt}
                     </Button>
@@ -484,7 +509,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                     onChange={(event) => setInputValue(event.target.value)}
                     autoSize={{ minRows: 3, maxRows: 6 }}
                     placeholder="Peça análises, plano de IA, automações e próximos passos..."
-                    disabled={sending}
+                    disabled={sending || !aiConfigured}
                     className="atlas-form-input"
                     style={{ border: "none", boxShadow: "none" }}
                     onPressEnter={(event) => {
@@ -523,6 +548,7 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                       icon={<SendOutlined />}
                       onClick={() => sendPrompt(inputValue)}
                       loading={sending}
+                      disabled={!aiConfigured}
                     >
                       Enviar
                     </Button>
