@@ -7,6 +7,7 @@ import {
   Checkbox,
   Col,
   Drawer,
+  DatePicker,
   Form,
   Input,
   InputNumber,
@@ -21,7 +22,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { FilePdfOutlined, PlusOutlined, SaveOutlined, SearchOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import dayjs, { type Dayjs } from 'dayjs';
 import { useSearchParams } from 'react-router-dom';
 import { clientesService } from '../../../core/services/clientesService';
 import { cepService } from '../../../core/services/cepService';
@@ -1005,8 +1006,14 @@ export const ServiceClientRegisterPage: React.FC = () => {
 
                       <Row gutter={12}>
                         <Col span={12}>
-                          <Form.Item name="entryDate" label="Data de entrada" rules={[{ required: true, message: 'Informe a data de entrada' }]}>
-                            <Input type="date" className="atlas-services-input" />
+                          <Form.Item
+                            name="entryDate"
+                            label="Data de entrada"
+                            rules={[{ required: true, message: 'Informe a data de entrada' }]}
+                            getValueProps={(value) => ({ value: value ? dayjs(String(value)) : null })}
+                            getValueFromEvent={(date: Dayjs | null) => (date ? date.format('YYYY-MM-DD') : '')}
+                          >
+                            <DatePicker className="atlas-services-date" style={{ width: '100%' }} format="DD/MM/YYYY" />
                           </Form.Item>
                         </Col>
                         <Col span={12}>
@@ -1090,8 +1097,14 @@ export const ServiceClientRegisterPage: React.FC = () => {
                           parser={parseCurrencyInput}
                         />
                       </Form.Item>
-                      <Form.Item name="contractDate" label="Data do contrato" rules={[{ required: true, message: 'Informe a data do contrato' }]}>
-                        <Input type="date" className="atlas-services-input" />
+                      <Form.Item
+                        name="contractDate"
+                        label="Data do contrato"
+                        rules={[{ required: true, message: 'Informe a data do contrato' }]}
+                        getValueProps={(value) => ({ value: value ? dayjs(String(value)) : null })}
+                        getValueFromEvent={(date: Dayjs | null) => (date ? date.format('YYYY-MM-DD') : '')}
+                      >
+                        <DatePicker className="atlas-services-date" style={{ width: '100%' }} format="DD/MM/YYYY" />
                       </Form.Item>
                       <Form.Item name="invoiceValue" label="Desconto NF (opcional)">
                         <InputNumber
@@ -1189,12 +1202,13 @@ export const ServiceClientRegisterPage: React.FC = () => {
                               />
                             </Col>
                             <Col xs={24} md={7}>
-                              <Input
-                                type="date"
-                                className="atlas-services-input"
-                                value={item.date}
-                                onChange={(event) => {
-                                  const nextDate = event.target.value;
+                              <DatePicker
+                                className="atlas-services-date"
+                                style={{ width: '100%' }}
+                                format="DD/MM/YYYY"
+                                value={item.date ? dayjs(item.date) : null}
+                                onChange={(date) => {
+                                  const nextDate = date ? date.format('YYYY-MM-DD') : '';
                                   setInstallments((current) => {
                                     if (
                                       index === 0
@@ -1310,12 +1324,12 @@ export const ServiceClientRegisterPage: React.FC = () => {
                             } : currentItem))}
                           />
                           {item.paymentDateType === 'DATA' ? (
-                            <Input
-                              type="date"
-                              className="atlas-services-input"
-                              style={{ marginTop: 6 }}
-                              value={item.paymentDate || ''}
-                              onChange={(event) => setLinkedProviders((current) => current.map((currentItem, currentIndex) => currentIndex === index ? { ...currentItem, paymentDate: event.target.value } : currentItem))}
+                            <DatePicker
+                              className="atlas-services-date"
+                              style={{ width: '100%', marginTop: 6 }}
+                              format="DD/MM/YYYY"
+                              value={item.paymentDate ? dayjs(item.paymentDate) : null}
+                              onChange={(date) => setLinkedProviders((current) => current.map((currentItem, currentIndex) => currentIndex === index ? { ...currentItem, paymentDate: date ? date.format('YYYY-MM-DD') : '' } : currentItem))}
                             />
                           ) : null}
                         </Col>
