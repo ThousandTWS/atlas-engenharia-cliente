@@ -259,6 +259,9 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
   const siderBackground = isDarkMode ? '#141B2D' : '#F8FAFC';
   const borderColor = isDarkMode ? '#313747' : '#CBD5E140';
   const menuScrollPaddingBottom = sidebarProfile === 'tv' ? 20 : 64;
+  const logoPanelBackground = isDarkMode
+    ? 'transparent'
+    : 'linear-gradient(135deg, #0b1323 0%, #111b31 55%, #1e40af 120%)';
 
   const menuContent = (
     <div
@@ -274,17 +277,20 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
        <div
          style={{
            height: !effectiveCollapsed ? (sidebarProfile === 'tv' ? 126 : 96) : 72,
-           margin: '8px 0 6px 0',
+           margin: '8px 10px 6px 10px',
            display: 'flex',
            flexDirection: 'column',
            justifyContent: 'center',
            alignItems: 'center',
            padding: effectiveCollapsed ? '0.4rem' : '1rem',
            gap: '4px',
+           borderRadius: 14,
+           background: logoPanelBackground,
+           border: isDarkMode ? 'none' : '1px solid #0f172a12',
          }}
        >
          <img
-           src={isDarkMode ? '/atlas-logo-white.svg' : '/atlas-logo-black.svg'}
+           src={'/atlas-logo-white.svg'}
            alt="Logo Atlas Engenharia"
            style={{
              width: !effectiveCollapsed ? sidebarProfileConfig.logoExpandedWidth : sidebarProfileConfig.logoCollapsedWidth,
@@ -294,7 +300,7 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
          {!effectiveCollapsed && sidebarProfile !== 'corporate' && (
            <Text
              style={{
-               color: isDarkMode ? '#CBD5E1' : '#475569',
+               color: isDarkMode ? '#CBD5E1' : '#E2E8F0',
                fontSize: sidebarProfile === 'tv' ? 14 : 12,
                letterSpacing: '0.4px',
              }}
