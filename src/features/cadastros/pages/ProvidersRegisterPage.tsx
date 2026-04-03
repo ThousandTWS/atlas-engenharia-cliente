@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { App, Breadcrumb, Button, Card, Col, Drawer, Form, Input, Row, Space, Tag, Typography } from 'antd';
+import { App, Button, Card, Col, Drawer, Form, Input, Row, Space, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { HomeOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { cadastrosApi, type ProviderLinkedServiceRecord, type ProviderRecord } from '../cadastrosApi';
 import { normalizeCpfCnpjBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
@@ -112,15 +112,6 @@ export const ProvidersRegisterPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1480, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Cadastros', href: '/cadastros' },
-          { title: 'Prestadores' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <Space direction="vertical" size={2}>
           <Title level={2} style={{ margin: 0 }}>Cadastro de Prestadores</Title>

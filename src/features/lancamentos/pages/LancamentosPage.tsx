@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   App,
-  Breadcrumb,
   Button,
   Card,
   Col,
@@ -21,7 +20,6 @@ import {
 } from 'antd';
 import {
   DownloadOutlined,
-  HomeOutlined,
   ImportOutlined,
   InboxOutlined,
   PlusOutlined,
@@ -412,15 +410,6 @@ export const LancamentosPage: React.FC = () => {
 
   return (
     <div className="atlas-lancamentos-page" style={{ maxWidth: 1480, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Financeiro' },
-          { title: 'Lançamentos' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <Card className="atlas-lancamentos-hero" bordered={false} style={{ marginBottom: 24 }}>
         <div className="atlas-lancamentos-hero-grid">
           <div>

@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   App,
-  Breadcrumb,
   Button,
   Card,
   Checkbox,
@@ -21,7 +20,7 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { FilePdfOutlined, HomeOutlined, PlusOutlined, SaveOutlined, SearchOutlined } from '@ant-design/icons';
+import { FilePdfOutlined, PlusOutlined, SaveOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useSearchParams } from 'react-router-dom';
 import { clientesService } from '../../../core/services/clientesService';
@@ -847,15 +846,6 @@ export const ServiceClientRegisterPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1540, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Cadastros', href: '/cadastros' },
-          { title: 'Servico e Cliente' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <Space direction="vertical" size={2}>
           <Title level={2} style={{ margin: 0 }}>Cadastro Unico de Servico / Cliente</Title>

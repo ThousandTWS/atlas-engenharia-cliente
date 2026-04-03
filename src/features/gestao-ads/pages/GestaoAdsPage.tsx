@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   App,
-  Breadcrumb,
   Button,
   Card,
   Col,
@@ -12,7 +11,6 @@ import {
 } from 'antd';
 import {
   GoogleOutlined,
-  HomeOutlined,
   ReloadOutlined,
   ThunderboltOutlined,
   WalletOutlined,
@@ -69,15 +67,6 @@ export const GestaoAdsPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Gestões' },
-          { title: 'Gestão Ads' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

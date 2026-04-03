@@ -2,7 +2,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   App,
-  Breadcrumb,
   Button,
   Card,
   Checkbox,
@@ -27,7 +26,6 @@ import {
   EditOutlined,
   FilePdfOutlined,
   FolderOpenOutlined,
-  HomeOutlined,
   PlusOutlined,
   SaveOutlined,
   SettingOutlined,
@@ -890,14 +888,6 @@ export const ServicesTrackingPage: React.FC = () => {
 
   return (
     <div className="atlas-services-page" style={{ maxWidth: 1600, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Painel de Acompanhamento' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
         <Space direction="vertical" size={2}>
           <Title level={2} style={{ margin: 0 }}>Tela de Servicos</Title>

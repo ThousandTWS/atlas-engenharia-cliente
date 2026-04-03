@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Button, Card, Typography, Space, Breadcrumb, App } from "antd";
+import { Button, Card, Typography, Space, App } from "antd";
 import type { TableProps } from "antd";
 import {
-  HomeOutlined,
   PlusOutlined,
   DollarCircleOutlined,
   FileTextOutlined,
@@ -235,15 +234,6 @@ export const AVCBPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: "/" },
-          { title: "Painéis e Gestão" },
-          { title: "Painel AVCB" },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   App,
-  Breadcrumb,
   Button,
   Card,
   Col,
@@ -14,7 +13,7 @@ import {
   Typography,
 } from 'antd';
 import type { TableProps } from 'antd';
-import { HomeOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ReloadOutlined } from '@ant-design/icons';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import type { NotificationCategory, NotificationItem, NotificationServiceType } from '../../../core/notifications/NotificationCenterContext';
 import { notificationsService, type BackendNotification, type BackendNotificationCategory, type BackendNotificationServiceType } from '../../../core/services/notificationsService';
@@ -272,14 +271,6 @@ export const NotificationsPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Notificações' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
         <Space direction="vertical" size={2}>
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>

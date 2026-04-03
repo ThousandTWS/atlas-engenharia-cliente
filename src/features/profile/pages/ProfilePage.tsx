@@ -1,6 +1,6 @@
 import React from 'react';
-import { Avatar, Breadcrumb, Card, Col, Divider, Row, Typography, App } from 'antd';
-import { HomeOutlined, UserOutlined } from '@ant-design/icons';
+import { Avatar, Card, Col, Divider, Row, Typography, App } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import { authService } from '../../../core/services/authService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 
@@ -55,21 +55,6 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div style={{ padding: isMobile ? 12 : 20 }}>
-      <Breadcrumb
-        style={{ marginBottom: 16, color: palette.mutedText }}
-        items={[
-          {
-            href: '/',
-            title: (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <HomeOutlined /> Home
-              </span>
-            ),
-          },
-          { title: 'Perfil' },
-        ]}
-      />
-
       <Card style={{ ...primaryCardStyle }} styles={{ body: { padding: isMobile ? 16 : 20 } }}>
         <div
           style={{

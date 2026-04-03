@@ -11,13 +11,11 @@ import {
   Col,
   Typography,
   Space,
-  Breadcrumb,
   App,
   Spin,
 } from 'antd';
 import {
   SaveOutlined,
-  HomeOutlined,
   DollarOutlined,
   FileTextOutlined,
   ArrowLeftOutlined,
@@ -100,16 +98,6 @@ export const CustoIndiretoFormPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Painéis e Gestão' },
-          { title: 'Custos Indiretos', href: '/custos-indiretos' },
-          { title: isEditing ? 'Editar Custo' : 'Novo Custo' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

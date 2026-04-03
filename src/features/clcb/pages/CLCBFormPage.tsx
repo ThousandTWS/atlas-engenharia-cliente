@@ -12,13 +12,11 @@ import {
   Col,
   Typography,
   Space,
-  Breadcrumb,
   App,
   Spin,
 } from 'antd';
 import {
   SaveOutlined,
-  HomeOutlined,
   DollarOutlined,
   UserOutlined,
   EnvironmentOutlined,
@@ -101,16 +99,6 @@ export const CLCBFormPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Painéis e Gestão' },
-          { title: 'Painel CLCB', href: '/clcb' },
-          { title: isEditing ? 'Editar CLCB' : 'Novo CLCB' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

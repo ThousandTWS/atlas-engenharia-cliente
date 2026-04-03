@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { App, Breadcrumb, Button, Card, Col, Row, Space, Statistic, Typography } from 'antd';
-import { DollarOutlined, HomeOutlined, SolutionOutlined, TeamOutlined, WalletOutlined } from '@ant-design/icons';
+import { App, Button, Card, Col, Row, Space, Statistic, Typography } from 'antd';
+import { DollarOutlined, SolutionOutlined, TeamOutlined, WalletOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { cadastrosApi, type BudgetRecord, type ProviderRecord, type ServiceRegistrationRecord } from '../cadastrosApi';
@@ -44,14 +44,6 @@ export const CadastrosHubPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1480, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Cadastros' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <Space direction="vertical" size={2}>
           <Title level={2} style={{ margin: 0 }}>Central de Cadastros</Title>

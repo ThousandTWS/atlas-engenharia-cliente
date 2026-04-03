@@ -8,11 +8,9 @@ import {
   Statistic,
   Typography,
   Space,
-  Breadcrumb,
   App,
 } from 'antd';
 import {
-  HomeOutlined,
   PlusOutlined,
   TeamOutlined,
   EnvironmentOutlined,
@@ -119,15 +117,6 @@ export const GestaoClientesPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Gestões' },
-          { title: 'Gestão de Clientes' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

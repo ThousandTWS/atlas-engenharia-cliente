@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   App,
-  Breadcrumb,
   Button,
   Card,
   Col,
@@ -19,7 +18,6 @@ import {
 import {
   ArrowLeftOutlined,
   FileTextOutlined,
-  HomeOutlined,
   SaveOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
@@ -254,16 +252,6 @@ export const LancamentoFormPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Financeiro' },
-          { title: 'Lançamentos', href: '/lancamentos' },
-          { title: isEditing ? 'Editar Lançamento' : 'Novo Lançamento' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

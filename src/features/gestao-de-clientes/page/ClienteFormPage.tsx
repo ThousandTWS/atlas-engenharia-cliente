@@ -10,13 +10,11 @@ import {
   Col,
   Typography,
   Space,
-  Breadcrumb,
   App,
   Spin,
 } from 'antd';
 import {
   SaveOutlined,
-  HomeOutlined,
   UserOutlined,
   EnvironmentOutlined,
   ArrowLeftOutlined,
@@ -87,16 +85,6 @@ export const ClienteFormPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Gestões' },
-          { title: 'Gestão de Clientes', href: '/gestao-de-clientes' },
-          { title: isEditing ? 'Editar Cliente' : 'Novo Cliente' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

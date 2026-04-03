@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { App, Breadcrumb, Button, Card, Checkbox, Col, Divider, Drawer, Form, Input, InputNumber, Modal, Row, Select, Space, Table, Tag, Tooltip, Typography } from 'antd';
+import { App, Button, Card, Checkbox, Col, Divider, Drawer, Form, Input, InputNumber, Modal, Row, Select, Space, Table, Tag, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { HomeOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { cadastrosApi, type BudgetRecord, type BudgetSituationRecord, type ServiceKind } from '../cadastrosApi';
 import { normalizePhoneBR } from '../../../shared/utils/inputFormat';
@@ -194,15 +194,6 @@ export const BudgetRegisterPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1480, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Cadastros', href: '/cadastros' },
-          { title: 'Orcamentos' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <Space direction="vertical" size={2}>
           <Title level={2} style={{ margin: 0 }}>Cadastro de Orcamento</Title>

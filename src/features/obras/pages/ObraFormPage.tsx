@@ -12,14 +12,12 @@ import {
   Col,
   Typography,
   Space,
-  Breadcrumb,
   App,
   Spin,
 } from 'antd';
 import {
   SaveOutlined,
   UserOutlined,
-  HomeOutlined,
   DollarOutlined,
   ArrowLeftOutlined,
 } from '@ant-design/icons';
@@ -102,16 +100,6 @@ export const ObraFormPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Painéis e Gestão' },
-          { title: 'Painel de Obras', href: '/obras' },
-          { title: isEditing ? 'Editar Obra' : 'Nova Obra' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

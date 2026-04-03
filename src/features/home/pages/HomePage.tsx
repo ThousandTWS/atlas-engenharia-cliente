@@ -1,5 +1,5 @@
-import { Breadcrumb, Col, Row, Space, Tag, Typography } from 'antd';
-import { CalendarOutlined, HomeOutlined } from '@ant-design/icons';
+import { Col, Row, Space, Tag, Typography } from 'antd';
+import { CalendarOutlined } from '@ant-design/icons';
 import { ExecutiveDashboard } from '../components/ExecutiveDashboard';
 import { WelcomeBanner } from '../components/WelcomeBanner';
 import dayjs from 'dayjs';
@@ -13,15 +13,6 @@ export const HomePage = () => {
       <div className="atlas-dashboard-shell">
         <div className="atlas-dashboard-topbar">
           <div>
-            <Breadcrumb
-              items={[
-                { title: <HomeOutlined />, href: '/' },
-                { title: 'Dashboard' },
-                { title: 'Insights' },
-              ]}
-              style={{ marginBottom: 12 }}
-            />
-
             <Space direction="vertical" size={4}>
               <Title level={2} style={{ margin: 0 }}>
                 Central de performance

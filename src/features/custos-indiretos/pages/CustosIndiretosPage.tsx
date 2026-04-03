@@ -5,7 +5,6 @@ import {
   Card,
   Typography,
   Space,
-  Breadcrumb,
   App,
   Modal,
   Upload,
@@ -17,7 +16,6 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import {
-  HomeOutlined,
   PlusOutlined,
   DollarCircleOutlined,
   FileTextOutlined,
@@ -406,15 +404,6 @@ export const CustosIndiretosPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Financeiro' },
-          { title: 'Custos Indiretos' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

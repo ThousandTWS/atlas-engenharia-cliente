@@ -12,7 +12,6 @@ import {
   Col,
   Typography,
   Space,
-  Breadcrumb,
   Divider,
   Statistic,
   Tag,
@@ -23,7 +22,6 @@ import {
 import {
   SaveOutlined,
   UserOutlined,
-  HomeOutlined,
   DollarOutlined,
   InfoCircleOutlined,
   ArrowLeftOutlined,
@@ -159,16 +157,6 @@ export const ProcessoAdmFormPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Gestão' },
-          { title: 'Processos Administrativos', href: '/processos' },
-          { title: isEditing ? 'Editar Processo' : 'Novo Processo' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

@@ -12,13 +12,11 @@ import {
   Col,
   Typography,
   Space,
-  Breadcrumb,
   App,
   Spin,
 } from 'antd';
 import {
   SaveOutlined,
-  HomeOutlined,
   DollarOutlined,
   FireOutlined,
   ArrowLeftOutlined,
@@ -100,16 +98,6 @@ export const AVCBFormPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Breadcrumb
-        items={[
-          { title: <HomeOutlined />, href: '/' },
-          { title: 'Painéis e Gestão' },
-          { title: 'Painel AVCB', href: '/avcb' },
-          { title: isEditing ? 'Editar AVCB' : 'Novo AVCB' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <div
         style={{
           marginBottom: 24,

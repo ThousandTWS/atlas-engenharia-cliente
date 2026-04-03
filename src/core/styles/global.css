@@ -4,6 +4,12 @@
   font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  --atlas-primary-from: #b9876b;
+  --atlas-primary-to: #8b5e47;
+  --atlas-primary-border: #7b4f36;
+  --atlas-primary-hover-from: #c59578;
+  --atlas-primary-hover-to: #94614b;
+  --atlas-primary-shadow: #a6745833;
 }
 
 body {
@@ -139,15 +145,51 @@ body {
 }
 
 .atlas-services-button-primary.ant-btn {
-  border-color: transparent !important;
-  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%) !important;
+  border-color: var(--atlas-primary-border) !important;
+  background: linear-gradient(180deg, var(--atlas-primary-from) 0%, var(--atlas-primary-to) 100%) !important;
   color: #ffffff !important;
+  box-shadow: 0 10px 26px var(--atlas-primary-shadow);
 }
 
 .atlas-services-button-primary.ant-btn:hover,
 .atlas-services-button-primary.ant-btn:focus {
-  background: linear-gradient(135deg, #172554 0%, #1e40af 100%) !important;
+  border-color: var(--atlas-primary-border) !important;
+  background: linear-gradient(180deg, var(--atlas-primary-hover-from) 0%, var(--atlas-primary-hover-to) 100%) !important;
   color: #ffffff !important;
+}
+
+.ant-btn-primary:not(.ant-btn-dangerous),
+.ant-btn-color-primary:not(.ant-btn-dangerous) {
+  border-color: var(--atlas-primary-border) !important;
+  background: linear-gradient(180deg, var(--atlas-primary-from) 0%, var(--atlas-primary-to) 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 10px 26px var(--atlas-primary-shadow);
+}
+
+.ant-btn-primary:not(.ant-btn-dangerous):hover,
+.ant-btn-primary:not(.ant-btn-dangerous):focus,
+.ant-btn-color-primary:not(.ant-btn-dangerous):hover,
+.ant-btn-color-primary:not(.ant-btn-dangerous):focus {
+  border-color: var(--atlas-primary-border) !important;
+  background: linear-gradient(180deg, var(--atlas-primary-hover-from) 0%, var(--atlas-primary-hover-to) 100%) !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-primary:not(.ant-btn-dangerous):active,
+.ant-btn-color-primary:not(.ant-btn-dangerous):active {
+  transform: translateY(1px);
+  box-shadow: 0 6px 18px var(--atlas-primary-shadow);
+}
+
+.ant-btn-primary:not(.ant-btn-dangerous):disabled,
+.ant-btn-primary:not(.ant-btn-dangerous)[disabled],
+.ant-btn-color-primary:not(.ant-btn-dangerous):disabled,
+.ant-btn-color-primary:not(.ant-btn-dangerous)[disabled] {
+  border-color: #cbd5e1 !important;
+  background: #cbd5e1 !important;
+  box-shadow: none !important;
+  opacity: 0.9;
 }
 
 .atlas-services-select .ant-select-selector,
@@ -1165,15 +1207,15 @@ body {
 }
 
 .ads-refresh-button.ant-btn-primary {
-  background: #a67458 !important;
-  border-color: #a67458 !important;
+  background: linear-gradient(180deg, var(--atlas-primary-from) 0%, var(--atlas-primary-to) 100%) !important;
+  border-color: var(--atlas-primary-border) !important;
   color: #ffffff !important;
 }
 
 .ads-refresh-button.ant-btn-primary:hover,
 .ads-refresh-button.ant-btn-primary:focus {
-  background: #8b5e47 !important;
-  border-color: #8b5e47 !important;
+  background: linear-gradient(180deg, var(--atlas-primary-hover-from) 0%, var(--atlas-primary-hover-to) 100%) !important;
+  border-color: var(--atlas-primary-border) !important;
   color: #ffffff !important;
 }
 
