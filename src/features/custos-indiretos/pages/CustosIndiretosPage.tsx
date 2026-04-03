@@ -6,7 +6,7 @@ import {
   Typography,
   Space,
   App,
-  Modal,
+  Drawer,
   Upload,
   Table,
   DatePicker,
@@ -470,17 +470,40 @@ export const CustosIndiretosPage: React.FC = () => {
         />
       </Card>
 
-      <Modal
+      <Drawer
         title="Importar custos indiretos"
         open={importModalOpen}
-        width={1100}
-        onCancel={() => {
+        placement="right"
+        width={920}
+        className="atlas-services-drawer"
+        onClose={() => {
           setImportModalOpen(false);
           setImportRows([]);
         }}
-        onOk={() => void handleImport()}
-        okText="Importar"
-        confirmLoading={importing}
+        footer={(
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <Button
+              className="atlas-services-button"
+              onClick={() => {
+                setImportModalOpen(false);
+                setImportRows([]);
+              }}
+              disabled={importing}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="atlas-services-button atlas-services-button-primary"
+              type="primary"
+              onClick={() => void handleImport()}
+              loading={importing}
+              disabled={importRows.length === 0}
+            >
+              Importar
+            </Button>
+          </div>
+        )}
+        styles={{ body: { padding: 16 } }}
       >
         <Space direction="vertical" style={{ width: '100%' }} size={16}>
           <Text type="secondary">
@@ -510,10 +533,10 @@ export const CustosIndiretosPage: React.FC = () => {
             dataSource={importRows}
             columns={importColumns}
             pagination={false}
-            scroll={{ x: 900, y: 420 }}
+            scroll={{ x: 900, y: 520 }}
           />
         </Space>
-      </Modal>
+      </Drawer>
     </div>
   );
 };
