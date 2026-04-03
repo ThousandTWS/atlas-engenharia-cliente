@@ -5,9 +5,9 @@ import {
   Card,
   Col,
   DatePicker,
+  Drawer,
   Form,
   Input,
-  Modal,
   Row,
   Select,
   Space,
@@ -527,14 +527,40 @@ export const LancamentosPage: React.FC = () => {
       </Card>
       </Card>
 
-      <Modal
+      <Drawer
         title={importOrigin === 'IMPORT_INTER' ? 'Importar arquivo do Inter' : 'Importar arquivo do Asaas'}
         open={importModalOpen}
-        width={1200}
-        onCancel={() => setImportModalOpen(false)}
-        onOk={() => void handleImport()}
-        okText="Importar lançamentos"
-        confirmLoading={importing}
+        placement="right"
+        width={920}
+        className="atlas-services-drawer"
+        onClose={() => {
+          setImportModalOpen(false);
+          setImportRows([]);
+        }}
+        footer={(
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <Button
+              className="atlas-services-button"
+              onClick={() => {
+                setImportModalOpen(false);
+                setImportRows([]);
+              }}
+              disabled={importing}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="atlas-services-button atlas-services-button-primary"
+              type="primary"
+              onClick={() => void handleImport()}
+              loading={importing}
+              disabled={importRows.length === 0}
+            >
+              Importar lançamentos
+            </Button>
+          </div>
+        )}
+        styles={{ body: { padding: 16 } }}
       >
         <Space direction="vertical" style={{ width: '100%' }} size={16}>
           <Text type="secondary">
@@ -558,10 +584,10 @@ export const LancamentosPage: React.FC = () => {
             dataSource={importRows}
             columns={importColumns}
             pagination={false}
-            scroll={{ x: 1100, y: 420 }}
+            scroll={{ x: 1100, y: 520 }}
           />
         </Space>
-      </Modal>
+      </Drawer>
     </div>
   );
 };
