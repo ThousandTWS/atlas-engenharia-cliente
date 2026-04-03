@@ -221,7 +221,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
       ) : null}
 
-      <Space size={isMobile ? 10 : 14} style={{ marginLeft: 'auto', alignItems: 'center' }} wrap>
+      <div className="atlas-app-header__actions">
         {!isMobile && (
           <Tooltip title="Ajuda">
             <Button
@@ -271,7 +271,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             )}
           </Space>
         </Dropdown>
-      </Space>
+      </div>
     </Header>
   );
 };

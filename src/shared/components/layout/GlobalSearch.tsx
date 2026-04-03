@@ -1,11 +1,8 @@
 import React from 'react';
-import { AutoComplete, Input, Grid } from 'antd';
+import { AutoComplete, Input } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import {useLayout} from './LayoutContext.tsx'
-
-const { useBreakpoint } = Grid;
-
+import { useLayout } from './LayoutContext.tsx';
 
 const searchOptions = [
   { value: 'Insights', path: '/' },
@@ -18,9 +15,7 @@ const searchOptions = [
 
 export const GlobalSearch: React.FC = () => {
   const navigate = useNavigate();
-  const screens = useBreakpoint();
-  const isLarge = screens.lg;
-  const {isDarkMode} = useLayout();
+  const { isDarkMode } = useLayout();
 
 
   const onSelect = (value: string) => {
@@ -32,8 +27,9 @@ export const GlobalSearch: React.FC = () => {
 
   return (
     <AutoComplete
-      popupMatchSelectWidth={isLarge ? 540 : true}
-      style={{ width: isLarge ? 560 : '100%', maxWidth: isLarge ? 560 : 320, flex: isLarge ? '1 1 560px' : undefined }}
+      popupMatchSelectWidth
+      className="atlas-global-search"
+      style={{ width: '100%' }}
       options={searchOptions.map(opt => ({ value: opt.value }))}
       onSelect={onSelect}
       filterOption={(inputValue, option) =>
@@ -42,17 +38,10 @@ export const GlobalSearch: React.FC = () => {
       variant="borderless"
     >
       <Input
-        size="large"
+        size="middle"
         placeholder="Pesquisar..."
-        suffix={<SearchOutlined style={{ color:isDarkMode ? '#fff' : 'rgba(0,0,0,0.45)' }} />}
-        style={{
-          marginTop: isLarge ? 12 : 10,
-          borderRadius: '8px', 
-          height: '40px', 
-          width: '100%',
-          backgroundColor: isDarkMode ? '#171C2A' :  '#f5f5f5',
-          border: isDarkMode ? 'solid 1px #1E2A47' :'1px solid #d9d9d9',
-        }}
+        className="atlas-global-search__input"
+        suffix={<SearchOutlined style={{ color: isDarkMode ? '#e2e8f0' : 'rgba(0,0,0,0.45)' }} />}
       />
     </AutoComplete>
   );
