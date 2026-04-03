@@ -214,9 +214,9 @@ body {
 }
 
 .atlas-app-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(260px, 520px) 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   flex-wrap: nowrap;
   height: 64px;
@@ -249,7 +249,7 @@ body {
   align-items: center;
   gap: 12px;
   min-width: 0;
-  flex: 0 1 520px;
+  max-width: 520px;
 }
 
 .atlas-app-header__meta {
@@ -281,19 +281,19 @@ body {
 }
 
 .atlas-app-header__search {
-  flex: 0 1 420px;
+  justify-self: center;
   min-width: 260px;
   max-width: 420px;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .atlas-app-header__actions {
-  margin-left: auto;
+  justify-self: end;
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  flex: 0 0 auto;
   white-space: nowrap;
 }
 
