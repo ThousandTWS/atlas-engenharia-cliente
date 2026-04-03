@@ -1,6 +1,5 @@
 import React from 'react';
-import { AutoComplete, Input } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Input } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from './LayoutContext.tsx';
 
@@ -17,32 +16,40 @@ export const GlobalSearch: React.FC = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useLayout();
 
+  void isDarkMode;
 
-  const onSelect = (value: string) => {
-    const option = searchOptions.find((opt) => opt.value === value);
-    if (option) {
-      navigate(option.path);
-    }
+  const resolveTarget = (raw: string) => {
+    const query = String(raw || '').trim().toLowerCase();
+    if (!query) return null;
+
+    const exact = searchOptions.find((opt) => opt.value.toLowerCase() === query);
+    if (exact) return exact;
+
+    const startsWith = searchOptions.find((opt) => opt.value.toLowerCase().startsWith(query));
+    if (startsWith) return startsWith;
+
+    const contains = searchOptions.find((opt) => opt.value.toLowerCase().includes(query));
+    return contains ?? null;
   };
 
   return (
-    <AutoComplete
-      popupMatchSelectWidth={420}
+    <Input.Search
+      size="large"
+      allowClear
+      placeholder="Pesquisar..."
       className="atlas-global-search"
-      style={{ width: '100%' }}
-      options={searchOptions.map(opt => ({ value: opt.value }))}
-      onSelect={onSelect}
-      filterOption={(inputValue, option) =>
-        option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
-      }
-      variant="borderless"
-    >
-      <Input
-        size="large"
-        placeholder="Pesquisar..."
-        className="atlas-global-search__input"
-        suffix={<SearchOutlined style={{ color: isDarkMode ? '#e2e8f0' : 'rgba(0,0,0,0.45)' }} />}
-      />
-    </AutoComplete>
+      onSearch={(value) => {
+        const target = resolveTarget(value);
+        if (target) {
+          navigate(target.path);
+        }
+      }}
+      onPressEnter={(event) => {
+        const target = resolveTarget((event.target as HTMLInputElement).value);
+        if (target) {
+          navigate(target.path);
+        }
+      }}
+    />
   );
 };
