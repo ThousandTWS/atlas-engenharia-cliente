@@ -28,7 +28,7 @@ export const WelcomeBanner: React.FC = () => {
       <div className="atlas-dashboard-brand-banner-inner">
         <Image
           preview={false}
-          src={isDarkMode ? '/atlas-logo-white.svg' : '/atlas-logo-black.svg'}
+          src="/atlas-logo-white.svg"
           alt="Atlas Engenharia"
           className="atlas-dashboard-brand-logo"
         />
