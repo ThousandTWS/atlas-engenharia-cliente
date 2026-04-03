@@ -1,19 +1,49 @@
 import React from 'react';
-import { App, Avatar, Button, Card, Col, Descriptions, Divider, Row, Space, Tag, Typography } from 'antd';
+import { App, Avatar, Button, Card, Col, Divider, Row, Space, Tag, Tooltip, Typography } from 'antd';
 import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../../core/services/authService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
-import { useUiPreferences } from '../../../shared/components/layout/uiPreferences';
 import { formatPhoneBR } from '../../../shared/utils/inputFormat';
 
 const { Title, Text } = Typography;
+
+const InfoLine: React.FC<{ label: string; value: string; copyableText?: string }> = ({
+  label,
+  value,
+  copyableText,
+}) => {
+  const content = (
+    <Text
+      style={{
+        display: 'block',
+        maxWidth: '100%',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}
+      copyable={copyableText ? { text: copyableText } : false}
+    >
+      {value}
+    </Text>
+  );
+
+  return (
+    <div style={{ minWidth: 0 }}>
+      <Text type="secondary" style={{ fontSize: 12 }}>
+        {label}
+      </Text>
+      <Tooltip title={value} placement="topLeft">
+        {content}
+      </Tooltip>
+    </div>
+  );
+};
 
 export const ProfilePage: React.FC = () => {
   const { message } = App.useApp();
   const navigate = useNavigate();
   const { isDarkMode, isMobile } = useLayout();
-  const { preferences } = useUiPreferences();
   const [user, setUser] = React.useState(authService.getCurrentUser());
   const [loggingOut, setLoggingOut] = React.useState(false);
 
@@ -52,7 +82,6 @@ export const ProfilePage: React.FC = () => {
   const username = user?.username || '-';
   const phone = user?.telefone ? formatPhoneBR(user.telefone) : '-';
   const role = user?.role || '-';
-  const enabled = user?.enabled ?? true;
 
   const initials = React.useMemo(() => {
     const parts = String(displayName || '')
@@ -79,135 +108,69 @@ export const ProfilePage: React.FC = () => {
           <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
             Meu Perfil
           </Title>
-          <Text type="secondary">Dados da sua conta e preferências de interface.</Text>
+          <Text type="secondary">Dados da sua conta.</Text>
         </Space>
 
         <Space wrap>
-          <Button
-            icon={<SettingOutlined />}
-            onClick={() => navigate('/profile/configuracoes')}
-          >
+          <Button icon={<SettingOutlined />} onClick={() => navigate('/profile/configuracoes')}>
             Configurações
           </Button>
         </Space>
       </div>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={14}>
-          <Card
-            className="atlas-services-filter-card"
-            bordered={false}
-            styles={{ body: { padding: isMobile ? 16 : 18 } }}
-          >
-            <div
+      <Card className="atlas-services-filter-card" bordered={false} styles={{ body: { padding: isMobile ? 16 : 18 } }}>
+        <Row gutter={[16, 16]} align="middle" wrap>
+          <Col flex="none">
+            <Avatar
+              size={isMobile ? 72 : 84}
+              icon={!initials ? <UserOutlined /> : undefined}
+              src={user?.profilePictureUrl ?? undefined}
               style={{
-                padding: isMobile ? 14 : 16,
-                borderRadius: 12,
-                border: '1px solid var(--atlas-border-color, rgba(148,163,184,.35))',
-                background: isDarkMode
-                  ? 'linear-gradient(135deg, rgba(30,41,59,.60), rgba(2,6,23,.55))'
-                  : 'linear-gradient(135deg, rgba(248,250,252,1), rgba(226,232,240,.65))',
+                backgroundColor: isDarkMode ? '#1E2A47' : '#E2E8F0',
+                color: isDarkMode ? '#E2E8F0' : '#0f172a',
+                fontWeight: 700,
               }}
             >
-              <Row gutter={[16, 16]} align="middle">
-                <Col flex="none">
-                  <Avatar
-                    size={isMobile ? 72 : 84}
-                    icon={!initials ? <UserOutlined /> : undefined}
-                    src={user?.profilePictureUrl ?? undefined}
-                    style={{
-                      backgroundColor: isDarkMode ? '#1E2A47' : '#E2E8F0',
-                      border: `3px solid ${isDarkMode ? '#111827' : '#FFFFFF'}`,
-                      color: isDarkMode ? '#E2E8F0' : '#0f172a',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {initials || undefined}
-                  </Avatar>
+              {initials || undefined}
+            </Avatar>
+          </Col>
+
+          <Col flex="auto" style={{ minWidth: 0 }}>
+            <Space direction="vertical" size={10} style={{ width: '100%' }}>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Title level={4} style={{ margin: 0 }}>
+                  {displayName}
+                </Title>
+                {role !== '-' ? (
+                  <Tag color="blue" style={{ marginInlineEnd: 0 }}>
+                    {role}
+                  </Tag>
+                ) : null}
+              </div>
+
+              <Row gutter={[14, 12]}>
+                <Col xs={24} sm={12} md={8}>
+                  <InfoLine label="E-mail" value={email} copyableText={user?.email || undefined} />
                 </Col>
-
-                <Col flex="auto">
-                  <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <Title level={4} style={{ margin: 0 }}>
-                        {displayName}
-                      </Title>
-                      <Tag color={enabled ? 'green' : 'red'} style={{ marginInlineEnd: 0 }}>
-                        {enabled ? 'Ativo' : 'Inativo'}
-                      </Tag>
-                      {role !== '-' ? (
-                        <Tag color="blue" style={{ marginInlineEnd: 0 }}>
-                          {role}
-                        </Tag>
-                      ) : null}
-                    </div>
-
-                    <Descriptions
-                      size="small"
-                      column={{ xs: 1, sm: 2 }}
-                      colon={false}
-                      items={[
-                        {
-                          key: 'email',
-                          label: 'E-mail',
-                          children:
-                            user?.email
-                              ? <Text copyable={{ text: user.email }}>{user.email}</Text>
-                              : email,
-                        },
-                        {
-                          key: 'username',
-                          label: 'Usuário',
-                          children:
-                            user?.username
-                              ? <Text copyable={{ text: user.username }}>{user.username}</Text>
-                              : username,
-                        },
-                        {
-                          key: 'phone',
-                          label: 'Telefone',
-                          children: phone,
-                        },
-                        {
-                          key: 'id',
-                          label: 'ID',
-                          children: user?.id ?? '-',
-                        },
-                      ]}
-                    />
-                  </Space>
+                <Col xs={24} sm={12} md={8}>
+                  <InfoLine label="Usuário" value={username} copyableText={user?.username || undefined} />
+                </Col>
+                <Col xs={24} sm={12} md={8}>
+                  <InfoLine label="Telefone" value={phone} />
                 </Col>
               </Row>
-            </div>
-
-            <Divider style={{ margin: '16px 0' }} />
-
-            <Space direction="vertical" size={4} style={{ width: '100%' }}>
-              <Text strong>Preferências rápidas</Text>
-              <Text type="secondary">
-                Breadcrumbs: {preferences.showBreadcrumbs ? 'ativados' : 'desativados'} · Busca global:{' '}
-                {preferences.showGlobalSearch ? 'ativada' : 'desativada'}
-              </Text>
             </Space>
-          </Card>
-        </Col>
+          </Col>
+        </Row>
 
-        <Col xs={24} lg={10}>
-          <Card
-            className="atlas-services-filter-card"
-            title="Sessão"
-            bordered={false}
-            styles={{ body: { padding: 16 } }}
-          >
-            <Space direction="vertical" size={10} style={{ width: '100%' }}>
-              <Text type="secondary">Encerrar sua sessão neste navegador.</Text>
-              <Button danger icon={<LogoutOutlined />} loading={loggingOut} onClick={() => void onLogout()}>
-                Sair deste navegador
-              </Button>
-            </Space>
-          </Card>
-        </Col>
-      </Row>
+        <Divider style={{ margin: '16px 0' }} />
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button danger icon={<LogoutOutlined />} loading={loggingOut} onClick={() => void onLogout()}>
+            Sair
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 };
