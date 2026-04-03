@@ -1,5 +1,5 @@
 import React from 'react';
-import { App, Button, Divider, Input, Modal, Space, Tabs, Tag, Tooltip, Typography } from 'antd';
+import { App, Button, Divider, Drawer, Input, Modal, Space, Tabs, Tag, Tooltip, Typography } from 'antd';
 import { CodeOutlined, CompressOutlined, CopyOutlined, ExpandOutlined, EyeOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { renderPdfTemplate } from '../utils/pdfTemplate';
 
@@ -19,6 +19,7 @@ export interface PdfTemplateEditorModalProps {
   cancelText?: string;
   onCancel: () => void;
   onSave: () => void | Promise<void>;
+  variant?: 'modal' | 'drawer';
 
   templateName: string;
   templateHtml: string;
@@ -39,6 +40,7 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
   cancelText = 'Cancelar',
   onCancel,
   onSave,
+  variant = 'modal',
   templateName,
   templateHtml,
   onChangeName,
@@ -123,6 +125,184 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
     }
   };
 
+  const content = (
+    <div className="atlas-pdf-template-editor">
+      <div className="atlas-pdf-template-toolbar">
+        <Space size={10} wrap>
+          {helperText ? (
+            <Text type="secondary">
+              <InfoCircleOutlined style={{ marginRight: 6 }} />
+              {helperText}
+            </Text>
+          ) : null}
+        </Space>
+
+        <Space size={8} wrap>
+          <Tooltip title={isFullscreen ? 'Sair do modo tela cheia' : 'Tela cheia'}>
+            <Button
+              className="atlas-services-button"
+              icon={isFullscreen ? <CompressOutlined /> : <ExpandOutlined />}
+              onClick={() => setIsFullscreen((current) => !current)}
+            />
+          </Tooltip>
+          <Tooltip title="Abrir prévia">
+            <Button
+              className="atlas-services-button"
+              icon={<EyeOutlined />}
+              onClick={() => setTabKey('preview')}
+              disabled={!templateHtml.trim()}
+            />
+          </Tooltip>
+          {placeholders.length ? (
+            <Tooltip title="Ver placeholders">
+              <Button
+                className="atlas-services-button"
+                icon={<CodeOutlined />}
+                onClick={() => setTabKey('placeholders')}
+              />
+            </Tooltip>
+          ) : null}
+        </Space>
+      </div>
+
+      <Divider style={{ margin: '12px 0' }} />
+
+      <Space direction="vertical" size={10} style={{ width: '100%' }}>
+        <Input
+          className="atlas-services-input"
+          placeholder="Nome do template"
+          value={templateName}
+          onChange={(event) => onChangeName(event.target.value)}
+        />
+
+        <Tabs
+          activeKey={tabKey}
+          onChange={(key) => setTabKey(key as typeof tabKey)}
+          items={[
+            {
+              key: 'editor',
+              label: 'Editor',
+              children: (
+                <Input.TextArea
+                  ref={textareaRef}
+                  className="atlas-services-input atlas-pdf-template-textarea"
+                  rows={isFullscreen ? 28 : 18}
+                  placeholder="<html>...</html>"
+                  value={templateHtml}
+                  onChange={(event) => onChangeHtml(event.target.value)}
+                />
+              ),
+            },
+            {
+              key: 'preview',
+              label: 'Prévia',
+              children: previewHtml ? (
+                <iframe
+                  className="atlas-pdf-template-preview"
+                  title="Prévia do template"
+                  sandbox=""
+                  srcDoc={previewHtml}
+                />
+              ) : (
+                <div className="atlas-pdf-template-empty">
+                  <Text type="secondary">Escreva/cole um HTML para ver a prévia.</Text>
+                </div>
+              ),
+            },
+            ...(placeholders.length
+              ? [
+                  {
+                    key: 'placeholders',
+                    label: 'Placeholders',
+                    children: (
+                      <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                        <Text type="secondary">
+                          Clique para inserir no cursor. Use o ícone para copiar.
+                        </Text>
+
+                        <div className="atlas-pdf-template-placeholders">
+                          {placeholders.map((item) => {
+                            const token = `{{${item.key}}}`;
+                            const label = item.label ? `${item.label} ` : '';
+                            return (
+                              <div key={item.key} className="atlas-pdf-template-placeholder">
+                                <Button
+                                  size="small"
+                                  className="atlas-services-button"
+                                  onClick={() => insertAtCursor(token)}
+                                >
+                                  {token}
+                                </Button>
+                                <Tooltip title="Copiar">
+                                  <Button
+                                    size="small"
+                                    className="atlas-services-button"
+                                    icon={<CopyOutlined />}
+                                    onClick={() => void copyToClipboard(token)}
+                                  />
+                                </Tooltip>
+                                <div className="atlas-pdf-template-placeholder-meta">
+                                  <Text strong>{label}{item.key}</Text>
+                                  {item.description ? (
+                                    <Text type="secondary">{item.description}</Text>
+                                  ) : null}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </Space>
+                    ),
+                  } as const,
+                ]
+              : []),
+          ]}
+        />
+      </Space>
+    </div>
+  );
+
+  const headerTitle = (
+    <Space size={10} align="center">
+      <span>{title}</span>
+      {isDirty ? <Tag color="gold">Alterações pendentes</Tag> : null}
+    </Space>
+  );
+
+  if (variant === 'drawer') {
+    return (
+      <Drawer
+        open={open}
+        onClose={handleCancel}
+        placement="right"
+        title={headerTitle}
+        width={isFullscreen ? '100vw' : 920}
+        className="atlas-services-drawer atlas-pdf-template-drawer"
+        mask
+        maskStyle={{ background: 'rgba(15, 23, 42, 0.35)' }}
+        extra={null}
+        footer={(
+          <Space style={{ width: '100%', justifyContent: 'flex-end' }} size={8} wrap>
+            <Button className="atlas-services-button" onClick={handleCancel}>
+              {cancelText}
+            </Button>
+            <Button
+              className="atlas-services-button atlas-services-button-primary"
+              type="primary"
+              onClick={() => void onSave()}
+              loading={confirmLoading}
+              disabled={!templateHtml.trim()}
+            >
+              {okText}
+            </Button>
+          </Space>
+        )}
+      >
+        {content}
+      </Drawer>
+    );
+  }
+
   return (
     <Modal
       open={open}
@@ -131,12 +311,7 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
       okText={okText}
       cancelText={cancelText}
       confirmLoading={confirmLoading}
-      title={(
-        <Space size={10} align="center">
-          <span>{title}</span>
-          {isDirty ? <Tag color="gold">Alterações pendentes</Tag> : null}
-        </Space>
-      )}
+      title={headerTitle}
       width={isFullscreen ? '100vw' : 980}
       centered={!isFullscreen}
       className="atlas-services-modal"
@@ -144,141 +319,7 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
       okButtonProps={{ className: 'atlas-services-button atlas-services-button-primary', disabled: !templateHtml.trim() }}
       cancelButtonProps={{ className: 'atlas-services-button' }}
     >
-      <div className="atlas-pdf-template-editor">
-        <div className="atlas-pdf-template-toolbar">
-          <Space size={10} wrap>
-            {helperText ? (
-              <Text type="secondary">
-                <InfoCircleOutlined style={{ marginRight: 6 }} />
-                {helperText}
-              </Text>
-            ) : null}
-          </Space>
-
-          <Space size={8} wrap>
-            <Tooltip title={isFullscreen ? 'Sair do modo tela cheia' : 'Tela cheia'}>
-              <Button
-                className="atlas-services-button"
-                icon={isFullscreen ? <CompressOutlined /> : <ExpandOutlined />}
-                onClick={() => setIsFullscreen((current) => !current)}
-              />
-            </Tooltip>
-            <Tooltip title="Abrir prévia">
-              <Button
-                className="atlas-services-button"
-                icon={<EyeOutlined />}
-                onClick={() => setTabKey('preview')}
-                disabled={!templateHtml.trim()}
-              />
-            </Tooltip>
-            {placeholders.length ? (
-              <Tooltip title="Ver placeholders">
-                <Button
-                  className="atlas-services-button"
-                  icon={<CodeOutlined />}
-                  onClick={() => setTabKey('placeholders')}
-                />
-              </Tooltip>
-            ) : null}
-          </Space>
-        </div>
-
-        <Divider style={{ margin: '12px 0' }} />
-
-        <Space direction="vertical" size={10} style={{ width: '100%' }}>
-          <Input
-            className="atlas-services-input"
-            placeholder="Nome do template"
-            value={templateName}
-            onChange={(event) => onChangeName(event.target.value)}
-          />
-
-          <Tabs
-            activeKey={tabKey}
-            onChange={(key) => setTabKey(key as typeof tabKey)}
-            items={[
-              {
-                key: 'editor',
-                label: 'Editor',
-                children: (
-                  <Input.TextArea
-                    ref={textareaRef}
-                    className="atlas-services-input atlas-pdf-template-textarea"
-                    rows={isFullscreen ? 28 : 18}
-                    placeholder="<html>...</html>"
-                    value={templateHtml}
-                    onChange={(event) => onChangeHtml(event.target.value)}
-                  />
-                ),
-              },
-              {
-                key: 'preview',
-                label: 'Prévia',
-                children: previewHtml ? (
-                  <iframe
-                    className="atlas-pdf-template-preview"
-                    title="Prévia do template"
-                    sandbox=""
-                    srcDoc={previewHtml}
-                  />
-                ) : (
-                  <div className="atlas-pdf-template-empty">
-                    <Text type="secondary">Escreva/cole um HTML para ver a prévia.</Text>
-                  </div>
-                ),
-              },
-              ...(placeholders.length
-                ? [
-                    {
-                      key: 'placeholders',
-                      label: 'Placeholders',
-                      children: (
-                        <Space direction="vertical" size={10} style={{ width: '100%' }}>
-                          <Text type="secondary">
-                            Clique para inserir no cursor. Use o ícone para copiar.
-                          </Text>
-
-                          <div className="atlas-pdf-template-placeholders">
-                            {placeholders.map((item) => {
-                              const token = `{{${item.key}}}`;
-                              const label = item.label ? `${item.label} ` : '';
-                              return (
-                                <div key={item.key} className="atlas-pdf-template-placeholder">
-                                  <Button
-                                    size="small"
-                                    className="atlas-services-button"
-                                    onClick={() => insertAtCursor(token)}
-                                  >
-                                    {token}
-                                  </Button>
-                                  <Tooltip title="Copiar">
-                                    <Button
-                                      size="small"
-                                      className="atlas-services-button"
-                                      icon={<CopyOutlined />}
-                                      onClick={() => void copyToClipboard(token)}
-                                    />
-                                  </Tooltip>
-                                  <div className="atlas-pdf-template-placeholder-meta">
-                                    <Text strong>{label}{item.key}</Text>
-                                    {item.description ? (
-                                      <Text type="secondary">{item.description}</Text>
-                                    ) : null}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </Space>
-                      ),
-                    } as const,
-                  ]
-                : []),
-            ]}
-          />
-        </Space>
-      </div>
+      {content}
     </Modal>
   );
 };
-

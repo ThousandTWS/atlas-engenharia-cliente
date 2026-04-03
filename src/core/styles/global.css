@@ -251,6 +251,15 @@ body {
   height: calc(100vh - 280px);
 }
 
+.atlas-pdf-template-drawer .ant-drawer-body {
+  height: calc(100vh - 130px);
+  overflow: auto;
+}
+
+.atlas-pdf-template-drawer .atlas-pdf-template-preview {
+  height: calc(100vh - 330px);
+}
+
 .atlas-services-table .ant-table-container {
   border-radius: 14px;
   overflow: hidden;

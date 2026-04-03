@@ -1266,6 +1266,7 @@ export const ServicesTrackingPage: React.FC = () => {
         confirmLoading={reportTemplateLoading}
         onCancel={() => setReportTemplateModalOpen(false)}
         onSave={() => void saveReportTemplate()}
+        variant="drawer"
         templateName={reportTemplateName}
         templateHtml={reportTemplateHtml}
         onChangeName={setReportTemplateName}

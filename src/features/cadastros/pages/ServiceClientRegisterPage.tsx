@@ -1330,6 +1330,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
         confirmLoading={templateLoading}
         onCancel={() => setTemplateModalOpen(false)}
         onSave={saveTemplate}
+        variant="drawer"
         templateName={templateName}
         templateHtml={templateHtml}
         onChangeName={setTemplateName}
