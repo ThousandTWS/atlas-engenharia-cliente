@@ -19,11 +19,10 @@ interface GlobalAiStrategy {
   canHandle(params: SendGlobalAiMessageParams): boolean;
   execute(params: SendGlobalAiMessageParams): Promise<string | null>;
 }
-
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() ?? '';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() || '';
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
 const GEMINI_BASE_URL = import.meta.env.VITE_GEMINI_API_BASE_URL?.trim() || 'https://generativelanguage.googleapis.com/v1beta';
-const N8N_AI_CHAT_URL = import.meta.env.VITE_N8N_AI_CHAT_URL?.trim() ?? '';
+const N8N_AI_CHAT_URL = import.meta.env.VITE_N8N_AI_CHAT_URL?.trim() || '';
 
 const normalizeN8nResponse = (response: unknown): string | null => {
   if (typeof response === 'string' && response.trim().length > 0) {

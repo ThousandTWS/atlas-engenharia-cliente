@@ -1,9 +1,10 @@
 import React from 'react';
-import { App, Avatar, Button, Card, Col, Divider, Row, Space, Tag, Tooltip, Typography } from 'antd';
+import { App, Avatar, Button, Card, Col, Divider, Row, Space, Switch, Tag, Tooltip, Typography } from 'antd';
 import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../../core/services/authService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
+import { useUiPreferences } from '../../../shared/components/layout/uiPreferences';
 import { formatPhoneBR } from '../../../shared/utils/inputFormat';
 
 const { Title, Text } = Typography;
@@ -43,7 +44,8 @@ const InfoLine: React.FC<{ label: string; value: string; copyableText?: string }
 export const ProfilePage: React.FC = () => {
   const { message } = App.useApp();
   const navigate = useNavigate();
-  const { isDarkMode, isMobile } = useLayout();
+  const { isDarkMode, isMobile, toggleTheme } = useLayout();
+  const { preferences, updatePreferences } = useUiPreferences();
   const [user, setUser] = React.useState(authService.getCurrentUser());
   const [loggingOut, setLoggingOut] = React.useState(false);
 
@@ -118,7 +120,12 @@ export const ProfilePage: React.FC = () => {
         </Space>
       </div>
 
-      <Card className="atlas-services-filter-card" bordered={false} styles={{ body: { padding: isMobile ? 16 : 18 } }}>
+      <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <Card
+          className="atlas-services-filter-card"
+          bordered={false}
+          styles={{ body: { padding: isMobile ? 16 : 18 } }}
+        >
         <Row gutter={[16, 16]} align="middle" wrap>
           <Col flex="none">
             <Avatar
@@ -170,7 +177,62 @@ export const ProfilePage: React.FC = () => {
             Sair
           </Button>
         </div>
-      </Card>
+        </Card>
+
+        <Card
+          className="atlas-services-filter-card"
+          title="Configurações"
+          bordered={false}
+          styles={{ body: { padding: 16 } }}
+          extra={
+            <Button size="small" icon={<SettingOutlined />} onClick={() => navigate('/profile/configuracoes')}>
+              Abrir página
+            </Button>
+          }
+        >
+          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'center' }}>
+              <div style={{ minWidth: 0 }}>
+                <Text strong>Tema escuro</Text>
+                <div>
+                  <Text type="secondary">Altera a aparência do sistema.</Text>
+                </div>
+              </div>
+              <Switch checked={isDarkMode} onChange={toggleTheme} />
+            </div>
+
+            <Divider style={{ margin: '10px 0' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'center' }}>
+              <div style={{ minWidth: 0 }}>
+                <Text strong>Breadcrumbs no topo</Text>
+                <div>
+                  <Text type="secondary">Mostra o caminho (Início / …) no header.</Text>
+                </div>
+              </div>
+              <Switch
+                checked={preferences.showBreadcrumbs}
+                onChange={(checked) => updatePreferences({ showBreadcrumbs: checked })}
+              />
+            </div>
+
+            <Divider style={{ margin: '10px 0' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'center' }}>
+              <div style={{ minWidth: 0 }}>
+                <Text strong>Busca global no header</Text>
+                <div>
+                  <Text type="secondary">Exibe o campo “Pesquisar…” no topo.</Text>
+                </div>
+              </div>
+              <Switch
+                checked={preferences.showGlobalSearch}
+                onChange={(checked) => updatePreferences({ showGlobalSearch: checked })}
+              />
+            </div>
+          </Space>
+        </Card>
+      </Space>
     </div>
   );
 };
