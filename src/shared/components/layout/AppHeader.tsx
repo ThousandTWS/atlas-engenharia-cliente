@@ -61,6 +61,21 @@ const resolveSegmentLabel = (segment: string) => {
   return SEGMENT_LABELS[segment] ?? toTitleCase(segment);
 };
 
+const getShortUserLabel = (value: string) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+
+  if (raw.includes('@')) {
+    return raw.split('@')[0] || raw;
+  }
+
+  const parts = raw.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0]!;
+  const first = parts[0]!;
+  const second = parts[1]!;
+  return `${first} ${second[0]}.`;
+};
+
 interface AppHeaderProps {
   collapsed: boolean;
   setCollapsed?: (collapsed: boolean) => void;
@@ -108,6 +123,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   const userName = user?.nomeCompleto || user?.email || 'Admin';
+  const shortUserName = getShortUserLabel(userName);
   const profilePicture = user?.profilePictureUrl ?? undefined;
 
   const iconButtonStyle: React.CSSProperties = {
@@ -266,7 +282,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             />
             {!isMobile && (
               <Typography.Text className="atlas-app-header__user-name" strong ellipsis>
-                {userName}
+                {shortUserName}
               </Typography.Text>
             )}
           </Space>
