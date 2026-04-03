@@ -200,6 +200,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
   const [templateLoading, setTemplateLoading] = useState(false);
   const [templateHtml, setTemplateHtml] = useState('');
   const [templateName, setTemplateName] = useState('');
+  const lastCepLookupRef = useRef<{ company: string; service: string }>({ company: '', service: '' });
 
   const serviceType = Form.useWatch<ServiceKind>('serviceType', form) || 'AVCB';
   const contractValue = Number(Form.useWatch('contractValue', form) || 0);
@@ -538,10 +539,19 @@ export const ServiceClientRegisterPage: React.FC = () => {
     }
   };
 
-  const handleCepLookup = async (target: 'company' | 'service') => {
+  const handleCepLookup = async (target: 'company' | 'service', options?: { silent?: boolean }) => {
     const cep = form.getFieldValue(target === 'company' ? 'companyCep' : 'serviceCep');
     try {
-      const lookup = await cepService.lookup(String(cep || ''));
+      const normalizedCep = String(cep || '').replace(/\D/g, '').slice(0, 8);
+      if (normalizedCep.length !== 8) {
+        return;
+      }
+
+      if (lastCepLookupRef.current[target] === normalizedCep) {
+        return;
+      }
+
+      const lookup = await cepService.lookup(normalizedCep);
       if (!lookup) {
         return;
       }
@@ -553,7 +563,10 @@ export const ServiceClientRegisterPage: React.FC = () => {
           companyState: String(lookup.state || '').toUpperCase(),
           companyCep: lookup.cep,
         });
-        message.success('Endereço preenchido pelo CEP.');
+        lastCepLookupRef.current.company = normalizedCep;
+        if (!options?.silent) {
+          message.success('Endereço preenchido pelo CEP.');
+        }
         return;
       }
 
@@ -564,11 +577,44 @@ export const ServiceClientRegisterPage: React.FC = () => {
         serviceState: String(lookup.state || '').toUpperCase(),
         serviceCep: lookup.cep,
       });
-      message.success('Endereço preenchido pelo CEP.');
+      lastCepLookupRef.current.service = normalizedCep;
+      if (!options?.silent) {
+        message.success('Endereço preenchido pelo CEP.');
+      }
     } catch (error: any) {
-      message.error(error.message || 'Erro ao consultar CEP.');
+      if (!options?.silent) {
+        message.error(error.message || 'Erro ao consultar CEP.');
+      }
     }
   };
+
+  useEffect(() => {
+    const digits = companyCep.replace(/\D/g, '').slice(0, 8);
+    if (digits.length !== 8) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      void handleCepLookup('company', { silent: true });
+    }, 450);
+
+    return () => window.clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyCep]);
+
+  useEffect(() => {
+    const digits = serviceCep.replace(/\D/g, '').slice(0, 8);
+    if (digits.length !== 8) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      void handleCepLookup('service', { silent: true });
+    }, 450);
+
+    return () => window.clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceCep]);
 
   const syncClientRecord = async (values: any) => {
     const payload = {

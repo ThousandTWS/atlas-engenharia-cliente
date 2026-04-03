@@ -18,11 +18,14 @@ import {
   UserOutlined,
   EnvironmentOutlined,
   ArrowLeftOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Cliente } from '../../../core/services/clientesService';
 import { clientesService } from '../../../core/services/clientesService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
+import { cepService } from '../../../core/services/cepService';
+import { normalizeCepBR } from '../../../shared/utils/inputFormat';
 
 const { Title, Text } = Typography;
 
@@ -41,6 +44,10 @@ export const ClienteFormPage: React.FC = () => {
   const { isMobile, isDarkMode } = useLayout();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
+  const lastCepRef = React.useRef<string>('');
+
+  const watchedCep = Form.useWatch<string>('cep', form) || '';
 
   useEffect(() => {
     if (!isEditing || !id) {
@@ -63,6 +70,55 @@ export const ClienteFormPage: React.FC = () => {
 
     loadCliente();
   }, [form, id, isEditing, message, navigate]);
+
+  const fillAddressByCep = async (rawCep: string) => {
+    const digits = String(rawCep || '').replace(/\D/g, '').slice(0, 8);
+    if (digits.length !== 8) {
+      return;
+    }
+
+    if (lastCepRef.current === digits) {
+      return;
+    }
+
+    setCepLoading(true);
+    try {
+      const lookup = await cepService.lookup(digits);
+      if (!lookup) {
+        return;
+      }
+
+      lastCepRef.current = digits;
+
+      const current = form.getFieldsValue(['rua', 'bairro', 'cidade', 'estado']);
+      form.setFieldsValue({
+        cep: lookup.cep || digits,
+        rua: current.rua || lookup.street,
+        bairro: current.bairro || lookup.neighborhood,
+        cidade: current.cidade || lookup.city,
+        estado: current.estado || String(lookup.state || '').toUpperCase(),
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao consultar CEP.';
+      message.error(errorMessage);
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const digits = String(watchedCep || '').replace(/\D/g, '').slice(0, 8);
+    if (digits.length !== 8) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      void fillAddressByCep(digits);
+    }, 450);
+
+    return () => window.clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedCep]);
 
   const onFinish = async (values: Cliente) => {
     setSaving(true);
@@ -191,8 +247,14 @@ export const ClienteFormPage: React.FC = () => {
                       name="cep"
                       label="CEP"
                       rules={[{ required: true, message: 'Informe o CEP' }]}
+                      normalize={normalizeCepBR}
                     >
-                      <Input style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }} placeholder="01234-567" />
+                      <Input
+                        style={{ background: isDarkMode ? '#171C2A' : '#fff', border: isDarkMode ? 'solid 1px #1E2A47' : 'solid 1px #CBD5E1' }}
+                        placeholder="01234-567"
+                        suffix={cepLoading ? <LoadingOutlined /> : null}
+                        onBlur={() => void fillAddressByCep(String(form.getFieldValue('cep') || ''))}
+                      />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={16}>
