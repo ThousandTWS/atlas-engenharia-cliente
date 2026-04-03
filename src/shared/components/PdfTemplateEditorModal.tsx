@@ -1,7 +1,22 @@
 import React from 'react';
 import { App, Button, Divider, Drawer, Input, Modal, Space, Tabs, Tag, Tooltip, Typography } from 'antd';
-import { CodeOutlined, CompressOutlined, CopyOutlined, ExpandOutlined, EyeOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import {
+  CodeOutlined,
+  CompressOutlined,
+  CopyOutlined,
+  ExpandOutlined,
+  EyeOutlined,
+  InfoCircleOutlined,
+  SearchOutlined,
+  SwapOutlined,
+} from '@ant-design/icons';
 import { renderPdfTemplate } from '../utils/pdfTemplate';
+import AceEditor from 'react-ace';
+
+import 'ace-builds/src-noconflict/mode-html';
+import 'ace-builds/src-noconflict/theme-github';
+import 'ace-builds/src-noconflict/ext-language_tools';
+import 'ace-builds/src-noconflict/ext-searchbox';
 
 const { Text } = Typography;
 
@@ -56,6 +71,7 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
   const [baseline, setBaseline] = React.useState({ name: '', html: '' });
 
   const textareaRef = React.useRef<any>(null);
+  const aceRef = React.useRef<React.ComponentRef<typeof AceEditor> | null>(null);
 
   React.useEffect(() => {
     if (!open) {
@@ -78,6 +94,18 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
   }, [templateHtml, previewVariables]);
 
   const insertAtCursor = (value: string) => {
+    const aceEditor = aceRef.current?.editor;
+    if (aceEditor) {
+      try {
+        setTabKey('editor');
+        aceEditor.focus();
+        aceEditor.insert(value);
+        return;
+      } catch {
+        // Fall back to textarea insertion.
+      }
+    }
+
     const textArea = textareaRef.current?.resizableTextArea?.textArea as HTMLTextAreaElement | undefined;
     if (!textArea) {
       onChangeHtml(`${templateHtml || ''}${value}`);
@@ -98,6 +126,34 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
         // Ignore selection issues in older browsers.
       }
     });
+  };
+
+  const openFind = () => {
+    const aceEditor = aceRef.current?.editor;
+    if (!aceEditor) {
+      return;
+    }
+    try {
+      setTabKey('editor');
+      aceEditor.focus();
+      aceEditor.execCommand('find');
+    } catch {
+      // Ignore search failures.
+    }
+  };
+
+  const openReplace = () => {
+    const aceEditor = aceRef.current?.editor;
+    if (!aceEditor) {
+      return;
+    }
+    try {
+      setTabKey('editor');
+      aceEditor.focus();
+      aceEditor.execCommand('replace');
+    } catch {
+      // Ignore replace failures.
+    }
   };
 
   const handleCancel = () => {
@@ -135,9 +191,26 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
               {helperText}
             </Text>
           ) : null}
+          <Text type="secondary" className="atlas-pdf-template-kbd-hint">
+            Ctrl+F buscar • Ctrl+H substituir
+          </Text>
         </Space>
 
         <Space size={8} wrap>
+          <Tooltip title="Buscar (Ctrl+F)">
+            <Button
+              className="atlas-services-button"
+              icon={<SearchOutlined />}
+              onClick={openFind}
+            />
+          </Tooltip>
+          <Tooltip title="Substituir (Ctrl+H)">
+            <Button
+              className="atlas-services-button"
+              icon={<SwapOutlined />}
+              onClick={openReplace}
+            />
+          </Tooltip>
           <Tooltip title={isFullscreen ? 'Sair do modo tela cheia' : 'Tela cheia'}>
             <Button
               className="atlas-services-button"
@@ -183,14 +256,35 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
               key: 'editor',
               label: 'Editor',
               children: (
-                <Input.TextArea
-                  ref={textareaRef}
-                  className="atlas-services-input atlas-pdf-template-textarea"
-                  rows={isFullscreen ? 28 : 18}
-                  placeholder="<html>...</html>"
-                  value={templateHtml}
-                  onChange={(event) => onChangeHtml(event.target.value)}
-                />
+                <div className="atlas-pdf-template-ace">
+                  <AceEditor
+                    ref={aceRef}
+                    mode="html"
+                    theme="github"
+                    width="100%"
+                    height={isFullscreen ? '70vh' : '460px'}
+                    value={templateHtml}
+                    onChange={(value) => onChangeHtml(value)}
+                    name="atlas-pdf-template-ace-editor"
+                    editorProps={{ $blockScrolling: true }}
+                    setOptions={{
+                      useWorker: false,
+                      showPrintMargin: false,
+                      tabSize: 2,
+                      enableBasicAutocompletion: true,
+                      enableLiveAutocompletion: true,
+                      enableSnippets: true,
+                    }}
+                  />
+                  <Input.TextArea
+                    ref={textareaRef}
+                    className="atlas-services-input atlas-pdf-template-textarea atlas-pdf-template-textarea-fallback"
+                    rows={isFullscreen ? 28 : 18}
+                    placeholder="<html>...</html>"
+                    value={templateHtml}
+                    onChange={(event) => onChangeHtml(event.target.value)}
+                  />
+                </div>
               ),
             },
             {
