@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { App, Button, Divider, Drawer, Input, Modal, Space, Tabs, Tag, Tooltip, Typography } from 'antd';
 import {
