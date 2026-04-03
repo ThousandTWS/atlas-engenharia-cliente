@@ -109,11 +109,27 @@ export const authService = {
    * Renovar sessão (rotaciona refresh token)
    */
   refreshSession: async (): Promise<TokenResponse> => {
-    const currentRefreshToken = authSessionStore.getRefreshToken();
+    if (isCookieAuthMode()) {
+      const response = await apiClient.post<TokenResponse>('/auth/refresh-token');
+      authSessionStore.setSession({
+        accessToken: response.data.token ?? null,
+        refreshToken: response.data.refreshToken ?? null,
+        user: response.data.user ?? null,
+      });
 
-    const response = currentRefreshToken
-      ? await apiClient.post<TokenResponse>('/auth/refresh-token', { refreshToken: currentRefreshToken } as RefreshTokenDTO)
-      : await apiClient.post<TokenResponse>('/auth/refresh-token');
+      notifyUserUpdated(authSessionStore.getUser());
+      return response.data;
+    }
+
+    const currentRefreshToken = authSessionStore.getRefreshToken();
+    if (!currentRefreshToken) {
+      throw new Error('Refresh token não encontrado');
+    }
+
+    const response = await apiClient.post<TokenResponse>(
+      '/auth/refresh-token',
+      { refreshToken: currentRefreshToken } as RefreshTokenDTO
+    );
 
     authSessionStore.setSession({
       accessToken: response.data.token ?? null,
@@ -156,6 +172,10 @@ export const authService = {
       }
     } else if (authSessionStore.getAccessToken()) {
       return true;
+    } else if (!authSessionStore.getRefreshToken()) {
+      authSessionStore.clear();
+      notifyUserUpdated(null);
+      return false;
     }
 
     try {
