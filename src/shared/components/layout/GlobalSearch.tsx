@@ -27,7 +27,7 @@ export const GlobalSearch: React.FC = () => {
 
   return (
     <AutoComplete
-      popupMatchSelectWidth
+      popupMatchSelectWidth={420}
       className="atlas-global-search"
       style={{ width: '100%' }}
       options={searchOptions.map(opt => ({ value: opt.value }))}
@@ -38,7 +38,7 @@ export const GlobalSearch: React.FC = () => {
       variant="borderless"
     >
       <Input
-        size="middle"
+        size="large"
         placeholder="Pesquisar..."
         className="atlas-global-search__input"
         suffix={<SearchOutlined style={{ color: isDarkMode ? '#e2e8f0' : 'rgba(0,0,0,0.45)' }} />}
