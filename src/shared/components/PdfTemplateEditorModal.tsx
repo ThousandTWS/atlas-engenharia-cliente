@@ -254,7 +254,13 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
           items={[
             {
               key: 'editor',
-              label: 'Editor',
+              label: (
+                <Tooltip title="Editor">
+                  <span aria-label="Editor">
+                    <CodeOutlined />
+                  </span>
+                </Tooltip>
+              ),
               children: (
                 <div className="atlas-pdf-template-ace">
                   <AceEditor
