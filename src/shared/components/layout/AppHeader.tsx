@@ -19,6 +19,7 @@ import { subscribeUserUpdated } from '../../../core/events/userObserver';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationDrawer } from './NotificationDrawer';
 import { useGlobalAiDrawer } from '../../../features/ai/context/GlobalAiDrawerContext';
+import { useUiPreferences } from './uiPreferences';
 
 const { Header } = Layout;
 
@@ -31,6 +32,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   servicos: 'Serviços',
   prestadores: 'Prestadores',
   profile: 'Meu Perfil',
+  configuracoes: 'Configurações',
   notificacoes: 'Notificações',
   obras: 'Obras',
   processos: 'Processos Adm',
@@ -81,6 +83,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleDrawer } = useGlobalAiDrawer();
+  const { preferences } = useUiPreferences();
   const [user, setUser] = React.useState<User | null>(authService.getCurrentUser());
   const [isElevated, setIsElevated] = React.useState(false);
 
@@ -104,6 +107,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       navigate('/auth/login');
     } else if (key === 'profile') {
       navigate('/profile');
+    } else if (key === 'settings') {
+      navigate('/profile/configuracoes');
     }
   };
 
@@ -206,7 +211,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </Tooltip>
 
         <div className="atlas-app-header__meta">
-          {!isMobile ? (
+          {!isMobile && preferences.showBreadcrumbs ? (
             <Breadcrumb className="atlas-app-header__breadcrumb" items={breadcrumbItems} />
           ) : null}
           <Typography.Text className="atlas-app-header__title" strong ellipsis>
@@ -215,7 +220,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
       </div>
 
-      {!isMobile ? (
+      {!isMobile && preferences.showGlobalSearch ? (
         <div className="atlas-app-header__search">
           <GlobalSearch />
         </div>

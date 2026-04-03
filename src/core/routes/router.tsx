@@ -20,6 +20,7 @@ import { CLCBFormPage } from '../../features/clcb/pages/CLCBFormPage';
 import { AVCBPage } from '../../features/avcb/pages/AVCBPage';
 import { AVCBFormPage } from '../../features/avcb/pages/AVCBFormPage';
 import { ProfilePage } from '../../features/profile/pages/ProfilePage';
+import { ProfileSettingsPage } from '../../features/profile/pages/ProfileSettingsPage';
 import { NotFoundPage } from '../../shared/components/NotFoundPage';
 import {GestaoClientesPage} from "../../features/gestao-de-clientes/page/GestaoDeClientes.tsx";
 import { ClienteFormPage } from "../../features/gestao-de-clientes/page/ClienteFormPage.tsx";
@@ -68,6 +69,10 @@ export const router = createBrowserRouter([
       {
         path: 'profile',
         element: <ProfilePage />,
+      },
+      {
+        path: 'profile/configuracoes',
+        element: <ProfileSettingsPage />,
       },
       {
         path: 'notificacoes',
