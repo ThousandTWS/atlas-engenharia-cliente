@@ -39,6 +39,7 @@ import { htmlToPlainText } from '../../../core/utils/text';
 import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
 import { pdfTemplatesService } from '../../../core/services/pdfTemplatesService';
 import { renderPdfTemplate, toSafeTextVar } from '../../../shared/utils/pdfTemplate';
+import { PdfTemplateEditorModal } from '../../../shared/components/PdfTemplateEditorModal';
 import {
   servicesTrackingApi,
   type ServiceHistoryEntry,
@@ -1259,36 +1260,54 @@ export const ServicesTrackingPage: React.FC = () => {
         </Form>
       </Modal>
 
-      <Modal
-        className="atlas-services-modal"
+      <PdfTemplateEditorModal
         open={reportTemplateModalOpen}
-        onCancel={() => setReportTemplateModalOpen(false)}
-        onOk={() => void saveReportTemplate()}
-        okText="Salvar template"
-        cancelText="Cancelar"
-        confirmLoading={reportTemplateLoading}
-        width={960}
         title="Modelo de PDF: Relatório do acompanhamento"
-      >
-        <Space direction="vertical" size={10} style={{ width: '100%' }}>
-          <Text type="secondary">
-            Placeholders: {'{{code}}'}, {'{{client_name}}'}, {'{{pending_conditions}}'}, etc.
-          </Text>
-          <Input
-            className="atlas-services-input"
-            placeholder="Nome do template"
-            value={reportTemplateName}
-            onChange={(event) => setReportTemplateName(event.target.value)}
-          />
-          <Input.TextArea
-            className="atlas-services-input"
-            rows={18}
-            placeholder="<html>...</html>"
-            value={reportTemplateHtml}
-            onChange={(event) => setReportTemplateHtml(event.target.value)}
-          />
-        </Space>
-      </Modal>
+        confirmLoading={reportTemplateLoading}
+        onCancel={() => setReportTemplateModalOpen(false)}
+        onSave={() => void saveReportTemplate()}
+        templateName={reportTemplateName}
+        templateHtml={reportTemplateHtml}
+        onChangeName={setReportTemplateName}
+        onChangeHtml={setReportTemplateHtml}
+        helperText={<>Placeholders comuns: {'{{code}}'}, {'{{client_name}}'}, {'{{pending_conditions}}'}.</>}
+        placeholders={[
+          { key: 'code', label: 'Código', description: 'Identificador do serviço.' },
+          { key: 'client_name', label: 'Cliente', description: 'Nome do cliente.' },
+          { key: 'generated_at', label: 'Gerado em', description: 'Data/hora de geração.' },
+          { key: 'service_type', label: 'Tipo', description: 'Tipo de serviço.' },
+          { key: 'subtype', label: 'Subtipo', description: 'Subtipo do serviço.' },
+          { key: 'situation', label: 'Situação', description: 'Situação no acompanhamento.' },
+          { key: 'pending_conditions', label: 'Pendências', description: 'Pendências em aberto.' },
+          { key: 'description', label: 'Descrição', description: 'Descrição/resumo.' },
+          { key: 'phone', label: 'Telefone', description: 'Telefone do cliente.' },
+          { key: 'contract_value', label: 'Contrato', description: 'Valor do contrato.' },
+          { key: 'contract_date', label: 'Data contrato', description: 'Data do contrato.' },
+          { key: 'payment_condition', label: 'Condição', description: 'Condição de pagamento.' },
+          { key: 'receivable', label: 'A receber', description: 'Valor a receber.' },
+          { key: 'received', label: 'Recebido', description: 'Valor recebido.' },
+          { key: 'costs', label: 'Custos', description: 'Custos.' },
+          { key: 'folder_url', label: 'Pasta', description: 'Link da pasta.' },
+        ]}
+        previewVariables={{
+          code: toSafeTextVar('SRV-0001'),
+          client_name: toSafeTextVar('Cliente Exemplo'),
+          generated_at: toSafeTextVar(dayjs().format('DD/MM/YYYY HH:mm')),
+          service_type: toSafeTextVar('AVCB'),
+          subtype: toSafeTextVar('Renovação'),
+          situation: toSafeTextVar('EM_ANDAMENTO'),
+          pending_conditions: toSafeTextVar('Documentação, Vistoria'),
+          description: toSafeTextVar('Resumo do acompanhamento do serviço.'),
+          phone: toSafeTextVar('(11) 99999-9999'),
+          contract_value: toSafeTextVar(formatCurrency(1200)),
+          contract_date: toSafeTextVar(dayjs().format('DD/MM/YYYY')),
+          payment_condition: toSafeTextVar('2x 30 dias'),
+          receivable: toSafeTextVar(formatCurrency(1200)),
+          received: toSafeTextVar(formatCurrency(600)),
+          costs: toSafeTextVar(formatCurrency(200)),
+          folder_url: toSafeTextVar('https://drive.google.com/...'),
+        }}
+      />
 
       <Modal
         className="atlas-services-modal"

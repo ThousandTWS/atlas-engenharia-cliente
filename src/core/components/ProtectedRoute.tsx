@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { authService } from "../services/authService";
+import { Spin } from "antd";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -48,7 +49,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   });
 
   if (isCheckingAuth) {
-    return null;
+    return (
+      <div className="atlas-page-loading">
+        <Spin size="large" />
+      </div>
+    );
   }
 
   if (!isAuthenticated) {

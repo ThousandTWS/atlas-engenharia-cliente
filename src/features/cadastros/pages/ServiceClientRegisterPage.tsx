@@ -31,6 +31,7 @@ import { servicesTrackingApi } from '../../services/servicesTrackingApi';
 import { cadastrosApi, type BudgetRecord, type LinkedProviderRecord, type PaymentConditionRecord, type PaymentInstallment, type ProviderRecord, type ServiceKind, type ServiceRegistrationRecord, type SubtypeConfig } from '../cadastrosApi';
 import { formatPhoneBR, normalizeCepBR, normalizeCpfCnpjBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
 import { renderPdfTemplate, toSafeTextVar } from '../../../shared/utils/pdfTemplate';
+import { PdfTemplateEditorModal } from '../../../shared/components/PdfTemplateEditorModal';
 
 const { Title, Text } = Typography;
 
@@ -1323,36 +1324,60 @@ export const ServiceClientRegisterPage: React.FC = () => {
         </Space>
       </Form>
 
-      <Modal
+      <PdfTemplateEditorModal
         open={templateModalOpen}
-        onCancel={() => setTemplateModalOpen(false)}
-        onOk={saveTemplate}
-        okText="Salvar template"
-        cancelText="Cancelar"
-        confirmLoading={templateLoading}
-        width={960}
         title="Modelo de PDF: Pedido de compra"
-        className="atlas-services-modal"
-      >
-        <Space direction="vertical" size={10} style={{ width: '100%' }}>
-          <Text type="secondary">
-            Use placeholders como {'{{code}}'} e blocos HTML prontos: {'{{installments_rows}}'}, {'{{providers_rows}}'}.
-          </Text>
-          <Input
-            className="atlas-services-input"
-            placeholder="Nome do template"
-            value={templateName}
-            onChange={(event) => setTemplateName(event.target.value)}
-          />
-          <Input.TextArea
-            className="atlas-services-input"
-            rows={18}
-            placeholder="<html>...</html>"
-            value={templateHtml}
-            onChange={(event) => setTemplateHtml(event.target.value)}
-          />
-        </Space>
-      </Modal>
+        confirmLoading={templateLoading}
+        onCancel={() => setTemplateModalOpen(false)}
+        onSave={saveTemplate}
+        templateName={templateName}
+        templateHtml={templateHtml}
+        onChangeName={setTemplateName}
+        onChangeHtml={setTemplateHtml}
+        helperText={
+          <>Use placeholders como {'{{code}}'} e blocos HTML: {'{{installments_rows}}'}, {'{{providers_rows}}'}.</>
+        }
+        placeholders={[
+          { key: 'code', label: 'Código', description: 'Identificador do cadastro.' },
+          { key: 'generated_at', label: 'Gerado em', description: 'Data/hora de geração.' },
+          { key: 'company_document', label: 'Documento', description: 'CPF/CNPJ do cliente.' },
+          { key: 'company_name', label: 'Razão social', description: 'Nome da empresa.' },
+          { key: 'contact_name', label: 'Contato', description: 'Responsável.' },
+          { key: 'phone', label: 'Telefone', description: 'Telefone principal.' },
+          { key: 'email', label: 'E-mail', description: 'E-mail principal.' },
+          { key: 'company_address', label: 'Endereço', description: 'Endereço do cliente.' },
+          { key: 'service_address', label: 'Local', description: 'Local do serviço.' },
+          { key: 'service_type', label: 'Tipo', description: 'Tipo de serviço.' },
+          { key: 'subtype', label: 'Subtipo', description: 'Subtipo do serviço.' },
+          { key: 'contract_value', label: 'Contrato', description: 'Valor do contrato.' },
+          { key: 'contract_date', label: 'Data contrato', description: 'Data do contrato.' },
+          { key: 'invoice_value', label: 'Fatura', description: 'Valor da fatura.' },
+          { key: 'payment_condition', label: 'Condição', description: 'Condição de pagamento.' },
+          { key: 'installments_rows', label: 'Parcelas', description: 'Linhas HTML (tabela) das parcelas.' },
+          { key: 'providers_rows', label: 'Prestadores', description: 'Linhas HTML (tabela) dos prestadores.' },
+        ]}
+        previewVariables={{
+          code: toSafeTextVar(editingRecord?.code || 'ATLAS-0001'),
+          generated_at: toSafeTextVar(dayjs().format('DD/MM/YYYY HH:mm')),
+          company_document: toSafeTextVar(form.getFieldValue('companyDocument') || '00.000.000/0001-00'),
+          company_name: toSafeTextVar(form.getFieldValue('companyName') || 'Empresa Exemplo LTDA'),
+          contact_name: toSafeTextVar(form.getFieldValue('contactName') || 'Fulano de Tal'),
+          phone: toSafeTextVar(form.getFieldValue('phone') || '(11) 99999-9999'),
+          email: toSafeTextVar(form.getFieldValue('email') || 'contato@exemplo.com'),
+          company_address: toSafeTextVar(form.getFieldValue('companyAddress') || 'Rua Exemplo, 123 - Centro'),
+          service_address: toSafeTextVar(form.getFieldValue('serviceAddress') || 'Av. Modelo, 456 - Bairro'),
+          service_type: toSafeTextVar(form.getFieldValue('serviceType') || 'AVCB'),
+          subtype: toSafeTextVar(form.getFieldValue('subtype') || '-'),
+          contract_value: toSafeTextVar(formatCurrency(Number(form.getFieldValue('contractValue') || 0) || 0)),
+          contract_date: toSafeTextVar(form.getFieldValue('contractDate') ? dayjs(form.getFieldValue('contractDate')).format('DD/MM/YYYY') : '-'),
+          invoice_value: toSafeTextVar(formatCurrency(Number(form.getFieldValue('invoiceValue') || 0) || 0)),
+          payment_condition: toSafeTextVar(form.getFieldValue('paymentConditionLabel') || '-'),
+          installments_rows:
+            '<tr><td style="text-align:center">1</td><td style="text-align:right">R$ 1.000,00</td><td style="text-align:center">10/04/2026</td><td style="text-align:center">Pix</td></tr>',
+          providers_rows:
+            '<tr><td>Prestador Exemplo</td><td style="text-align:right">R$ 500,00</td><td style="text-align:right">R$ 450,00</td><td style="text-align:center">Sim</td></tr>',
+        }}
+      />
 
       <Card className="atlas-services-table-card" style={{ marginTop: 24 }} title="Cadastros recentes" loading={loading}>
         <Table rowKey="id" columns={recentServicesColumns} dataSource={services} pagination={{ pageSize: 6 }} />
