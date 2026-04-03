@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, Typography, Avatar, Space, Dropdown, Button, Tooltip } from 'antd';
+import { Layout, Typography, Avatar, Space, Dropdown, Button, Tooltip, Breadcrumb } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   UserOutlined,
@@ -12,7 +12,7 @@ import {
   MoonOutlined,
   SunOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../../../core/services/authService';
 import type { User } from '../../../core/services/authService';
 import { subscribeUserUpdated } from '../../../core/events/userObserver';
@@ -21,13 +21,53 @@ import { NotificationDrawer } from './NotificationDrawer';
 import { useGlobalAiDrawer } from '../../../features/ai/context/GlobalAiDrawerContext';
 
 const { Header } = Layout;
+
+const SEGMENT_LABELS: Record<string, string> = {
+  '': 'Início',
+  acompanhamento: 'Acompanhamento',
+  'acompanhamento-servicos': 'Acompanhamento',
+  cadastros: 'Cadastros',
+  orcamentos: 'Orçamentos',
+  servicos: 'Serviços',
+  prestadores: 'Prestadores',
+  profile: 'Meu Perfil',
+  notificacoes: 'Notificações',
+  obras: 'Obras',
+  processos: 'Processos Adm',
+  clcb: 'CLCB',
+  avcb: 'AVCB',
+  lancamentos: 'Lançamentos',
+  'custos-indiretos': 'Custos Indiretos',
+  'gestao-de-clientes': 'Clientes',
+  'gestao-ads': 'Gestão ADS',
+  chat: 'Chat',
+  novo: 'Novo',
+  editar: 'Editar',
+};
+
+const isLikelyIdSegment = (segment: string) =>
+  /^\d+$/.test(segment) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment);
+
+const toTitleCase = (value: string) =>
+  value
+    .replace(/[-_]+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+const resolveSegmentLabel = (segment: string) => {
+  if (isLikelyIdSegment(segment)) {
+    return 'Detalhe';
+  }
+  return SEGMENT_LABELS[segment] ?? toTitleCase(segment);
+};
+
 interface AppHeaderProps {
   collapsed: boolean;
   setCollapsed?: (collapsed: boolean) => void;
   isMobile?: boolean;
   sideBarWidth: number;
   isDarkMode: boolean;
-  toggleTheme: ( ) => void;
+  toggleTheme: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -38,16 +78,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   isDarkMode,
   toggleTheme,
 }) => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { toggleDrawer } = useGlobalAiDrawer();
   const [user, setUser] = React.useState<User | null>(authService.getCurrentUser());
-
+  const [isElevated, setIsElevated] = React.useState(false);
 
   React.useEffect(() => {
     const unsubscribe = subscribeUserUpdated((updatedUser) => {
       setUser(updatedUser);
     });
     return unsubscribe;
+  }, []);
+
+  React.useEffect(() => {
+    const update = () => setIsElevated((window.scrollY || 0) > 4);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
   }, []);
 
   const handleProfileMenuClick: MenuProps['onClick'] = async ({ key }) => {
@@ -95,40 +143,83 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   const headerWidth = isMobile ? '100%' : `calc(100% - ${sideBarWidth}px)`;
 
+  const breadcrumbItems = React.useMemo(() => {
+    const segments = location.pathname.split('/').filter(Boolean);
+    const items: { title: React.ReactNode }[] = [
+      { title: <Link to="/">{SEGMENT_LABELS['']}</Link> },
+    ];
+
+    let accumulated = '';
+    segments.forEach((segment, index) => {
+      accumulated += `/${segment}`;
+      const label = resolveSegmentLabel(segment);
+      const isLast = index === segments.length - 1;
+      items.push({
+        title: isLast ? <span>{label}</span> : <Link to={accumulated}>{label}</Link>,
+      });
+    });
+
+    return items;
+  }, [location.pathname]);
+
+  const pageTitle = React.useMemo(() => {
+    const segments = location.pathname.split('/').filter(Boolean);
+    if (!segments.length) {
+      return 'Insights';
+    }
+
+    const last = segments[segments.length - 1] || '';
+    const label = resolveSegmentLabel(last);
+    const first = resolveSegmentLabel(segments[0] || '');
+
+    if (label === 'Novo' || label === 'Editar') {
+      return `${label} • ${first}`;
+    }
+
+    return label;
+  }, [location.pathname]);
+
   return (
     <Header
       style={{
         position: 'fixed',
         zIndex: 1000,
         width: headerWidth,
-        padding: isMobile ? '0 12px' : '0 24px',
-        background: isDarkMode ? '#141B2D' : '#F8FAFC',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: isDarkMode ? '1px solid #1E2A47' : '1px solid #CBD5E140',
-        transition: 'all 0.2s',
+        padding: isMobile ? '0 12px' : '0 18px',
         right: 0,
       }}
+      className={[
+        'atlas-app-header',
+        isDarkMode ? 'atlas-app-header--dark' : 'atlas-app-header--light',
+        isElevated ? 'atlas-app-header--elevated' : '',
+      ].filter(Boolean).join(' ')}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '24px', flex: 1, minWidth: 0 }}>
-        {isMobile && (
+      <div className="atlas-app-header__left">
+        <Tooltip title={collapsed ? 'Expandir menu' : 'Recolher menu'}>
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed?.(!collapsed)}
-            style={{ fontSize: '16px', width: 40, height: 40 }}
+            className="atlas-header-icon-btn"
+            style={{ ...iconButtonStyle, fontSize: 16 }}
           />
-        )}
-        <div
-          style={{
-            display: isMobile && !collapsed ? 'none' : 'block',
-            minWidth: isMobile ? 0 : 12,
-          }}
-        />
+        </Tooltip>
+
+        <div className="atlas-app-header__meta">
+          {!isMobile ? (
+            <Breadcrumb className="atlas-app-header__breadcrumb" items={breadcrumbItems} />
+          ) : null}
+          <Typography.Text className="atlas-app-header__title" strong ellipsis>
+            {pageTitle}
+          </Typography.Text>
+        </div>
       </div>
 
-      {!isMobile && <GlobalSearch />}
+      {!isMobile ? (
+        <div className="atlas-app-header__search">
+          <GlobalSearch />
+        </div>
+      ) : null}
 
       <Space size={isMobile ? 10 : 14} style={{ marginLeft: 'auto', alignItems: 'center' }} wrap>
         {!isMobile && (
@@ -136,6 +227,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <Button
               type="text"
               icon={<QuestionCircleOutlined style={{ fontSize: '18px' }} />}
+              className="atlas-header-icon-btn"
               style={iconButtonStyle}
             />
           </Tooltip>
@@ -145,6 +237,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <Button
             type="text"
             icon={<RobotOutlined style={{ fontSize: '18px', color: '#4285F4' }} />}
+            className="atlas-header-icon-btn"
             style={iconButtonStyle}
             onClick={toggleDrawer}
           />
@@ -158,19 +251,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <Button
             type="text"
             icon={isDarkMode ? <SunOutlined style={{ fontSize: '18px' }} /> : <MoonOutlined style={{ fontSize: '18px' }} />}
+            className="atlas-header-icon-btn"
             style={iconButtonStyle}
             onClick={toggleTheme}
           />
         </Tooltip>
 
         <Dropdown menu={{ items: profileMenuItems, onClick: handleProfileMenuClick }} placement="bottomRight" trigger={['click']}>
-          <Space style={{ cursor: 'pointer', marginLeft: isMobile ? 0 : '4px' }}>
+          <Space className="atlas-app-header__user" style={{ cursor: 'pointer', marginLeft: isMobile ? 0 : '4px' }}>
             <Avatar 
               size={isMobile ? 'small' : 'default'} 
               icon={<UserOutlined />} 
               src={profilePicture}
             />
-            {!isMobile && <Typography.Text strong>{userName}</Typography.Text>}
+            {!isMobile && (
+              <Typography.Text className="atlas-app-header__user-name" strong ellipsis>
+                {userName}
+              </Typography.Text>
+            )}
           </Space>
         </Dropdown>
       </Space>
