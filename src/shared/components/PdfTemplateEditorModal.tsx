@@ -2,9 +2,7 @@ import React from 'react';
 import { App, Button, Divider, Drawer, Input, Modal, Space, Tabs, Tag, Tooltip, Typography } from 'antd';
 import {
   CodeOutlined,
-  CompressOutlined,
   CopyOutlined,
-  ExpandOutlined,
   EyeOutlined,
   InfoCircleOutlined,
   SearchOutlined,
@@ -67,7 +65,6 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
 }) => {
   const { message } = App.useApp();
   const [tabKey, setTabKey] = React.useState<'editor' | 'preview' | 'placeholders'>(defaultTabKey);
-  const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [baseline, setBaseline] = React.useState({ name: '', html: '' });
 
   const textareaRef = React.useRef<any>(null);
@@ -79,7 +76,6 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
     }
 
     setTabKey(defaultTabKey);
-    setIsFullscreen(false);
     setBaseline({ name: templateName, html: templateHtml });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -211,13 +207,6 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
               onClick={openReplace}
             />
           </Tooltip>
-          <Tooltip title={isFullscreen ? 'Sair do modo tela cheia' : 'Tela cheia'}>
-            <Button
-              className="atlas-services-button"
-              icon={isFullscreen ? <CompressOutlined /> : <ExpandOutlined />}
-              onClick={() => setIsFullscreen((current) => !current)}
-            />
-          </Tooltip>
           <Tooltip title="Abrir prévia">
             <Button
               className="atlas-services-button"
@@ -268,7 +257,7 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
                     mode="html"
                     theme="github"
                     width="100%"
-                    height={isFullscreen ? '70vh' : '460px'}
+                    height="460px"
                     value={templateHtml}
                     onChange={(value) => onChangeHtml(value)}
                     name="atlas-pdf-template-ace-editor"
@@ -285,7 +274,7 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
                   <Input.TextArea
                     ref={textareaRef}
                     className="atlas-services-input atlas-pdf-template-textarea atlas-pdf-template-textarea-fallback"
-                    rows={isFullscreen ? 28 : 18}
+                    rows={18}
                     placeholder="<html>...</html>"
                     value={templateHtml}
                     onChange={(event) => onChangeHtml(event.target.value)}
@@ -376,7 +365,7 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
         onClose={handleCancel}
         placement="right"
         title={headerTitle}
-        width={isFullscreen ? '100vw' : 920}
+        width={920}
         className="atlas-services-drawer atlas-pdf-template-drawer"
         mask
         maskStyle={{ background: 'rgba(15, 23, 42, 0.35)' }}
@@ -412,10 +401,9 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
       cancelText={cancelText}
       confirmLoading={confirmLoading}
       title={headerTitle}
-      width={isFullscreen ? '100vw' : 980}
-      centered={!isFullscreen}
+      width={980}
+      centered
       className="atlas-services-modal"
-      wrapClassName={isFullscreen ? 'atlas-pdf-template-modal-fullscreen' : undefined}
       okButtonProps={{ className: 'atlas-services-button atlas-services-button-primary', disabled: !templateHtml.trim() }}
       cancelButtonProps={{ className: 'atlas-services-button' }}
     >
