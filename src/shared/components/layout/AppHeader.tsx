@@ -4,7 +4,7 @@ import type { MenuProps } from 'antd';
 import {
   UserOutlined,
   LogoutOutlined,
-  SettingOutlined,
+
   QuestionCircleOutlined,
   RobotOutlined,
   MenuUnfoldOutlined,
@@ -129,11 +129,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       key: 'profile',
       label: 'Meu Perfil',
       icon: <UserOutlined />,
-    },
-    {
-      key: 'settings',
-      label: 'Configurações',
-      icon: <SettingOutlined />,
     },
     {
       type: 'divider',

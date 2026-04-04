@@ -112,12 +112,6 @@ export const ProfilePage: React.FC = () => {
           </Title>
           <Text type="secondary">Dados da sua conta.</Text>
         </Space>
-
-        <Space wrap>
-          <Button icon={<SettingOutlined />} onClick={() => navigate('/profile/configuracoes')}>
-            Configurações
-          </Button>
-        </Space>
       </div>
 
       <Space direction="vertical" size={16} style={{ width: '100%' }}>
