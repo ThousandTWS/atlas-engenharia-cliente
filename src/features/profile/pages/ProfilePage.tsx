@@ -1,6 +1,6 @@
 import React from 'react';
 import { App, Avatar, Button, Card, Col, Divider, Row, Space, Switch, Tag, Tooltip, Typography } from 'antd';
-import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../../core/services/authService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
@@ -178,11 +178,6 @@ export const ProfilePage: React.FC = () => {
           title="Configurações"
           bordered={false}
           styles={{ body: { padding: 16 } }}
-          extra={
-            <Button size="small" icon={<SettingOutlined />} onClick={() => navigate('/profile/configuracoes')}>
-              Abrir página
-            </Button>
-          }
         >
           <Space direction="vertical" size={12} style={{ width: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'center' }}>
