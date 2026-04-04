@@ -1,13 +1,19 @@
 export interface ChainHandler<TInput, TResult> {
-  setNext(handler: ChainHandler<TInput, TResult>): ChainHandler<TInput, TResult>;
+  setNext(
+    handler: ChainHandler<TInput, TResult>,
+  ): ChainHandler<TInput, TResult>;
   handle(input: TInput): Promise<TResult | null>;
 }
 
-export abstract class AbstractChainHandler<TInput, TResult>
-  implements ChainHandler<TInput, TResult> {
+export abstract class AbstractChainHandler<
+  TInput,
+  TResult,
+> implements ChainHandler<TInput, TResult> {
   private nextHandler: ChainHandler<TInput, TResult> | null = null;
 
-  setNext(handler: ChainHandler<TInput, TResult>): ChainHandler<TInput, TResult> {
+  setNext(
+    handler: ChainHandler<TInput, TResult>,
+  ): ChainHandler<TInput, TResult> {
     this.nextHandler = handler;
     return handler;
   }

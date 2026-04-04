@@ -32,5 +32,6 @@ export class ArrayIterator<T> implements ResettableIterator<T> {
   }
 }
 
-export const createArrayIterator = <T>(items: readonly T[]): ResettableIterator<T> =>
-  new ArrayIterator(items);
+export const createArrayIterator = <T>(
+  items: readonly T[],
+): ResettableIterator<T> => new ArrayIterator(items);

@@ -1,21 +1,31 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { liveProvider, type LiveEvent, type LiveEventType } from '../realtime/liveProvider';
-import { FirstMatchStrategyResolver, type StrategyMatcher } from '../patterns/strategy';
+import {
+  liveProvider,
+  type LiveEvent,
+  type LiveEventType,
+} from "../realtime/liveProvider";
+import {
+  FirstMatchStrategyResolver,
+  type StrategyMatcher,
+} from "../patterns/strategy";
 
-export type NotificationType = 'info' | 'success' | 'warning' | 'error';
+export type NotificationType = "info" | "success" | "warning" | "error";
 
 export interface OpenNotificationParams {
   title: string;
   description?: string;
   type?: NotificationType;
-  category?: 'financial' | 'technical';
-  origin?: 'manual' | 'automatic';
+  category?: "financial" | "technical";
+  origin?: "manual" | "automatic";
   ruleId?: string;
   showToast?: boolean;
 }
 
 const isKnownType = (value: unknown): value is NotificationType =>
-  value === 'success' || value === 'warning' || value === 'error' || value === 'info';
+  value === "success" ||
+  value === "warning" ||
+  value === "error" ||
+  value === "info";
 
 const eventTypeStrategy = <TResult>(
   eventType: LiveEventType,
@@ -25,13 +35,16 @@ const eventTypeStrategy = <TResult>(
   resolve: () => output,
 });
 
-const eventTypeToNotificationTypeResolver = new FirstMatchStrategyResolver<LiveEventType, NotificationType>(
+const eventTypeToNotificationTypeResolver = new FirstMatchStrategyResolver<
+  LiveEventType,
+  NotificationType
+>(
   [
-    eventTypeStrategy('created', 'success'),
-    eventTypeStrategy('updated', 'info'),
-    eventTypeStrategy('deleted', 'warning'),
+    eventTypeStrategy("created", "success"),
+    eventTypeStrategy("updated", "info"),
+    eventTypeStrategy("deleted", "warning"),
   ],
-  () => 'info',
+  () => "info",
 );
 
 interface NotificationFormatterImplementation {
@@ -55,15 +68,21 @@ abstract class NotificationBridge {
 class ResourceNotificationFormatter implements NotificationFormatterImplementation {
   format(event: LiveEvent): OpenNotificationParams {
     const meta = event.meta ?? {};
-    const metaTitle = typeof meta.title === 'string' ? meta.title : '';
-    const resourceLabel = typeof meta.resourceLabel === 'string' ? meta.resourceLabel : event.channel;
+    const metaTitle = typeof meta.title === "string" ? meta.title : "";
+    const resourceLabel =
+      typeof meta.resourceLabel === "string"
+        ? meta.resourceLabel
+        : event.channel;
     const idValue = (event.payload as { id?: string | number } | undefined)?.id;
 
-    const description = idValue !== undefined
-      ? `${resourceLabel} #${idValue}`
-      : `${resourceLabel}`;
+    const description =
+      idValue !== undefined
+        ? `${resourceLabel} #${idValue}`
+        : `${resourceLabel}`;
 
-    const metaType = isKnownType(meta.notificationType) ? meta.notificationType : undefined;
+    const metaType = isKnownType(meta.notificationType)
+      ? meta.notificationType
+      : undefined;
 
     return {
       title: metaTitle || `Evento ${event.type}`,
@@ -87,7 +106,7 @@ class FallbackNotificationFormatter implements NotificationFormatterImplementati
 
 class ResourceNotificationBridge extends NotificationBridge {
   supports(event: LiveEvent): boolean {
-    return event.channel.startsWith('resources.');
+    return event.channel.startsWith("resources.");
   }
 }
 
@@ -113,7 +132,7 @@ class NotificationMediator {
     return {
       title: `Evento ${event.type}`,
       description: event.channel,
-      type: 'info',
+      type: "info",
       showToast: false,
     };
   }
@@ -122,7 +141,7 @@ class NotificationMediator {
     notify: (params: OpenNotificationParams) => void,
   ): () => void {
     return liveProvider.subscribe({
-      channel: 'resources.*',
+      channel: "resources.*",
       callback: (event) => {
         notify(this.resolve(event));
       },

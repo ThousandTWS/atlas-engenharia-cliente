@@ -1,11 +1,11 @@
 export type CsvPrimitive = string | number | boolean | null | undefined | Date;
 export type CsvRecord = Record<string, CsvPrimitive>;
 
-export type CsvDelimiter = ',' | ';';
+export type CsvDelimiter = "," | ";";
 
 const normalizeValue = (value: CsvPrimitive): string => {
   if (value === null || value === undefined) {
-    return '';
+    return "";
   }
 
   if (value instanceof Date) {
@@ -15,9 +15,15 @@ const normalizeValue = (value: CsvPrimitive): string => {
   return String(value);
 };
 
-const escapeCsvValue = (value: CsvPrimitive, delimiter: CsvDelimiter): string => {
+const escapeCsvValue = (
+  value: CsvPrimitive,
+  delimiter: CsvDelimiter,
+): string => {
   const rawValue = normalizeValue(value);
-  const shouldEscape = rawValue.includes('"') || rawValue.includes('\n') || rawValue.includes(delimiter);
+  const shouldEscape =
+    rawValue.includes('"') ||
+    rawValue.includes("\n") ||
+    rawValue.includes(delimiter);
   if (shouldEscape) {
     return `"${rawValue.replace(/"/g, '""')}"`;
   }
@@ -29,38 +35,44 @@ export const buildCsv = (
   columns?: string[],
   options?: { delimiter?: CsvDelimiter; includeBom?: boolean },
 ): string => {
-  const delimiter = options?.delimiter ?? ';';
+  const delimiter = options?.delimiter ?? ";";
   if (!rows.length) {
     const headers = columns ?? [];
     const content = headers.join(delimiter);
     return options?.includeBom ? `\uFEFF${content}` : content;
   }
 
-  const headers = columns && columns.length > 0
-    ? columns
-    : Object.keys(rows[0]);
+  const headers =
+    columns && columns.length > 0 ? columns : Object.keys(rows[0]);
 
-  const lines = [headers.map((header) => escapeCsvValue(header, delimiter)).join(delimiter)];
+  const lines = [
+    headers.map((header) => escapeCsvValue(header, delimiter)).join(delimiter),
+  ];
 
   rows.forEach((row) => {
-    const line = headers.map((header) => escapeCsvValue(row[header], delimiter)).join(delimiter);
+    const line = headers
+      .map((header) => escapeCsvValue(row[header], delimiter))
+      .join(delimiter);
     lines.push(line);
   });
 
-  const content = lines.join('\n');
+  const content = lines.join("\n");
   return options?.includeBom ? `\uFEFF${content}` : content;
 };
 
 export const downloadCsv = (csv: string, filename: string) => {
-  if (typeof document === 'undefined') {
+  if (typeof document === "undefined") {
     return;
   }
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
+  const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.setAttribute('download', filename.endsWith('.csv') ? filename : `${filename}.csv`);
+  anchor.setAttribute(
+    "download",
+    filename.endsWith(".csv") ? filename : `${filename}.csv`,
+  );
   document.body.appendChild(anchor);
   anchor.click();
   document.body.removeChild(anchor);
@@ -69,7 +81,7 @@ export const downloadCsv = (csv: string, filename: string) => {
 
 const parseCsvLine = (line: string, delimiter: CsvDelimiter): string[] => {
   const values: string[] = [];
-  let current = '';
+  let current = "";
   let inQuotes = false;
 
   for (let index = 0; index < line.length; index += 1) {
@@ -89,7 +101,7 @@ const parseCsvLine = (line: string, delimiter: CsvDelimiter): string[] => {
 
     if (char === delimiter && !inQuotes) {
       values.push(current.trim());
-      current = '';
+      current = "";
       continue;
     }
 
@@ -103,11 +115,13 @@ const parseCsvLine = (line: string, delimiter: CsvDelimiter): string[] => {
 const detectDelimiter = (headerLine: string): CsvDelimiter => {
   const commaCount = (headerLine.match(/,/g) || []).length;
   const semicolonCount = (headerLine.match(/;/g) || []).length;
-  return semicolonCount >= commaCount ? ';' : ',';
+  return semicolonCount >= commaCount ? ";" : ",";
 };
 
-export const parseCsvToRecords = (csvText: string): Record<string, string>[] => {
-  const text = csvText.replace(/^\uFEFF/, '');
+export const parseCsvToRecords = (
+  csvText: string,
+): Record<string, string>[] => {
+  const text = csvText.replace(/^\uFEFF/, "");
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -122,16 +136,21 @@ export const parseCsvToRecords = (csvText: string): Record<string, string>[] => 
 
   return lines.slice(1).map((line) => {
     const values = parseCsvLine(line, delimiter);
-    return headers.reduce<Record<string, string>>((accumulator, header, index) => {
-      accumulator[header] = values[index] ?? '';
-      return accumulator;
-    }, {});
+    return headers.reduce<Record<string, string>>(
+      (accumulator, header, index) => {
+        accumulator[header] = values[index] ?? "";
+        return accumulator;
+      },
+      {},
+    );
   });
 };
 
 export const toNumber = (value: string) => {
-  const cleaned = value.replace(/[^\d,.-]/g, '');
-  const normalized = cleaned.includes(',') ? cleaned.replace(/\./g, '').replace(',', '.') : cleaned;
+  const cleaned = value.replace(/[^\d,.-]/g, "");
+  const normalized = cleaned.includes(",")
+    ? cleaned.replace(/\./g, "").replace(",", ".")
+    : cleaned;
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 };

@@ -10,7 +10,9 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
-  const [isAuthenticated, setIsAuthenticated] = React.useState(authService.isAuthenticated());
+  const [isAuthenticated, setIsAuthenticated] = React.useState(
+    authService.isAuthenticated(),
+  );
 
   React.useEffect(() => {
     let isMounted = true;
