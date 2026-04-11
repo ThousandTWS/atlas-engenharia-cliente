@@ -57,17 +57,7 @@ const formatCurrency = (value?: number) =>
     currency: 'BRL',
   }).format(Number(value || 0));
 
-const normalizeDelimitedText = (content: string) => {
-  const lines = content.split(/\r?\n/).filter(Boolean);
-  if (lines.length === 0) {
-    return '';
-  }
-
-  const delimiter = lines[0].includes(';') && !lines[0].includes(',') ? ';' : ',';
-  return lines.map((line) => line.replaceAll(delimiter, ',')).join('\n');
-};
-
-const parseCsvLine = (line: string) => {
+const parseCsvLine = (line: string, delimiter: string = ',') => {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
@@ -87,7 +77,7 @@ const parseCsvLine = (line: string) => {
       continue;
     }
 
-    if (char === ',' && !inQuotes) {
+    if (char === delimiter && !inQuotes) {
       result.push(current.trim());
       current = '';
       continue;
@@ -109,18 +99,23 @@ const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
   }
 
   const rawText = await file.text();
-  const content = normalizeDelimitedText(rawText);
-  const lines = content.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  const lines = rawText.split(/\r?\n/).filter((line) => line.trim().length > 0);
 
   if (lines.length < 2) {
     throw new Error('Arquivo deve conter pelo menos um cabeçalho e uma linha de dados.');
   }
 
-  const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase().trim());
+  // Detectar delimitador (ponto-e-vírgula ou vírgula)
+  const firstLine = lines[0];
+  const semiColonCount = (firstLine.match(/;/g) || []).length;
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const delimiter = semiColonCount > commaCount ? ';' : ',';
+
+  const headers = parseCsvLine(lines[0], delimiter).map((header) => header.toLowerCase().trim());
   const resolveIndex = (...candidates: string[]) =>
     headers.findIndex((header) => candidates.some((candidate) => header.includes(candidate.toLowerCase())));
 
-  const dateIndex = resolveIndex('data', 'date', 'dt', 'data_transacao');
+  const dateIndex = resolveIndex('data', 'date', 'dt', 'data_transacao', 'data lançamento');
   const descriptionIndex = resolveIndex('descricao', 'descrição', 'historico', 'histórico', 'description', 'desc', 'movimentacao');
   const valueIndex = resolveIndex('valor', 'amount', 'vlr', 'valor_transacao', 'credito', 'debito');
   const paymentIndex = resolveIndex('forma', 'metodo', 'método', 'payment', 'forma_pagamento', 'tipo');
@@ -135,11 +130,26 @@ const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
     const line = lines[i].trim();
     if (!line) continue;
 
-    const columns = parseCsvLine(line);
+    const columns = parseCsvLine(line, delimiter);
 
-    // Extrair valor (suporte para diferentes formatos)
+    // Extrair valor com suporte a formatos: 1.234,56 (BR) ou 1,234.56 (US)
     const rawValue = String(columns[valueIndex] ?? '0').trim();
-    const value = Number(rawValue.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.'));
+    let value: number;
+
+    // Detectar formato do valor
+    const lastCommaPos = rawValue.lastIndexOf(',');
+    const lastDotPos = rawValue.lastIndexOf('.');
+
+    if (lastCommaPos > lastDotPos) {
+      // Formato brasileiro: 1.234,56 (ponto = milhares, vírgula = decimal)
+      value = Number(rawValue.replace(/\./g, '').replace(',', '.'));
+    } else if (lastDotPos > lastCommaPos) {
+      // Formato americano: 1,234.56 (vírgula = milhares, ponto = decimal)
+      value = Number(rawValue.replace(/,/g, ''));
+    } else {
+      // Sem separadores
+      value = Number(rawValue);
+    }
 
     // Extrair data (suporte para diferentes formatos)
     const rawDate = String(columns[dateIndex] ?? '').trim();
@@ -158,7 +168,7 @@ const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
     const row: FinancialImportRow = {
       data: date.isValid() ? date.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
       descricao: String(columns[descriptionIndex] || '').trim() || 'Transação importada',
-      valor: Number.isFinite(value) && value > 0 ? Math.abs(value) : 0,
+      valor: Number.isFinite(value) && value !== 0 ? Math.abs(value) : 0,
       formaPagamento: String(columns[paymentIndex] || '').trim() || '',
       status: 'A_CONFIRMAR' as FinancialLaunchStatus,
       codigoServico: '',
