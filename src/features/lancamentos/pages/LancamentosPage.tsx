@@ -312,6 +312,23 @@ export const LancamentosPage: React.FC = () => {
   const [showMissingFieldsModal, setShowMissingFieldsModal] = useState(false);
   const resumo = response.resumo || { total: 0, pago: 0, aPagar: 0, previsto: 0 };
 
+  const handleAutoRegisterClient = useCallback(() => {
+    setImportRows((current) => current.map((row) => ({
+      ...row,
+      nomeCliente: row.nomeCliente?.trim() ? row.nomeCliente : 'Cliente automático',
+    })));
+    setMissingFieldDefaults((prev) => ({ ...prev, nomeCliente: 'Cliente automático' }));
+    setShowMissingFieldsModal(false);
+  }, []);
+
+  const handleNavigateToClientRegistration = useCallback(() => {
+    setShowMissingFieldsModal(false);
+    setImportModalOpen(false);
+    setImportRows([]);
+    setDetectedFormat(null);
+    navigate('/gestao-de-clientes/novo');
+  }, [navigate]);
+
   useEffect(() => {
     if (importRows.length === 0) {
       setMissingFields([]);
@@ -880,12 +897,39 @@ export const LancamentosPage: React.FC = () => {
           setShowMissingFieldsModal(false);
         }}
         onCancel={() => setShowMissingFieldsModal(false)}
-        okText="Aplicar padrões"
-        cancelText="Fechar"
+        footer={(
+          <Space style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+            {missingFields.includes('nomeCliente') && (
+              <Button onClick={handleNavigateToClientRegistration} type="default">
+                Cadastrar cliente
+              </Button>
+            )}
+            {missingFields.includes('nomeCliente') && (
+              <Button onClick={handleAutoRegisterClient} type="dashed">
+                Cadastro automático
+              </Button>
+            )}
+            <Button
+              type="primary"
+              onClick={() => {
+                setImportRows((current) => applyMissingFieldDefaults(current, missingFieldDefaults));
+                setShowMissingFieldsModal(false);
+              }}
+            >
+              Aplicar padrões
+            </Button>
+          </Space>
+        )}
       >
         <Text>
           Foram identificados campos adicionais ausentes em parte dos lançamentos importados. Informe valores padrão para aplicar às linhas que não possuem estes campos.
         </Text>
+
+        {missingFields.includes('nomeCliente') && (
+          <Text type="warning" style={{ display: 'block', marginTop: 12 }}>
+            O nome do cliente está ausente em algumas linhas. Você pode cadastrar o cliente manualmente ou usar cadastro automático para preencher um valor padrão.
+          </Text>
+        )}
 
         <Space direction="vertical" style={{ width: '100%', marginTop: 16 }}>
           {missingFields.map((field) => (
