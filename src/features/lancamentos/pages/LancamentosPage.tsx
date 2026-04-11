@@ -8,6 +8,7 @@ import {
   Drawer,
   Form,
   Input,
+  Modal,
   Row,
   Select,
   Space,
@@ -416,14 +417,21 @@ export const LancamentosPage: React.FC = () => {
       title: 'Código serviço',
       dataIndex: 'codigoServico',
       render: (_, record, index) => (
-        <Input
-          value={record.codigoServico}
-          onChange={(event) => {
-            const next = [...importRows];
-            next[index] = { ...record, codigoServico: event.target.value };
-            setImportRows(next);
-          }}
-        />
+        <Space size={8} style={{ width: '100%', display: 'flex' }}>
+          <Input
+            placeholder={activeTab === 'ENTRADA' ? 'Recomendado' : 'Opcional'}
+            value={record.codigoServico}
+            onChange={(event) => {
+              const next = [...importRows];
+              next[index] = { ...record, codigoServico: event.target.value };
+              setImportRows(next);
+            }}
+            style={{ flex: 1 }}
+          />
+          {activeTab === 'ENTRADA' && (!record.codigoServico || record.codigoServico.trim() === '') && (
+            <Tag color="orange">Vazio</Tag>
+          )}
+        </Space>
       ),
     },
     {
@@ -443,6 +451,40 @@ export const LancamentosPage: React.FC = () => {
   ];
 
   const handleImport = useCallback(async () => {
+    // Validar se há linhas sem código de serviço em ENTRADA
+    const rowsWithoutService = activeTab === 'ENTRADA' 
+      ? importRows.filter((row) => !row.codigoServico || row.codigoServico.trim() === '')
+      : [];
+
+    if (rowsWithoutService.length > 0) {
+      Modal.confirm({
+        title: 'Confirmação de importação',
+        content: `${rowsWithoutService.length} de ${importRows.length} lançamentos não possuem código de serviço vinculado. Deseja importar mesmo assim? Você poderá vincular posteriormente.`,
+        okText: 'Importar',
+        cancelText: 'Cancelar',
+        onOk: async () => {
+          setImporting(true);
+          try {
+            await financialLaunchService.importBatch({
+              origem: importOrigin,
+              tipo: activeTab,
+              rows: importRows,
+            });
+            message.success('Lançamentos importados com sucesso.');
+            setImportModalOpen(false);
+            setImportRows([]);
+            void fetchLancamentos();
+          } catch (error) {
+            message.error(`Erro ao importar lançamentos: ${(error as Error).message}`);
+          } finally {
+            setImporting(false);
+          }
+        },
+      });
+      return;
+    }
+
+    // Se todas as linhas têm código de serviço, importar direto
     setImporting(true);
     try {
       await financialLaunchService.importBatch({
@@ -625,6 +667,11 @@ export const LancamentosPage: React.FC = () => {
               <strong>Formato esperado:</strong> Arquivo CSV com colunas de Data, Descrição/Valor.
               Cada linha será uma transação que pode ser editada antes de importar.
             </Text>
+            {activeTab === 'ENTRADA' && (
+              <Text type="warning" style={{ fontSize: '12px', marginTop: 8, display: 'block' }}>
+                ℹ️ <strong>Nota:</strong> O código de serviço é opcional na importação. Você poderá preencher ou vincular depois se necessário.
+              </Text>
+            )}
           </div>
 
           <Upload
