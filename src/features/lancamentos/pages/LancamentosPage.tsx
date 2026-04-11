@@ -129,11 +129,12 @@ const detectImportFormat = (fileContent: string): { format: 'INTER' | 'ASAAS'; d
   return { format: delimiter === ';' ? 'INTER' : 'ASAAS', delimiter, isBrazilianFormat: delimiter === ';' };
 };
 
-type AdditionalImportField = 'formaPagamento' | 'codigoServico' | 'nomePrestador' | 'observacao';
+type AdditionalImportField = 'formaPagamento' | 'codigoServico' | 'nomeCliente' | 'nomePrestador' | 'observacao';
 
 const additionalFieldLabels: Record<AdditionalImportField, string> = {
   formaPagamento: 'Forma de pagamento',
   codigoServico: 'Código de serviço',
+  nomeCliente: 'Cliente',
   nomePrestador: 'Prestador',
   observacao: 'Observação',
 };
@@ -202,6 +203,7 @@ const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
   const descriptionIndex = resolveIndex('descricao', 'descrição', 'historico', 'histórico', 'description', 'desc', 'movimentacao');
   const valueIndex = resolveIndex('valor', 'amount', 'vlr', 'valor_transacao', 'credito', 'debito');
   const paymentIndex = resolveIndex('forma', 'metodo', 'método', 'payment', 'forma_pagamento', 'tipo');
+  const clientNameIndex = resolveIndex('nome', 'cliente', 'name', 'customer');
 
   if (dateIndex === -1 && descriptionIndex === -1 && valueIndex === -1) {
     throw new Error('Não foi possível identificar as colunas necessárias (data, descrição, valor) no arquivo.');
@@ -249,6 +251,7 @@ const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
       formaPagamento: String(columns[paymentIndex] || '').trim() || '',
       status: 'A_CONFIRMAR' as FinancialLaunchStatus,
       codigoServico: '',
+      nomeCliente: String(columns[clientNameIndex] || '').trim() || '',
       nomePrestador: '',
       observacao: `Importado do ${format === 'INTER' ? 'Inter' : 'Asaas'}`,
     };
@@ -530,6 +533,20 @@ export const LancamentosPage: React.FC = () => {
             <Tag color="orange">Vazio</Tag>
           )}
         </Space>
+      ),
+    },
+    {
+      title: 'Cliente',
+      dataIndex: 'nomeCliente',
+      render: (_, record, index) => (
+        <Input
+          value={record.nomeCliente}
+          onChange={(event) => {
+            const next = [...importRows];
+            next[index] = { ...record, nomeCliente: event.target.value };
+            setImportRows(next);
+          }}
+        />
       ),
     },
     {

@@ -92,6 +92,7 @@ export interface FinancialImportRow {
   status?: FinancialLaunchStatus;
   codigoServico?: string;
   prestadorId?: number;
+  nomeCliente?: string;
   nomePrestador?: string;
   observacao?: string;
 }
