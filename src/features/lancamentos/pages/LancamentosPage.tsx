@@ -380,7 +380,9 @@ export const LancamentosPage: React.FC = () => {
     {
       title: activeTab === 'SAIDA' ? 'Prestador' : 'Cliente',
       key: 'person',
-      render: (_, record) => record.nomePrestador || record.nomeCliente || '-',
+      render: (_, record) => activeTab === 'SAIDA'
+        ? record.nomePrestador || record.nomeCliente || '-'
+        : record.nomeCliente || record.nomePrestador || '-',
     },
     {
       title: 'Serviço',
