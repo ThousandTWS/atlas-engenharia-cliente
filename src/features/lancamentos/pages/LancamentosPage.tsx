@@ -148,6 +148,9 @@ const getMissingAdditionalFields = (rows: FinancialImportRow[]): AdditionalImpor
   if (rows.some((row) => !row.codigoServico || !row.codigoServico.trim())) {
     fields.push('codigoServico');
   }
+  if (rows.some((row) => !row.nomeCliente || !row.nomeCliente.trim())) {
+    fields.push('nomeCliente');
+  }
   if (rows.some((row) => !row.nomePrestador || !row.nomePrestador.trim())) {
     fields.push('nomePrestador');
   }
@@ -161,6 +164,7 @@ const getMissingAdditionalFields = (rows: FinancialImportRow[]): AdditionalImpor
 const getMissingFieldCounts = (rows: FinancialImportRow[]): Record<AdditionalImportField, number> => ({
   formaPagamento: rows.filter((row) => !row.formaPagamento || !row.formaPagamento.trim()).length,
   codigoServico: rows.filter((row) => !row.codigoServico || !row.codigoServico.trim()).length,
+  nomeCliente: rows.filter((row) => !row.nomeCliente || !row.nomeCliente.trim()).length,
   nomePrestador: rows.filter((row) => !row.nomePrestador || !row.nomePrestador.trim()).length,
   observacao: rows.filter((row) => !row.observacao || !row.observacao.trim()).length,
 });
@@ -172,6 +176,7 @@ const applyMissingFieldDefaults = (
   ...row,
   formaPagamento: row.formaPagamento?.trim() ? row.formaPagamento : defaults.formaPagamento,
   codigoServico: row.codigoServico?.trim() ? row.codigoServico : defaults.codigoServico,
+  nomeCliente: row.nomeCliente?.trim() ? row.nomeCliente : defaults.nomeCliente,
   nomePrestador: row.nomePrestador?.trim() ? row.nomePrestador : defaults.nomePrestador,
   observacao: row.observacao?.trim() ? row.observacao : defaults.observacao,
 }));
@@ -300,6 +305,7 @@ export const LancamentosPage: React.FC = () => {
   const [missingFieldDefaults, setMissingFieldDefaults] = useState<Record<AdditionalImportField, string>>({
     formaPagamento: '',
     codigoServico: '',
+    nomeCliente: '',
     nomePrestador: '',
     observacao: '',
   });
@@ -822,7 +828,7 @@ export const LancamentosPage: React.FC = () => {
 
                 setDetectedFormat(detected);
                 setImportRows(rows);
-                setMissingFieldDefaults({ formaPagamento: '', codigoServico: '', nomePrestador: '', observacao: '' });
+                setMissingFieldDefaults({ formaPagamento: '', codigoServico: '', nomeCliente: '', nomePrestador: '', observacao: '' });
 
                 const missing = getMissingAdditionalFields(rows);
                 if (missing.length > 0) {
