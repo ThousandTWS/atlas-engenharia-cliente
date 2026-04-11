@@ -208,7 +208,18 @@ const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
   const descriptionIndex = resolveIndex('descricao', 'descrição', 'historico', 'histórico', 'description', 'desc', 'movimentacao');
   const valueIndex = resolveIndex('valor', 'amount', 'vlr', 'valor_transacao', 'credito', 'debito');
   const paymentIndex = resolveIndex('forma', 'metodo', 'método', 'payment', 'forma_pagamento', 'tipo');
-  const clientNameIndex = resolveIndex('nome', 'cliente', 'name', 'customer');
+  let clientNameIndex = resolveIndex('nome', 'cliente', 'name', 'customer', 'empresa', 'razao', 'razão', 'fornecedor');
+  
+  // Se não encontrou a coluna de nome/cliente, tentar procurar pela primeira coluna que não é data, descrição ou valor
+  if (clientNameIndex === -1) {
+    for (let i = 0; i < headers.length; i++) {
+      const h = headers[i];
+      if (i !== dateIndex && i !== descriptionIndex && i !== valueIndex && i !== paymentIndex && h.trim().length > 0) {
+        clientNameIndex = i;
+        break;
+      }
+    }
+  }
 
   if (dateIndex === -1 && descriptionIndex === -1 && valueIndex === -1) {
     throw new Error('Não foi possível identificar as colunas necessárias (data, descrição, valor) no arquivo.');
