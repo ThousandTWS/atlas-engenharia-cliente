@@ -407,10 +407,10 @@ export const LancamentosPage: React.FC = () => {
     },
     {
       title: activeTab === 'SAIDA' ? 'Prestador' : 'Cliente',
-      key: 'person',
-      render: (_, record) => activeTab === 'SAIDA'
-        ? record.nomePrestador || record.nomeCliente || '-'
-        : record.nomeCliente || record.nomePrestador || '-',
+      dataIndex: activeTab === 'SAIDA' ? 'nomePrestador' : 'nomeCliente',
+      render: (value, record) => activeTab === 'SAIDA'
+        ? value || record.nomeCliente || '-'
+        : value || record.nomePrestador || '-',
     },
     {
       title: 'Serviço',
