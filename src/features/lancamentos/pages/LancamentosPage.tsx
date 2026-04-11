@@ -129,6 +129,52 @@ const detectImportFormat = (fileContent: string): { format: 'INTER' | 'ASAAS'; d
   return { format: delimiter === ';' ? 'INTER' : 'ASAAS', delimiter, isBrazilianFormat: delimiter === ';' };
 };
 
+type AdditionalImportField = 'formaPagamento' | 'codigoServico' | 'nomePrestador' | 'observacao';
+
+const additionalFieldLabels: Record<AdditionalImportField, string> = {
+  formaPagamento: 'Forma de pagamento',
+  codigoServico: 'Código de serviço',
+  nomePrestador: 'Prestador',
+  observacao: 'Observação',
+};
+
+const getMissingAdditionalFields = (rows: FinancialImportRow[]): AdditionalImportField[] => {
+  const fields: AdditionalImportField[] = [];
+
+  if (rows.some((row) => !row.formaPagamento || !row.formaPagamento.trim())) {
+    fields.push('formaPagamento');
+  }
+  if (rows.some((row) => !row.codigoServico || !row.codigoServico.trim())) {
+    fields.push('codigoServico');
+  }
+  if (rows.some((row) => !row.nomePrestador || !row.nomePrestador.trim())) {
+    fields.push('nomePrestador');
+  }
+  if (rows.some((row) => !row.observacao || !row.observacao.trim())) {
+    fields.push('observacao');
+  }
+
+  return fields;
+};
+
+const getMissingFieldCounts = (rows: FinancialImportRow[]): Record<AdditionalImportField, number> => ({
+  formaPagamento: rows.filter((row) => !row.formaPagamento || !row.formaPagamento.trim()).length,
+  codigoServico: rows.filter((row) => !row.codigoServico || !row.codigoServico.trim()).length,
+  nomePrestador: rows.filter((row) => !row.nomePrestador || !row.nomePrestador.trim()).length,
+  observacao: rows.filter((row) => !row.observacao || !row.observacao.trim()).length,
+});
+
+const applyMissingFieldDefaults = (
+  rows: FinancialImportRow[],
+  defaults: Record<AdditionalImportField, string>,
+): FinancialImportRow[] => rows.map((row) => ({
+  ...row,
+  formaPagamento: row.formaPagamento?.trim() ? row.formaPagamento : defaults.formaPagamento,
+  codigoServico: row.codigoServico?.trim() ? row.codigoServico : defaults.codigoServico,
+  nomePrestador: row.nomePrestador?.trim() ? row.nomePrestador : defaults.nomePrestador,
+  observacao: row.observacao?.trim() ? row.observacao : defaults.observacao,
+}));
+
 const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
   const fileName = file.name.toLowerCase();
 
@@ -247,7 +293,29 @@ export const LancamentosPage: React.FC = () => {
   const [importRows, setImportRows] = useState<FinancialImportRow[]>([]);
   const [importing, setImporting] = useState(false);
   const [detectedFormat, setDetectedFormat] = useState<'INTER' | 'ASAAS' | null>(null);
+  const [missingFields, setMissingFields] = useState<AdditionalImportField[]>([]);
+  const [missingFieldDefaults, setMissingFieldDefaults] = useState<Record<AdditionalImportField, string>>({
+    formaPagamento: '',
+    codigoServico: '',
+    nomePrestador: '',
+    observacao: '',
+  });
+  const [showMissingFieldsModal, setShowMissingFieldsModal] = useState(false);
   const resumo = response.resumo || { total: 0, pago: 0, aPagar: 0, previsto: 0 };
+
+  useEffect(() => {
+    if (importRows.length === 0) {
+      setMissingFields([]);
+      setShowMissingFieldsModal(false);
+      return;
+    }
+
+    const missing = getMissingAdditionalFields(importRows);
+    setMissingFields(missing);
+    if (missing.length === 0) {
+      setShowMissingFieldsModal(false);
+    }
+  }, [importRows]);
 
   const fetchLancamentos = useCallback(async () => {
     setLoading(true);
@@ -504,6 +572,7 @@ export const LancamentosPage: React.FC = () => {
             setImportModalOpen(false);
             setImportRows([]);
             setDetectedFormat(null);
+            setShowMissingFieldsModal(false);
             void fetchLancamentos();
           } catch (error) {
             message.error(`Erro ao importar lançamentos: ${(error as Error).message}`);
@@ -527,6 +596,7 @@ export const LancamentosPage: React.FC = () => {
       setImportModalOpen(false);
       setImportRows([]);
       setDetectedFormat(null);
+      setShowMissingFieldsModal(false);
       void fetchLancamentos();
     } catch (error) {
       message.error(`Erro ao importar lançamentos: ${(error as Error).message}`);
@@ -663,6 +733,7 @@ export const LancamentosPage: React.FC = () => {
           setImportModalOpen(false);
           setImportRows([]);
           setDetectedFormat(null);
+          setShowMissingFieldsModal(false);
         }}
         footer={(
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
@@ -672,6 +743,7 @@ export const LancamentosPage: React.FC = () => {
                 setImportModalOpen(false);
                 setImportRows([]);
                 setDetectedFormat(null);
+                setShowMissingFieldsModal(false);
               }}
               disabled={importing}
             >
@@ -733,6 +805,13 @@ export const LancamentosPage: React.FC = () => {
 
                 setDetectedFormat(detected);
                 setImportRows(rows);
+                setMissingFieldDefaults({ formaPagamento: '', codigoServico: '', nomePrestador: '', observacao: '' });
+
+                const missing = getMissingAdditionalFields(rows);
+                if (missing.length > 0) {
+                  setShowMissingFieldsModal(true);
+                }
+
                 message.success(`${rows.length} linhas processadas do arquivo ${file.name} (Formato: ${detected || 'desconhecido'})`);
               } catch (error) {
                 message.error(`Erro ao processar arquivo: ${(error as Error).message}`);
@@ -767,6 +846,42 @@ export const LancamentosPage: React.FC = () => {
           />
         </Space>
       </Drawer>
+
+      <Modal
+        title="Campos adicionais ausentes"
+        open={showMissingFieldsModal}
+        onOk={() => {
+          setImportRows((current) => applyMissingFieldDefaults(current, missingFieldDefaults));
+          setShowMissingFieldsModal(false);
+        }}
+        onCancel={() => setShowMissingFieldsModal(false)}
+        okText="Aplicar padrões"
+        cancelText="Fechar"
+      >
+        <Text>
+          Foram identificados campos adicionais ausentes em parte dos lançamentos importados. Informe valores padrão para aplicar às linhas que não possuem estes campos.
+        </Text>
+
+        <Space direction="vertical" style={{ width: '100%', marginTop: 16 }}>
+          {missingFields.map((field) => (
+            <div key={field} style={{ width: '100%' }}>
+              <Text strong>{additionalFieldLabels[field]}</Text>
+              <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+                {getMissingFieldCounts(importRows)[field]} de {importRows.length} linhas estão sem valor.
+              </Text>
+              <Input
+                value={missingFieldDefaults[field]}
+                placeholder={`Preencher ${additionalFieldLabels[field]} padrão`}
+                onChange={(event) => setMissingFieldDefaults((prev) => ({ ...prev, [field]: event.target.value }))}
+              />
+            </div>
+          ))}
+        </Space>
+
+        <Text type="secondary" style={{ display: 'block', marginTop: 16 }}>
+          Os valores preenchidos serão aplicados apenas às linhas que não possuem o campo definido.
+        </Text>
+      </Modal>
     </div>
   );
 };
