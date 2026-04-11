@@ -11,6 +11,7 @@ import { AppFooter } from "./shared/components/layout/AppFooter";
 import { GlobalAiDrawerProvider } from "./features/ai/context/GlobalAiDrawerContext";
 import { GlobalAiAssistantDrawer } from "./features/ai/components/GlobalAiAssistantDrawer";
 import "./shared/components/layout/theme/token.json";
+import { ConfigProvider, theme } from 'antd';
 
 const { Content } = Layout;
 
@@ -87,10 +88,13 @@ function AppLayoutStructure() {
 }
 
 function App() {
+  const configProps = { theme: { algorithm: theme.defaultAlgorithm } };
   return (
-    <GlobalAiDrawerProvider>
-      <AppLayoutStructure />
-    </GlobalAiDrawerProvider>
+    <ConfigProvider {...configProps}>
+      <GlobalAiDrawerProvider>
+        <AppLayoutStructure />
+      </GlobalAiDrawerProvider>
+    </ConfigProvider>
   );
 }
 
