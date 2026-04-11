@@ -106,13 +106,22 @@ export const BudgetRegisterPage: React.FC = () => {
 
   const situationMap = useMemo(() => new Map(situations.map((item) => [item.label, item])), [situations]);
 
-  const resolveSituationTagColor = (label?: string) => {
-    const normalized = (label || '').toLowerCase();
-    const meta = label ? situationMap.get(label) : undefined;
-    if (meta?.closed || normalized.includes('fechado')) return 'green';
-    if (normalized.includes('perdid')) return 'red';
-    if (normalized.includes('descont')) return 'gold';
-    return 'blue';
+  const updateBudgetSituation = async (budget: BudgetRecord, nextSituation: string) => {
+    try {
+      await cadastrosApi.saveBudget({
+        id: budget.id,
+        name: budget.name,
+        description: budget.description,
+        situation: nextSituation,
+        phone: budget.phone,
+        serviceType: budget.serviceType,
+        totalValue: budget.totalValue,
+      });
+      await loadBudgets();
+      message.success('Situação atualizada.');
+    } catch (error: any) {
+      message.error(error.message || 'Erro ao atualizar situação.');
+    }
   };
 
   const columns: ColumnsType<BudgetRecord> = [
@@ -152,10 +161,15 @@ export const BudgetRegisterPage: React.FC = () => {
       title: 'Situacao',
       dataIndex: 'situation',
       key: 'situation',
-      render: (value) => (
-        <Tag color={resolveSituationTagColor(String(value || 'Enviado'))} style={{ marginInlineEnd: 0 }}>
-          {String(value || 'Enviado')}
-        </Tag>
+      render: (value, record) => (
+        <Select
+          className="atlas-services-select"
+          value={value || 'Enviado'}
+          options={situations.map((item) => ({ label: item.label, value: item.label }))}
+          onChange={(nextValue) => updateBudgetSituation(record, nextValue)}
+          dropdownMatchSelectWidth={200}
+          style={{ minWidth: 180 }}
+        />
       ),
     },
     {

@@ -119,6 +119,34 @@ const writeInspectionScheduleMap = (value: InspectionScheduleMap) => {
   window.localStorage.setItem(INSPECTION_STORAGE_KEY, JSON.stringify(value));
 };
 
+const SITUATION_COLOR_STORAGE_KEY = 'atlas.service_tracking.situation_colors';
+const PENDING_TAG_COLOR_STORAGE_KEY = 'atlas.service_tracking.pending_tag_color';
+
+const readSituationColors = (): Record<string, string> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(SITUATION_COLOR_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeSituationColors = (value: Record<string, string>) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(SITUATION_COLOR_STORAGE_KEY, JSON.stringify(value));
+};
+
+const readPendingTagColor = (): string => {
+  if (typeof window === 'undefined') return '#f59e0b';
+  return window.localStorage.getItem(PENDING_TAG_COLOR_STORAGE_KEY) || '#f59e0b';
+};
+
+const writePendingTagColor = (value: string) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(PENDING_TAG_COLOR_STORAGE_KEY, value);
+};
+
 const buildGoogleCalendarUrl = (params: { title: string; details?: string; location?: string; start: dayjs.Dayjs; end: dayjs.Dayjs }) => {
   const timeZone = 'America/Sao_Paulo';
   const start = params.start.format('YYYYMMDDTHHmmss');
@@ -227,9 +255,30 @@ export const ServicesTrackingPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [situationColors, setSituationColors] = useState<Record<string, string>>(() => readSituationColors());
+  const [pendingTagColor, setPendingTagColor] = useState<string>(() => readPendingTagColor());
   const [rows, setRows] = useState<UnifiedServiceRow[]>([]);
   const [typeFilter, setTypeFilter] = useState<ServiceKind | 'ALL'>('ALL');
   const [searchText, setSearchText] = useState('');
+
+  const getSituationColor = (serviceType: ServiceKind, situation: string) => {
+    return situationColors[`${serviceType}|${situation}`] || '#2563eb';
+  };
+
+  const updateSituationColor = (serviceType: ServiceKind, situation: string, color: string) => {
+    const next = {
+      ...situationColors,
+      [`${serviceType}|${situation}`]: color,
+    };
+    setSituationColors(next);
+    writeSituationColors(next);
+  };
+
+  const updatePendingTagColor = (color: string) => {
+    setPendingTagColor(color);
+    writePendingTagColor(color);
+  };
   const [situationConfig, setSituationConfig] = useState<ServiceSituationConfig>(EMPTY_SITUATION_CONFIG);
   const [historyMap, setHistoryMap] = useState<Record<string, ServiceHistoryEntry[]>>({});
   const [drawerRow, setDrawerRow] = useState<UnifiedServiceRow | null>(null);
@@ -727,6 +776,8 @@ export const ServicesTrackingPage: React.FC = () => {
       dataIndex: 'code',
       key: 'code',
       width: 120,
+      sorter: (a, b) => a.code.localeCompare(b.code, 'pt-BR', { numeric: true, sensitivity: 'base' }),
+      excel: { mode: 'list' },
       render: (value: string) => <Text strong>{value}</Text>,
     },
     {
@@ -734,6 +785,8 @@ export const ServicesTrackingPage: React.FC = () => {
       dataIndex: 'clientName',
       key: 'clientName',
       width: 180,
+      sorter: (a, b) => a.clientName.localeCompare(b.clientName, 'pt-BR', { sensitivity: 'base' }),
+      excel: { mode: 'list' },
     },
     {
       title: 'Telefone',
@@ -741,12 +794,16 @@ export const ServicesTrackingPage: React.FC = () => {
       key: 'phone',
       width: 150,
       responsive: ['lg'],
+      sorter: (a, b) => a.phone.localeCompare(b.phone, 'pt-BR', { sensitivity: 'base' }),
+      excel: { mode: 'list' },
     },
     {
       title: 'Tipo de servico',
       dataIndex: 'serviceType',
       key: 'serviceType',
       width: 150,
+      sorter: (a, b) => a.serviceType.localeCompare(b.serviceType, 'pt-BR', { sensitivity: 'base' }),
+      excel: { mode: 'list' },
       render: (value: ServiceKind) => value === 'PROCESSOS_ADM' ? 'Proc. Adm.' : value,
     },
     {
@@ -754,58 +811,56 @@ export const ServicesTrackingPage: React.FC = () => {
       dataIndex: 'subtype',
       key: 'subtype',
       width: 180,
-      render: (_, row) => (
-        <Select
-          className="atlas-services-select"
-          size="small"
-          value={inlineEdit?.key === row.key && inlineEdit.field === 'subtype' ? inlineEdit.value : row.subtype}
-          options={(DEFAULT_SUBTYPE_OPTIONS[row.serviceType] ?? []).map((item) => ({ label: item, value: item }))}
-          style={{ width: '100%' }}
-          onFocus={() => setInlineEdit({ key: row.key, field: 'subtype', value: row.subtype })}
-          onChange={(value) => setInlineEdit({ key: row.key, field: 'subtype', value })}
-          onBlur={() => saveInlineEdit(row)}
-        />
-      ),
+      sorter: (a, b) => a.subtype.localeCompare(b.subtype, 'pt-BR', { sensitivity: 'base' }),
+      excel: { mode: 'list' },
+      render: (value: string) => <Text>{value || '-'}</Text>,
     },
     {
       title: 'Situacao',
       dataIndex: 'situation',
       key: 'situation',
       width: 180,
-      render: (_, row) => (
-        <Space direction="vertical" size={6} style={{ width: '100%' }}>
-          <Select
-            className="atlas-services-select"
-            size="small"
-            value={inlineEdit?.key === row.key && inlineEdit.field === 'situation' ? inlineEdit.value : row.situation}
-            options={(situationConfig[row.serviceType] ?? []).map((item) => ({ label: item.label, value: item.label }))}
-            style={{ width: '100%' }}
-            onFocus={() => setInlineEdit({ key: row.key, field: 'situation', value: row.situation })}
-            onChange={(value) => setInlineEdit({ key: row.key, field: 'situation', value })}
-            onBlur={() => saveInlineEdit(row)}
-          />
-          <Space size={[6, 6]} wrap>
-            {(row.pendingConditions || []).filter((item) => !item.done).map((item) => (
-              <Tag
-                key={item.id}
-                closable
-                onClose={(event) => {
-                  event.preventDefault();
-                  void concludePendingCondition(row, item.id);
-                }}
-              >
-                {item.label}
-              </Tag>
-            ))}
+      sorter: (a, b) => a.situation.localeCompare(b.situation, 'pt-BR', { sensitivity: 'base' }),
+      excel: { mode: 'list' },
+      render: (_, row) => {
+        const color = getSituationColor(row.serviceType, row.situation);
+        return (
+          <Space direction="vertical" size={6} style={{ width: '100%' }}>
+            <Select
+              className="atlas-services-select"
+              size="small"
+              value={inlineEdit?.key === row.key && inlineEdit.field === 'situation' ? inlineEdit.value : row.situation}
+              options={(situationConfig[row.serviceType] ?? []).map((item) => ({ label: item.label, value: item.label }))}
+              style={{ width: '100%', background: color, color: '#000' }}
+              onFocus={() => setInlineEdit({ key: row.key, field: 'situation', value: row.situation })}
+              onChange={(value) => setInlineEdit({ key: row.key, field: 'situation', value })}
+              onBlur={() => saveInlineEdit(row)}
+            />
+            <Space size={[6, 6]} wrap>
+              {(row.pendingConditions || []).filter((item) => !item.done).map((item) => (
+                <Tag
+                  key={item.id}
+                  closable
+                  color={pendingTagColor}
+                  onClose={(event) => {
+                    event.preventDefault();
+                    void concludePendingCondition(row, item.id);
+                  }}
+                >
+                  {item.label}
+                </Tag>
+              ))}
+            </Space>
           </Space>
-        </Space>
-      ),
+        );
+      },
     },
     {
       title: 'Tempo na situacao',
       key: 'situationDuration',
       width: 140,
       responsive: ['lg'],
+      sorter: (a, b) => a.situationDurationDays - b.situationDurationDays,
       render: (_, row) => `${row.situationDurationDays} dia(s)`,
     },
     {
@@ -813,17 +868,7 @@ export const ServicesTrackingPage: React.FC = () => {
       dataIndex: 'description',
       key: 'description',
       width: 260,
-      render: (_, row) => (
-        <Input
-          className="atlas-services-input"
-          size="small"
-          value={inlineEdit?.key === row.key && inlineEdit.field === 'description' ? inlineEdit.value : row.description}
-          placeholder="Descricao livre"
-          onFocus={() => setInlineEdit({ key: row.key, field: 'description', value: row.description })}
-          onChange={(event) => setInlineEdit({ key: row.key, field: 'description', value: event.target.value })}
-          onBlur={() => saveInlineEdit(row)}
-        />
-      ),
+      render: (value: string) => <Text ellipsis>{value || '-'}</Text>,
     },
     {
       title: 'Valor do contrato',
@@ -831,6 +876,7 @@ export const ServicesTrackingPage: React.FC = () => {
       key: 'contractValue',
       width: 150,
       responsive: ['lg'],
+      sorter: (a, b) => a.contractValue - b.contractValue,
       render: (value: number) => formatCurrency(value),
     },
     {
@@ -839,6 +885,7 @@ export const ServicesTrackingPage: React.FC = () => {
       key: 'contractDate',
       width: 130,
       responsive: ['xl'],
+      sorter: (a, b) => dayjs(a.contractDate).valueOf() - dayjs(b.contractDate).valueOf(),
       render: (value: string) => value ? dayjs(value).format('DD/MM/YYYY') : '-',
     },
     {
@@ -847,6 +894,8 @@ export const ServicesTrackingPage: React.FC = () => {
       key: 'paymentCondition',
       width: 180,
       responsive: ['xxl'],
+      sorter: (a, b) => a.paymentCondition.localeCompare(b.paymentCondition, 'pt-BR', { sensitivity: 'base' }),
+      excel: { mode: 'list' },
     },
     {
       title: 'A receber',
@@ -854,6 +903,7 @@ export const ServicesTrackingPage: React.FC = () => {
       key: 'receivable',
       width: 140,
       responsive: ['xl'],
+      sorter: (a, b) => a.receivable - b.receivable,
       render: (value: number) => formatCurrency(value),
     },
     {
@@ -862,6 +912,7 @@ export const ServicesTrackingPage: React.FC = () => {
       key: 'received',
       width: 140,
       responsive: ['xxl'],
+      sorter: (a, b) => a.received - b.received,
       render: (value: number) => formatCurrency(value),
     },
     {
@@ -870,17 +921,28 @@ export const ServicesTrackingPage: React.FC = () => {
       key: 'costs',
       width: 140,
       responsive: ['xxl'],
+      sorter: (a, b) => a.costs - b.costs,
       render: (value: number) => formatCurrency(value),
     },
     {
       title: 'Acoes',
       key: 'actions',
-      width: 160,
+      width: 220,
       render: (_, row) => (
         <Space>
           <Button className="atlas-services-button" size="small" icon={<EditOutlined />} onClick={() => void openDrawer(row)}>
             Detalhes
           </Button>
+          {row.folderUrl ? (
+            <Button
+              className="atlas-services-button"
+              size="small"
+              icon={<FolderOpenOutlined />}
+              onClick={() => window.open(row.folderUrl, '_blank', 'noopener,noreferrer')}
+            >
+              Pasta
+            </Button>
+          ) : null}
         </Space>
       ),
     },
@@ -1164,6 +1226,14 @@ export const ServicesTrackingPage: React.FC = () => {
                         </Button>
                       </Col>
                       <Col>
+                        <Input
+                          type="color"
+                          value={getSituationColor(serviceType.value, item.label)}
+                          onChange={(event) => updateSituationColor(serviceType.value, item.label, event.target.value)}
+                          style={{ width: 64, padding: 0, height: 32, border: '1px solid #d9d9d9', borderRadius: 6 }}
+                        />
+                      </Col>
+                      <Col>
                         <Button
                           danger
                           onClick={() => void deleteSituation(item)}
@@ -1197,6 +1267,16 @@ export const ServicesTrackingPage: React.FC = () => {
                     </div>
                   </div>
                 ))}
+
+                <Row align="middle" style={{ width: '100%', justifyContent: 'space-between', padding: '0 10px' }}>
+                  <Text strong>Cor das pendências</Text>
+                  <Input
+                    type="color"
+                    value={pendingTagColor}
+                    onChange={(event) => updatePendingTagColor(event.target.value)}
+                    style={{ width: 64, padding: 0, height: 32, border: '1px solid #d9d9d9', borderRadius: 6 }}
+                  />
+                </Row>
 
                 <Button
                   className="atlas-services-button"

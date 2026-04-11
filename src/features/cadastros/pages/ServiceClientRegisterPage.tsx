@@ -187,6 +187,8 @@ export const ServiceClientRegisterPage: React.FC = () => {
   const [editingRecord, setEditingRecord] = useState<ServiceRegistrationRecord | null>(null);
   const [existingClientId, setExistingClientId] = useState<number | null>(null);
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
+  const [budgetSituationFilter, setBudgetSituationFilter] = useState<string>('');
+  const [budgetSituations, setBudgetSituations] = useState<{ id: number; label: string; closed: boolean }[]>([]);
   const [providerDrawerOpen, setProviderDrawerOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentManageOpen, setPaymentManageOpen] = useState(false);
@@ -255,7 +257,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [servicesResponse, budgetsResponse, providersResponse, conditionsResponse, subtypeResponse, situationResponses] = await Promise.all([
+      const [servicesResponse, budgetsResponse, providersResponse, conditionsResponse, subtypeResponse, situationResponses, budgetSituationsResponse] = await Promise.all([
         cadastrosApi.getServices({ size: 500 }),
         cadastrosApi.getBudgets({ size: 500 }),
         cadastrosApi.getProviders({ size: 500 }),
@@ -265,6 +267,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
           type,
           items: await servicesTrackingApi.getSituations(type),
         }))),
+        cadastrosApi.getBudgetSituations(),
       ]);
 
       setServices(servicesResponse.content);
@@ -272,6 +275,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
       setProviders(providersResponse.content);
       setPaymentConditions(conditionsResponse);
       setSubtypeConfig(subtypeResponse);
+      setBudgetSituations(budgetSituationsResponse);
       setInitialSituations(situationResponses.reduce<Record<ServiceKind, string>>((acc, entry) => ({
         ...acc,
         [entry.type]: entry.items.find((item) => item.isDefault)?.label || DEFAULT_INITIAL_SITUATIONS[entry.type],
@@ -331,6 +335,16 @@ export const ServiceClientRegisterPage: React.FC = () => {
       form.setFieldValue('serviceAddress', companyAddressString);
       return;
     }
+
+    form.setFieldsValue({
+      serviceCep: '',
+      serviceStreet: '',
+      serviceNumber: '',
+      serviceNeighborhood: '',
+      serviceCity: '',
+      serviceState: '',
+    });
+    lastCepLookupRef.current.service = '';
     form.setFieldValue('serviceAddress', serviceAddressString);
   }, [companyAddressString, companyCep, companyCity, companyNeighborhood, companyNumber, companyState, companyStreet, form, sameAddress, serviceAddressString]);
 
@@ -398,8 +412,10 @@ export const ServiceClientRegisterPage: React.FC = () => {
   const filteredBudgets = useMemo(() => budgets.filter((item) => {
     const phoneDigits = String(item.phone || '').replace(/\D/g, '');
     const haystack = [item.code, item.phone, phoneDigits, item.serviceType, item.totalValue, item.createdAt].join(' ').toLowerCase();
-    return haystack.includes(budgetSearch.toLowerCase());
-  }), [budgetSearch, budgets]);
+    const matchesSearch = haystack.includes(budgetSearch.toLowerCase());
+    const matchesSituation = !budgetSituationFilter || item.situation === budgetSituationFilter;
+    return matchesSearch && matchesSituation;
+  }), [budgetSearch, budgets, budgetSituationFilter]);
 
   const recentServicesColumns: ColumnsType<ServiceRegistrationRecord> = [
     { title: 'Codigo', dataIndex: 'code', key: 'code', render: (value) => <Text strong>{value}</Text> },
@@ -540,7 +556,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
     }
   };
 
-  const handleCepLookup = async (target: 'company' | 'service', options?: { silent?: boolean }) => {
+  const handleCepLookup = async (target: 'company' | 'service', options?: { silent?: boolean; force?: boolean }) => {
     const cep = form.getFieldValue(target === 'company' ? 'companyCep' : 'serviceCep');
     try {
       const normalizedCep = String(cep || '').replace(/\D/g, '').slice(0, 8);
@@ -548,7 +564,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
         return;
       }
 
-      if (lastCepLookupRef.current[target] === normalizedCep) {
+      if (!options?.force && lastCepLookupRef.current[target] === normalizedCep) {
         return;
       }
 
@@ -644,6 +660,36 @@ export const ServiceClientRegisterPage: React.FC = () => {
     return clientId;
   };
 
+  const closeLinkedBudget = async () => {
+    if (!selectedBudget || !budgetSituations.length) {
+      return;
+    }
+
+    const isAlreadyClosed = budgetSituations.some((item) => item.label === selectedBudget.situation && item.closed);
+    if (isAlreadyClosed) {
+      return;
+    }
+
+    const closedSituation = budgetSituations.find((item) => item.closed && item.label.toLowerCase().includes('fechado'))
+      || budgetSituations.find((item) => item.closed)
+      || null;
+
+    if (!closedSituation) {
+      return;
+    }
+
+    await cadastrosApi.saveBudget({
+      id: selectedBudget.id,
+      name: selectedBudget.name,
+      description: selectedBudget.description,
+      situation: closedSituation.label,
+      phone: selectedBudget.phone,
+      serviceType: selectedBudget.serviceType,
+      totalValue: selectedBudget.totalValue,
+    });
+    setSelectedBudget((current) => current ? { ...current, situation: closedSituation.label } : current);
+  };
+
   const handleSave = async (values: any) => {
     if (paymentMismatch) {
       message.error('A soma das parcelas precisa fechar exatamente o valor líquido (valor do contrato - desconto NF).');
@@ -699,6 +745,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
         createdAt: editingRecord?.createdAt || '',
       });
 
+      await closeLinkedBudget();
       await loadAll();
       message.success(editingRecord ? 'Servico atualizado.' : `Servico cadastrado com codigo ${saved.code}.`);
       loadRecord(saved);
@@ -944,6 +991,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
                           <Form.Item name="companyCep" label="CEP" normalize={normalizeCepBR}>
                             <Input
                               className="atlas-services-input"
+                              suffix={<SearchOutlined style={{ cursor: 'pointer' }} onClick={() => void handleCepLookup('company', { force: true })} />}
                               onBlur={() => void handleCepLookup('company')}
                             />
                           </Form.Item>
@@ -1037,6 +1085,7 @@ export const ServiceClientRegisterPage: React.FC = () => {
                             <Input
                               className="atlas-services-input"
                               disabled={sameAddress}
+                              suffix={<SearchOutlined style={{ cursor: sameAddress ? 'not-allowed' : 'pointer' }} onClick={() => !sameAddress && void handleCepLookup('service', { force: true })} />}
                               onBlur={() => void handleCepLookup('service')}
                             />
                           </Form.Item>
@@ -1443,12 +1492,27 @@ export const ServiceClientRegisterPage: React.FC = () => {
         className="atlas-services-modal"
       >
         <Space direction="vertical" size={12} style={{ width: '100%' }}>
-          <Input
-            className="atlas-services-input"
-            placeholder="Filtrar por codigo, telefone, valor, tipo ou data"
-            value={budgetSearch}
-            onChange={(event) => setBudgetSearch(event.target.value)}
-          />
+          <Row gutter={[12, 12]} style={{ width: '100%' }}>
+            <Col xs={24} md={16}>
+              <Input
+                className="atlas-services-input"
+                placeholder="Filtrar por codigo, telefone, valor, tipo ou data"
+                value={budgetSearch}
+                onChange={(event) => setBudgetSearch(event.target.value)}
+              />
+            </Col>
+            <Col xs={24} md={8}>
+              <Select
+                className="atlas-services-select"
+                placeholder="Filtrar por situação"
+                value={budgetSituationFilter || undefined}
+                allowClear
+                options={budgetSituations.map((item) => ({ label: item.label, value: item.label }))}
+                onChange={(value) => setBudgetSituationFilter(String(value || ''))}
+                style={{ width: '100%' }}
+              />
+            </Col>
+          </Row>
           <Table
             rowKey="id"
             dataSource={filteredBudgets}
