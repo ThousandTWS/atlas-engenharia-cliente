@@ -101,39 +101,82 @@ const parseCsvLine = (line: string) => {
 };
 
 const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
-  const rawText = await file.text();
-  const content = normalizeDelimitedText(rawText);
-  const lines = content.split(/\r?\n/).filter(Boolean);
+  const fileName = file.name.toLowerCase();
 
-  if (lines.length < 2) {
-    return [];
+  // Para arquivos Excel, tentar ler como CSV primeiro (muitos exports do Excel são CSV)
+  if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+    throw new Error('Arquivos Excel (.xlsx, .xls) não são suportados diretamente. Salve como CSV primeiro.');
   }
 
-  const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase());
+  const rawText = await file.text();
+  const content = normalizeDelimitedText(rawText);
+  const lines = content.split(/\r?\n/).filter((line) => line.trim().length > 0);
+
+  if (lines.length < 2) {
+    throw new Error('Arquivo deve conter pelo menos um cabeçalho e uma linha de dados.');
+  }
+
+  const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase().trim());
   const resolveIndex = (...candidates: string[]) =>
-    headers.findIndex((header) => candidates.some((candidate) => header.includes(candidate)));
+    headers.findIndex((header) => candidates.some((candidate) => header.includes(candidate.toLowerCase())));
 
-  const dateIndex = resolveIndex('data', 'date');
-  const descriptionIndex = resolveIndex('descricao', 'descrição', 'historico', 'histórico', 'description');
-  const valueIndex = resolveIndex('valor', 'amount');
-  const paymentIndex = resolveIndex('forma', 'metodo', 'método', 'payment');
+  const dateIndex = resolveIndex('data', 'date', 'dt', 'data_transacao');
+  const descriptionIndex = resolveIndex('descricao', 'descrição', 'historico', 'histórico', 'description', 'desc', 'movimentacao');
+  const valueIndex = resolveIndex('valor', 'amount', 'vlr', 'valor_transacao', 'credito', 'debito');
+  const paymentIndex = resolveIndex('forma', 'metodo', 'método', 'payment', 'forma_pagamento', 'tipo');
 
-  return lines.slice(1).map((line) => {
+  if (dateIndex === -1 && descriptionIndex === -1 && valueIndex === -1) {
+    throw new Error('Não foi possível identificar as colunas necessárias (data, descrição, valor) no arquivo.');
+  }
+
+  const rows: FinancialImportRow[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
     const columns = parseCsvLine(line);
-    const value = Number(String(columns[valueIndex] ?? '0').replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.'));
-    const date = dayjs(columns[dateIndex], ['DD/MM/YYYY', 'YYYY-MM-DD'], true);
 
-    return {
-      data: (date.isValid() ? date : dayjs()).format('YYYY-MM-DD'),
-      descricao: columns[descriptionIndex] || 'Transação importada',
-      valor: Number.isFinite(value) ? Math.abs(value) : 0,
-      formaPagamento: columns[paymentIndex] || '',
+    // Extrair valor (suporte para diferentes formatos)
+    const rawValue = String(columns[valueIndex] ?? '0').trim();
+    const value = Number(rawValue.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.'));
+
+    // Extrair data (suporte para diferentes formatos)
+    const rawDate = String(columns[dateIndex] ?? '').trim();
+    let date = dayjs();
+
+    // Tentar diferentes formatos de data
+    const dateFormats = ['DD/MM/YYYY', 'YYYY-MM-DD', 'DD-MM-YYYY', 'MM/DD/YYYY', 'DD.MM.YYYY'];
+    for (const format of dateFormats) {
+      const parsed = dayjs(rawDate, format, true);
+      if (parsed.isValid()) {
+        date = parsed;
+        break;
+      }
+    }
+
+    const row: FinancialImportRow = {
+      data: date.isValid() ? date.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
+      descricao: String(columns[descriptionIndex] || '').trim() || 'Transação importada',
+      valor: Number.isFinite(value) && value > 0 ? Math.abs(value) : 0,
+      formaPagamento: String(columns[paymentIndex] || '').trim() || '',
       status: 'A_CONFIRMAR' as FinancialLaunchStatus,
       codigoServico: '',
       nomePrestador: '',
       observacao: '',
     };
-  }).filter((row) => row.valor > 0);
+
+    // Só adicionar se tiver valor válido
+    if (row.valor > 0) {
+      rows.push(row);
+    }
+  }
+
+  if (rows.length === 0) {
+    throw new Error('Nenhuma transação válida encontrada no arquivo.');
+  }
+
+  return rows;
 };
 
 const statusColorMap: Record<FinancialLaunchStatus, string> = {
@@ -563,21 +606,45 @@ export const LancamentosPage: React.FC = () => {
         styles={{ body: { padding: 16 } }}
       >
         <Space direction="vertical" style={{ width: '100%' }} size={16}>
-          <Text type="secondary">
-            O arquivo é lido como tabela CSV/planilha simples. Depois o usuário ajusta linha a linha antes de gravar.
-          </Text>
+          <div>
+            <Text type="secondary">
+              Faça o download do extrato do {importOrigin === 'IMPORT_INTER' ? 'Inter' : 'Asaas'} e selecione o arquivo CSV/TXT.
+              Os dados aparecerão na tabela abaixo para revisão e ajustes antes da importação.
+            </Text>
+            <Text type="secondary" style={{ fontSize: '12px', marginTop: 4 }}>
+              <strong>Formato esperado:</strong> Arquivo CSV com colunas de Data, Descrição/Valor.
+              Cada linha será uma transação que pode ser editada antes de importar.
+            </Text>
+          </div>
 
           <Upload
             beforeUpload={async (file) => {
-              const rows = await parseImportFile(file);
-              setImportRows(rows);
+              try {
+                const rows = await parseImportFile(file);
+                setImportRows(rows);
+                message.success(`${rows.length} linhas processadas do arquivo ${file.name}`);
+              } catch (error) {
+                message.error(`Erro ao processar arquivo: ${(error as Error).message}`);
+              }
               return false;
             }}
             maxCount={1}
-            accept=".csv,.txt"
+            accept=".csv,.txt,.xlsx,.xls"
+            showUploadList={false}
           >
             <Button icon={<UploadOutlined />}>Selecionar arquivo</Button>
           </Upload>
+
+          {importRows.length > 0 && (
+            <div>
+              <Text strong style={{ marginBottom: 8, display: 'block' }}>
+                Dados importados ({importRows.length} transações)
+              </Text>
+              <Text type="secondary" style={{ fontSize: '12px', marginBottom: 16, display: 'block' }}>
+                Revise e ajuste os dados abaixo. Clique em "Importar lançamentos" quando estiver pronto.
+              </Text>
+            </div>
+          )}
 
           <Table
             rowKey={(_, index) => String(index)}
@@ -585,6 +652,7 @@ export const LancamentosPage: React.FC = () => {
             columns={importColumns}
             pagination={false}
             scroll={{ x: 1100, y: 520 }}
+            locale={{ emptyText: 'Nenhum dado importado ainda. Selecione um arquivo acima.' }}
           />
         </Space>
       </Drawer>
