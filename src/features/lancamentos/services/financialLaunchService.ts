@@ -176,6 +176,16 @@ export const financialLaunchService = {
     await apiClient.delete(`/lancamentos/${id}`);
   },
 
+  async detectFormat(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post<{ origem: FinancialLaunchOrigin; delimiter: string; isBrazilianFormat: boolean }>('/lancamentos/detect-format', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
   async importBatch(payload: { origem: FinancialLaunchOrigin; tipo: FinancialLaunchType; rows: FinancialImportRow[] }) {
     const response = await apiClient.post<FinancialLaunch[]>('/lancamentos/import', payload);
     return response.data;

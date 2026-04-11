@@ -22,7 +22,6 @@ import {
 import {
   DownloadOutlined,
   ImportOutlined,
-  InboxOutlined,
   PlusOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
@@ -37,7 +36,6 @@ import {
   type FinancialImportRow,
   type FinancialLaunch,
   type FinancialLaunchListResponse,
-  type FinancialLaunchOrigin,
   type FinancialLaunchStatus,
   type FinancialLaunchType,
 } from '../services/financialLaunchService';
@@ -91,6 +89,46 @@ const parseCsvLine = (line: string, delimiter: string = ',') => {
   return result;
 };
 
+// Detecta automaticamente o formato do arquivo (Inter ou Asaas)
+const detectImportFormat = (fileContent: string): { format: 'INTER' | 'ASAAS'; delimiter: string; isBrazilianFormat: boolean } => {
+  const lines = fileContent.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  if (lines.length < 2) {
+    throw new Error('Arquivo deve conter pelo menos um cabeçalho e uma linha de dados.');
+  }
+
+  const firstLine = lines[0];
+  const secondLine = lines[1];
+
+  // Conta ocorrências de delimitadores
+  const semiColonCount = (firstLine.match(/;/g) || []).length;
+  const commaCount = (firstLine.match(/,/g) || []).length;
+
+  // Verifica se parece com formato Inter (padrões específicos)
+  const hasInterPatterns = firstLine.toLowerCase().includes('data lançamento') ||
+                          firstLine.toLowerCase().includes('saldo') ||
+                          secondLine.includes('Pix enviado') ||
+                          secondLine.includes('Pix recebido');
+
+  // Verifica se parece com formato Asaas (padrões específicos)
+  const hasAsaasPatterns = firstLine.toLowerCase().includes('forma') ||
+                          !firstLine.toLowerCase().includes('saldo');
+
+  // Detecta formato brasileiro (vírgula como separador decimal)
+  const hasBrazilianFormat = secondLine.includes(',') && !secondLine.includes('.,');
+
+  if (hasInterPatterns || (semiColonCount > commaCount && hasBrazilianFormat)) {
+    return { format: 'INTER', delimiter: ';', isBrazilianFormat: true };
+  }
+
+  if (hasAsaasPatterns || commaCount > semiColonCount) {
+    return { format: 'ASAAS', delimiter: ',', isBrazilianFormat: false };
+  }
+
+  // Fallback: usa delimitador mais comum
+  const delimiter = semiColonCount > commaCount ? ';' : ',';
+  return { format: delimiter === ';' ? 'INTER' : 'ASAAS', delimiter, isBrazilianFormat: delimiter === ';' };
+};
+
 const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
   const fileName = file.name.toLowerCase();
 
@@ -100,17 +138,15 @@ const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
   }
 
   const rawText = await file.text();
+
+  // Detecta automaticamente o formato
+  const { format, delimiter, isBrazilianFormat } = detectImportFormat(rawText);
+
   const lines = rawText.split(/\r?\n/).filter((line) => line.trim().length > 0);
 
   if (lines.length < 2) {
     throw new Error('Arquivo deve conter pelo menos um cabeçalho e uma linha de dados.');
   }
-
-  // Detectar delimitador (ponto-e-vírgula ou vírgula)
-  const firstLine = lines[0];
-  const semiColonCount = (firstLine.match(/;/g) || []).length;
-  const commaCount = (firstLine.match(/,/g) || []).length;
-  const delimiter = semiColonCount > commaCount ? ';' : ',';
 
   const headers = parseCsvLine(lines[0], delimiter).map((header) => header.toLowerCase().trim());
   const resolveIndex = (...candidates: string[]) =>
@@ -137,19 +173,13 @@ const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
     const rawValue = String(columns[valueIndex] ?? '0').trim();
     let value: number;
 
-    // Detectar formato do valor
-    const lastCommaPos = rawValue.lastIndexOf(',');
-    const lastDotPos = rawValue.lastIndexOf('.');
-
-    if (lastCommaPos > lastDotPos) {
+    // Usa o formato detectado
+    if (isBrazilianFormat) {
       // Formato brasileiro: 1.234,56 (ponto = milhares, vírgula = decimal)
       value = Number(rawValue.replace(/\./g, '').replace(',', '.'));
-    } else if (lastDotPos > lastCommaPos) {
+    } else {
       // Formato americano: 1,234.56 (vírgula = milhares, ponto = decimal)
       value = Number(rawValue.replace(/,/g, ''));
-    } else {
-      // Sem separadores
-      value = Number(rawValue);
     }
 
     // Extrair data (suporte para diferentes formatos)
@@ -174,7 +204,7 @@ const parseImportFile = async (file: File): Promise<FinancialImportRow[]> => {
       status: 'A_CONFIRMAR' as FinancialLaunchStatus,
       codigoServico: '',
       nomePrestador: '',
-      observacao: '',
+      observacao: `Importado do ${format === 'INTER' ? 'Inter' : 'Asaas'}`,
     };
 
     // Só adicionar se tiver valor válido
@@ -214,9 +244,9 @@ export const LancamentosPage: React.FC = () => {
     resumo: { total: 0, pago: 0, aPagar: 0, previsto: 0 },
   });
   const [importModalOpen, setImportModalOpen] = useState(false);
-  const [importOrigin, setImportOrigin] = useState<FinancialLaunchOrigin>('IMPORT_INTER');
   const [importRows, setImportRows] = useState<FinancialImportRow[]>([]);
   const [importing, setImporting] = useState(false);
+  const [detectedFormat, setDetectedFormat] = useState<'INTER' | 'ASAAS' | null>(null);
   const resumo = response.resumo || { total: 0, pago: 0, aPagar: 0, previsto: 0 };
 
   const fetchLancamentos = useCallback(async () => {
@@ -466,13 +496,14 @@ export const LancamentosPage: React.FC = () => {
           setImporting(true);
           try {
             await financialLaunchService.importBatch({
-              origem: importOrigin,
+              origem: detectedFormat === 'INTER' ? 'IMPORT_INTER' : 'IMPORT_ASAAS',
               tipo: activeTab,
               rows: importRows,
             });
             message.success('Lançamentos importados com sucesso.');
             setImportModalOpen(false);
             setImportRows([]);
+            setDetectedFormat(null);
             void fetchLancamentos();
           } catch (error) {
             message.error(`Erro ao importar lançamentos: ${(error as Error).message}`);
@@ -488,20 +519,21 @@ export const LancamentosPage: React.FC = () => {
     setImporting(true);
     try {
       await financialLaunchService.importBatch({
-        origem: importOrigin,
+        origem: detectedFormat === 'INTER' ? 'IMPORT_INTER' : 'IMPORT_ASAAS',
         tipo: activeTab,
         rows: importRows,
       });
       message.success('Lançamentos importados com sucesso.');
       setImportModalOpen(false);
       setImportRows([]);
+      setDetectedFormat(null);
       void fetchLancamentos();
     } catch (error) {
       message.error(`Erro ao importar lançamentos: ${(error as Error).message}`);
     } finally {
       setImporting(false);
     }
-  }, [activeTab, fetchLancamentos, importOrigin, importRows, message]);
+  }, [activeTab, fetchLancamentos, importRows, message, detectedFormat]);
 
   return (
     <div className="atlas-lancamentos-page" style={{ maxWidth: 1480, margin: '0 auto' }}>
@@ -516,8 +548,7 @@ export const LancamentosPage: React.FC = () => {
           </div>
           <div className="atlas-lancamentos-actions">
             <Button className="atlas-services-button atlas-services-button-primary" type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/lancamentos/novo?tipo=${activeTab}`)}>+ Novo</Button>
-            <Button className="atlas-services-button" icon={<ImportOutlined />} onClick={() => { setImportOrigin('IMPORT_INTER'); setImportModalOpen(true); }}>Importar Inter</Button>
-            <Button className="atlas-services-button" icon={<InboxOutlined />} onClick={() => { setImportOrigin('IMPORT_ASAAS'); setImportModalOpen(true); }}>Importar Asaas</Button>
+            <Button className="atlas-services-button" icon={<ImportOutlined />} onClick={() => { setImportModalOpen(true); }}>Importar Extrato</Button>
             <Button className="atlas-services-button" icon={<DownloadOutlined />} loading={exporting} onClick={() => exportRows(response.content)}>Exportar</Button>
           </div>
         </div>
@@ -623,7 +654,7 @@ export const LancamentosPage: React.FC = () => {
       </Card>
 
       <Drawer
-        title={importOrigin === 'IMPORT_INTER' ? 'Importar arquivo do Inter' : 'Importar arquivo do Asaas'}
+        title={`Importar arquivo ${detectedFormat ? `(${detectedFormat})` : ''}`}
         open={importModalOpen}
         placement="right"
         width={920}
@@ -631,6 +662,7 @@ export const LancamentosPage: React.FC = () => {
         onClose={() => {
           setImportModalOpen(false);
           setImportRows([]);
+          setDetectedFormat(null);
         }}
         footer={(
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
@@ -639,6 +671,7 @@ export const LancamentosPage: React.FC = () => {
               onClick={() => {
                 setImportModalOpen(false);
                 setImportRows([]);
+                setDetectedFormat(null);
               }}
               disabled={importing}
             >
@@ -660,11 +693,17 @@ export const LancamentosPage: React.FC = () => {
         <Space direction="vertical" style={{ width: '100%' }} size={16}>
           <div>
             <Text type="secondary">
-              Faça o download do extrato do {importOrigin === 'IMPORT_INTER' ? 'Inter' : 'Asaas'} e selecione o arquivo CSV/TXT.
+              Faça o upload do extrato bancário (Inter ou Asaas). O sistema detectará automaticamente o formato do arquivo e processará os dados.
               Os dados aparecerão na tabela abaixo para revisão e ajustes antes da importação.
             </Text>
+            {detectedFormat && (
+              <Text type="secondary" style={{ fontSize: '12px', marginTop: 8, display: 'block' }}>
+                <strong>Formato detectado:</strong> {detectedFormat} 
+                {detectedFormat === 'INTER' ? ' (delimitador: ponto-e-vírgula, formato brasileiro)' : ' (delimitador: vírgula, formato americano)'}
+              </Text>
+            )}
             <Text type="secondary" style={{ fontSize: '12px', marginTop: 4 }}>
-              <strong>Formato esperado:</strong> Arquivo CSV com colunas de Data, Descrição/Valor.
+              <strong>Formatos suportados:</strong> Arquivos CSV com colunas de Data, Descrição e Valor.
               Cada linha será uma transação que pode ser editada antes de importar.
             </Text>
             {activeTab === 'ENTRADA' && (
@@ -677,9 +716,15 @@ export const LancamentosPage: React.FC = () => {
           <Upload
             beforeUpload={async (file) => {
               try {
+                // Detecta o formato usando o backend
+                const formatInfo = await financialLaunchService.detectFormat(file);
+                setDetectedFormat(formatInfo.origem === 'IMPORT_INTER' ? 'INTER' : 'ASAAS');
+
+                // Parse o arquivo localmente
                 const rows = await parseImportFile(file);
                 setImportRows(rows);
-                message.success(`${rows.length} linhas processadas do arquivo ${file.name}`);
+                
+                message.success(`${rows.length} linhas processadas do arquivo ${file.name} (Formato: ${formatInfo.origem === 'IMPORT_INTER' ? 'Inter' : 'Asaas'})`);
               } catch (error) {
                 message.error(`Erro ao processar arquivo: ${(error as Error).message}`);
               }
