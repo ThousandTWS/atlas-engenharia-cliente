@@ -314,10 +314,10 @@ export const LancamentosPage: React.FC = () => {
   const [detectedFormat, setDetectedFormat] = useState<'INTER' | 'ASAAS' | null>(null);
   const [missingFields, setMissingFields] = useState<AdditionalImportField[]>([]);
   const [missingFieldDefaults, setMissingFieldDefaults] = useState<Record<AdditionalImportField, string>>({
-    formaPagamento: '',
-    codigoServico: '',
-    nomeCliente: '',
-    nomePrestador: '',
+    formaPagamento: 'Não informado',
+    codigoServico: 'Não vinculado',
+    nomeCliente: 'Cliente importado',
+    nomePrestador: 'Não informado',
     observacao: '',
   });
   const [showMissingFieldsModal, setShowMissingFieldsModal] = useState(false);
@@ -326,9 +326,9 @@ export const LancamentosPage: React.FC = () => {
   const handleAutoRegisterClient = useCallback(() => {
     setImportRows((current) => current.map((row) => ({
       ...row,
-      nomeCliente: row.nomeCliente?.trim() ? row.nomeCliente : 'Cliente automático',
+      nomeCliente: row.nomeCliente?.trim() ? row.nomeCliente : 'Cliente importado',
     })));
-    setMissingFieldDefaults((prev) => ({ ...prev, nomeCliente: 'Cliente automático' }));
+    setMissingFieldDefaults((prev) => ({ ...prev, nomeCliente: 'Cliente importado' }));
     setShowMissingFieldsModal(false);
   }, []);
 
@@ -858,7 +858,7 @@ export const LancamentosPage: React.FC = () => {
 
                 setDetectedFormat(detected);
                 setImportRows(rows);
-                setMissingFieldDefaults({ formaPagamento: '', codigoServico: '', nomeCliente: '', nomePrestador: '', observacao: '' });
+                setMissingFieldDefaults({ formaPagamento: 'Não informado', codigoServico: 'Não vinculado', nomeCliente: 'Cliente importado', nomePrestador: 'Não informado', observacao: '' });
 
                 const missing = getMissingAdditionalFields(rows);
                 if (missing.length > 0) {
