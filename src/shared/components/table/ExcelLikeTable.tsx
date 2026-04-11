@@ -13,6 +13,7 @@ import {
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import type { MenuProps } from 'antd';
 import type {
+  ColumnGroupType,
   ColumnType,
   ColumnsType,
   SortOrder,
@@ -115,11 +116,13 @@ type ExcelColumnExtras<T> = {
   };
 };
 
-type ExcelColumnType<T> = ColumnType<T> & ExcelColumnExtras<T>;
+export type ExcelColumnType<T> = ColumnType<T> & ExcelColumnExtras<T>;
+
+type ExcelColumnsType<T> = Array<ExcelColumnType<T> | ColumnGroupType<T>>;
 
 export type ExcelLikeTableProps<T> = Omit<TableProps<T>, 'columns'> & {
   tableId: string;
-  columns: ColumnsType<T>;
+  columns: ExcelColumnsType<T>;
   persistState?: boolean;
   showColumnSettings?: boolean;
   exportFilename?: string;

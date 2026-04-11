@@ -20,7 +20,6 @@ import {
   Timeline,
   Typography,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
 import {
   CalendarOutlined,
   EditOutlined,
@@ -34,7 +33,7 @@ import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { formatPhoneBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
 import { htmlToPlainText } from '../../../core/utils/text';
-import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
+import { ExcelLikeTable, type ExcelColumnType } from '../../../shared/components/table/ExcelLikeTable';
 import { pdfTemplatesService } from '../../../core/services/pdfTemplatesService';
 import { renderPdfTemplate, toSafeTextVar } from '../../../shared/utils/pdfTemplate';
 import { PdfTemplateEditorModal } from '../../../shared/components/PdfTemplateEditorModal';
@@ -282,7 +281,6 @@ export const ServicesTrackingPage: React.FC = () => {
   const [situationConfig, setSituationConfig] = useState<ServiceSituationConfig>(EMPTY_SITUATION_CONFIG);
   const [historyMap, setHistoryMap] = useState<Record<string, ServiceHistoryEntry[]>>({});
   const [drawerRow, setDrawerRow] = useState<UnifiedServiceRow | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [inlineEdit, setInlineEdit] = useState<InlineEditState | null>(null);
   const [drawerForm] = Form.useForm();
   const [conditionModalOpen, setConditionModalOpen] = useState(false);
@@ -770,7 +768,7 @@ export const ServicesTrackingPage: React.FC = () => {
     }
   };
 
-  const columns: ColumnsType<UnifiedServiceRow> = [
+  const columns: ExcelColumnType<UnifiedServiceRow>[] = [
     {
       title: 'Codigo',
       dataIndex: 'code',

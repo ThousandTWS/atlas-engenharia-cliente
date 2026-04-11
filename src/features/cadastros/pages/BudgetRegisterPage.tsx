@@ -104,8 +104,6 @@ export const BudgetRegisterPage: React.FC = () => {
     }
   };
 
-  const situationMap = useMemo(() => new Map(situations.map((item) => [item.label, item])), [situations]);
-
   const updateBudgetSituation = async (budget: BudgetRecord, nextSituation: string) => {
     try {
       await cadastrosApi.saveBudget({

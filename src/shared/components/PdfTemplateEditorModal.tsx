@@ -69,7 +69,7 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
   const [baseline, setBaseline] = React.useState({ name: '', html: '' });
 
   const textareaRef = React.useRef<any>(null);
-  const aceRef = React.useRef<React.ComponentRef<typeof AceEditor> | null>(null);
+  const aceRef = React.useRef<any>(null);
 
   React.useEffect(() => {
     if (!open) {
@@ -260,7 +260,7 @@ export const PdfTemplateEditorModal: React.FC<PdfTemplateEditorModalProps> = ({
                     width="100%"
                     height="460px"
                     value={templateHtml}
-                    onChange={(value) => onChangeHtml(value)}
+                    onChange={(value: string) => onChangeHtml(value)}
                     name="atlas-pdf-template-ace-editor"
                     editorProps={{ $blockScrolling: true }}
                     setOptions={{
