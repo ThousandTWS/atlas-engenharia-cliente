@@ -96,6 +96,11 @@ export interface FinancialImportRow {
   observacao?: string;
 }
 
+export interface PdfReceiptParseResult {
+  origem: FinancialLaunchOrigin;
+  rows: FinancialImportRow[];
+}
+
 const emptySummary = (): FinancialLaunchSummary => ({
   total: 0,
   pago: 0,
@@ -188,6 +193,16 @@ export const financialLaunchService = {
 
   async importBatch(payload: { origem: FinancialLaunchOrigin; tipo: FinancialLaunchType; rows: FinancialImportRow[] }) {
     const response = await apiClient.post<FinancialLaunch[]>('/lancamentos/import', payload);
+    return response.data;
+  },
+
+  async parsePdfReceipt(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post<PdfReceiptParseResult>('/lancamentos/parse-pdf', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 

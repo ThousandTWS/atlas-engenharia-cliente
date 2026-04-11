@@ -703,8 +703,8 @@ export const LancamentosPage: React.FC = () => {
               </Text>
             )}
             <Text type="secondary" style={{ fontSize: '12px', marginTop: 4 }}>
-              <strong>Formatos suportados:</strong> Arquivos CSV com colunas de Data, Descrição e Valor.
-              Cada linha será uma transação que pode ser editada antes de importar.
+              <strong>Formatos suportados:</strong> Arquivos CSV ou PDF de comprovante bancário do Inter/Asaas.
+              O sistema tenta extrair data, descrição e valor automaticamente e permite editar antes de importar.
             </Text>
             {activeTab === 'ENTRADA' && (
               <Text type="warning" style={{ fontSize: '12px', marginTop: 8, display: 'block' }}>
@@ -716,22 +716,31 @@ export const LancamentosPage: React.FC = () => {
           <Upload
             beforeUpload={async (file) => {
               try {
-                // Detecta o formato usando o backend
-                const formatInfo = await financialLaunchService.detectFormat(file);
-                setDetectedFormat(formatInfo.origem === 'IMPORT_INTER' ? 'INTER' : 'ASAAS');
+                const fileName = file.name.toLowerCase();
+                let rows: FinancialImportRow[] = [];
+                let detected: 'INTER' | 'ASAAS' | null = null;
 
-                // Parse o arquivo localmente
-                const rows = await parseImportFile(file);
+                if (fileName.endsWith('.pdf')) {
+                  const parseResult = await financialLaunchService.parsePdfReceipt(file);
+                  rows = parseResult.rows;
+                  detected = parseResult.origem === 'IMPORT_INTER' ? 'INTER' : 'ASAAS';
+                } else {
+                  const rawText = await file.text();
+                  const { format } = detectImportFormat(rawText);
+                  detected = format;
+                  rows = await parseImportFile(file);
+                }
+
+                setDetectedFormat(detected);
                 setImportRows(rows);
-                
-                message.success(`${rows.length} linhas processadas do arquivo ${file.name} (Formato: ${formatInfo.origem === 'IMPORT_INTER' ? 'Inter' : 'Asaas'})`);
+                message.success(`${rows.length} linhas processadas do arquivo ${file.name} (Formato: ${detected || 'desconhecido'})`);
               } catch (error) {
                 message.error(`Erro ao processar arquivo: ${(error as Error).message}`);
               }
               return false;
             }}
             maxCount={1}
-            accept=".csv,.txt,.xlsx,.xls"
+            accept=".csv,.txt,.xlsx,.xls,.pdf"
             showUploadList={false}
           >
             <Button icon={<UploadOutlined />}>Selecionar arquivo</Button>
