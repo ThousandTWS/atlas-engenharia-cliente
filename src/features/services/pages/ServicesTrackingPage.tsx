@@ -251,6 +251,8 @@ const SPREADSHEET_FIELD_CANDIDATES: Record<SpreadsheetImportField, string[]> = {
 
 const INSPECTION_STORAGE_KEY = 'atlas.service_tracking.inspection_schedule';
 const LEGACY_INSPECTION_STORAGE_KEY = 'prevent.service_tracking.inspection_schedule';
+const SERVICES_CACHE_STORAGE_KEY = 'atlas.service_tracking.rows_cache_v1';
+const SERVICES_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 const readInspectionScheduleMap = (): InspectionScheduleMap => {
   if (typeof window === 'undefined') return {};
@@ -275,6 +277,32 @@ const readInspectionScheduleMap = (): InspectionScheduleMap => {
 const writeInspectionScheduleMap = (value: InspectionScheduleMap) => {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(INSPECTION_STORAGE_KEY, JSON.stringify(value));
+};
+
+const readServicesRowsCache = (): UnifiedServiceRow[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(SERVICES_CACHE_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as { savedAt: number; rows: UnifiedServiceRow[] };
+    if (!parsed?.savedAt || !Array.isArray(parsed?.rows)) return [];
+    if (Date.now() - Number(parsed.savedAt) > SERVICES_CACHE_MAX_AGE_MS) return [];
+    return parsed.rows;
+  } catch {
+    return [];
+  }
+};
+
+const writeServicesRowsCache = (rows: UnifiedServiceRow[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(SERVICES_CACHE_STORAGE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      rows,
+    }));
+  } catch {
+    // no-op
+  }
 };
 
 const SITUATION_COLOR_STORAGE_KEY = 'atlas.service_tracking.situation_colors';
@@ -491,11 +519,10 @@ export const ServicesTrackingPage: React.FC = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [services,] = await Promise.all([
-        servicesTrackingApi.getAll({ size: 500 }),
-        loadSituationConfig(),
-      ]);
-      setRows(services.content.map(mapServiceRow));
+      const services = await servicesTrackingApi.getAll({ size: 500 });
+      const mapped = services.content.map(mapServiceRow);
+      setRows(mapped);
+      writeServicesRowsCache(mapped);
     } catch (error: any) {
       const errorMessage = String(error?.message || '');
       if (errorMessage.toLowerCase().includes('timeout')) {
@@ -506,11 +533,22 @@ export const ServicesTrackingPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadSituationConfig, message]);
+  }, [message]);
+
+  useEffect(() => {
+    const cachedRows = readServicesRowsCache();
+    if (cachedRows.length) {
+      setRows(cachedRows);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    void loadSituationConfig();
+  }, [loadSituationConfig]);
 
   useEffect(() => {
     if (!drawerRow) {
@@ -785,7 +823,11 @@ export const ServicesTrackingPage: React.FC = () => {
   };
 
   const replaceRow = (row: UnifiedServiceRow) => {
-    setRows((current) => current.map((item) => item.key === row.key ? row : item));
+    setRows((current) => {
+      const next = current.map((item) => item.key === row.key ? row : item);
+      writeServicesRowsCache(next);
+      return next;
+    });
     setDrawerRow((current) => current?.key === row.key ? row : current);
   };
 
