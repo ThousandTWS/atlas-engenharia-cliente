@@ -14,10 +14,12 @@ import {
   Modal,
   Row,
   Select,
+  Slider,
   Space,
   Tabs,
   Tag,
   Timeline,
+  Upload,
   Typography,
 } from 'antd';
 import {
@@ -25,16 +27,20 @@ import {
   EditOutlined,
   FilePdfOutlined,
   FolderOpenOutlined,
+  ImportOutlined,
   PlusOutlined,
   SaveOutlined,
   SettingOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../../../core/api/apiClient';
 import { formatPhoneBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
 import { htmlToPlainText } from '../../../core/utils/text';
 import { ExcelLikeTable, type ExcelColumnType } from '../../../shared/components/table/ExcelLikeTable';
 import { pdfTemplatesService } from '../../../core/services/pdfTemplatesService';
+import { parseCsvToRecords, toNumber } from '../../../core/import-export/csv';
 import { renderPdfTemplate, toSafeTextVar } from '../../../shared/utils/pdfTemplate';
 import { PdfTemplateEditorModal } from '../../../shared/components/PdfTemplateEditorModal';
 import {
@@ -48,6 +54,7 @@ import {
   type TrackingServiceDto,
   type TrackingServiceUpdatePayload,
 } from '../servicesTrackingApi';
+import * as XLSX from 'xlsx';
 
 const { Title, Text } = Typography;
 
@@ -89,6 +96,158 @@ interface InspectionSchedule {
 }
 
 type InspectionScheduleMap = Record<string, InspectionSchedule>;
+
+type SpreadsheetImportField =
+  | 'code'
+  | 'serviceType'
+  | 'subtype'
+  | 'situation'
+  | 'clientName'
+  | 'phone'
+  | 'description'
+  | 'contractValue'
+  | 'contractDate'
+  | 'paymentCondition'
+  | 'receivable'
+  | 'received'
+  | 'costs'
+  | 'folderUrl'
+  | 'entryDate'
+  | 'companyDocument'
+  | 'companyName'
+  | 'contactName'
+  | 'email'
+  | 'companyAddress'
+  | 'serviceAddress';
+
+interface ParsedSpreadsheetRow {
+  lineNumber: number;
+  code: string;
+  serviceType?: ServiceKind;
+  subtype?: string;
+  situation?: string;
+  clientName?: string;
+  phone?: string;
+  description?: string;
+  contractValue?: number;
+  contractDate?: string;
+  paymentCondition?: string;
+  receivable?: number;
+  received?: number;
+  costs?: number;
+  folderUrl?: string;
+  entryDate?: string;
+  companyDocument?: string;
+  companyName?: string;
+  contactName?: string;
+  email?: string;
+  companyAddress?: string;
+  serviceAddress?: string;
+  sheetName?: string;
+}
+
+const normalizeHeaderKey = (value: string) =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+
+const normalizeCode = (value: string) =>
+  String(value || '').trim().toUpperCase();
+
+const resolveSpreadsheetDate = (value: string): string => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+
+  const slash = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slash) return `${slash[3]}-${slash[2]}-${slash[1]}`;
+
+  const dash = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (dash) return `${dash[3]}-${dash[2]}-${dash[1]}`;
+
+  const yearFirst = raw.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+  if (yearFirst) return `${yearFirst[1]}-${yearFirst[2]}-${yearFirst[3]}`;
+
+  return '';
+};
+
+const resolveSpreadsheetDateFromAny = (value: unknown): string => {
+  if (value === null || value === undefined || value === '') return '';
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const parsed = XLSX.SSF.parse_date_code(value);
+    if (parsed && parsed.y && parsed.m && parsed.d) {
+      return `${String(parsed.y).padStart(4, '0')}-${String(parsed.m).padStart(2, '0')}-${String(parsed.d).padStart(2, '0')}`;
+    }
+  }
+
+  return resolveSpreadsheetDate(String(value));
+};
+
+const resolveServiceKind = (value: string): ServiceKind | undefined => {
+  const normalized = normalizeHeaderKey(value).toUpperCase();
+  if (!normalized) return undefined;
+  if (normalized.includes('PROCESSO') || normalized.includes('PROCADM') || normalized.includes('ADM')) return 'PROCESSOS_ADM';
+  if (normalized.includes('OBRA')) return 'OBRAS';
+  if (normalized.includes('CLCB')) return 'CLCB';
+  if (normalized.includes('AVCB')) return 'AVCB';
+  return undefined;
+};
+
+const inferServiceKindFromCode = (code: string): ServiceKind | undefined => {
+  const normalized = String(code || '').trim();
+  if (!normalized) return undefined;
+  if (normalized.startsWith('1.') || normalized.startsWith('1-')) return 'PROCESSOS_ADM';
+  if (normalized.startsWith('2.') || normalized.startsWith('2-')) return 'OBRAS';
+  if (normalized.startsWith('3.') || normalized.startsWith('3-')) return 'AVCB';
+  if (normalized.startsWith('4.') || normalized.startsWith('4-')) return 'CLCB';
+  return undefined;
+};
+
+const normalizeSituationForSource = (value?: string): 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO' => {
+  const normalized = normalizeHeaderKey(String(value || ''));
+  if (!normalized) return 'PENDENTE';
+  if (normalized.includes('cancel')) return 'CANCELADO';
+  if (normalized.includes('conclu') || normalized.includes('finaliz')) return 'CONCLUIDO';
+  if (
+    normalized.includes('andamento')
+    || normalized.includes('aguar')
+    || normalized.includes('agenda')
+    || normalized.includes('analise')
+    || normalized.includes('vistoria')
+    || normalized.includes('protocol')
+  ) {
+    return 'EM_ANDAMENTO';
+  }
+  return 'PENDENTE';
+};
+
+const SPREADSHEET_FIELD_CANDIDATES: Record<SpreadsheetImportField, string[]> = {
+  code: ['codigo', 'codigoservico', 'codservico', 'servicocodigo', 'servicecode', 'code', 'cod', 'coluna1'],
+  serviceType: ['tiposervico', 'tipo', 'servico', 'servicetype'],
+  subtype: ['subtipo', 'subtiposervico', 'subtype'],
+  situation: ['situacao', 'status', 'etapa', 'fase'],
+  clientName: ['cliente', 'nomecliente', 'razaosocial', 'nomeempresa'],
+  phone: ['telefone', 'celular', 'fone', 'phone'],
+  description: ['descricao', 'observacao', 'detalhes', 'description'],
+  contractValue: ['valorcontrato', 'valor', 'contrato', 'valorservico'],
+  contractDate: ['datacontrato', 'contratodata', 'dataassinatura'],
+  paymentCondition: ['condicaopagamento', 'pagamento', 'formapagamento'],
+  receivable: ['areceber', 'valorareceber', 'receber'],
+  received: ['recebido', 'valorrecebido'],
+  costs: ['custos', 'custo'],
+  folderUrl: ['folderurl', 'pastalink', 'pastadrive', 'pasta', 'linkpasta'],
+  entryDate: ['dataentrada', 'entrada'],
+  companyDocument: ['cnpj', 'cpf', 'cpfcnpj', 'documentoempresa', 'documento'],
+  companyName: ['empresa', 'nomeempresa', 'razaosocialempresa', 'nomedocliente'],
+  contactName: ['contato', 'nomecontato', 'responsavel'],
+  email: ['email', 'correioeletronico'],
+  companyAddress: ['enderecoempresa', 'enderecocliente', 'endereco'],
+  serviceAddress: ['enderecoservico', 'localservico', 'local'],
+};
 
 const INSPECTION_STORAGE_KEY = 'atlas.service_tracking.inspection_schedule';
 const LEGACY_INSPECTION_STORAGE_KEY = 'prevent.service_tracking.inspection_schedule';
@@ -260,6 +419,21 @@ export const ServicesTrackingPage: React.FC = () => {
   const [rows, setRows] = useState<UnifiedServiceRow[]>([]);
   const [typeFilter, setTypeFilter] = useState<ServiceKind | 'ALL'>('ALL');
   const [searchText, setSearchText] = useState('');
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importingSpreadsheet, setImportingSpreadsheet] = useState(false);
+  const [importFileName, setImportFileName] = useState('');
+  const [importPreviewRows, setImportPreviewRows] = useState<ParsedSpreadsheetRow[]>([]);
+  const [detectedImportFields, setDetectedImportFields] = useState<SpreadsheetImportField[]>([]);
+  const [importProgress, setImportProgress] = useState({
+    current: 0,
+    total: 0,
+    created: 0,
+    updated: 0,
+    skipped: 0,
+    startedAt: 0,
+    lastLine: 0,
+    lastStatus: 'Aguardando início',
+  });
 
   const getSituationColor = (serviceType: ServiceKind, situation: string) => {
     return situationColors[`${serviceType}|${situation}`] || '#2563eb';
@@ -447,6 +621,163 @@ export const ServicesTrackingPage: React.FC = () => {
 
     return matchesType && haystack.includes(searchText.trim().toLowerCase());
   }), [rows, searchText, typeFilter]);
+
+  const importProgressPercent = useMemo(() => {
+    if (!importProgress.total) return 0;
+    return Math.round((importProgress.current / importProgress.total) * 100);
+  }, [importProgress.current, importProgress.total]);
+
+  const importElapsedSeconds = useMemo(() => {
+    if (!importProgress.startedAt) return 0;
+    return Math.max(Math.floor((Date.now() - importProgress.startedAt) / 1000), 0);
+  }, [importProgress.current, importProgress.startedAt]);
+
+  const resolveFieldValue = (
+    normalizedRow: Record<string, string>,
+    field: SpreadsheetImportField,
+    detectedMap: Partial<Record<SpreadsheetImportField, string>>
+  ) => {
+    const detectedKey = detectedMap[field];
+    if (detectedKey && normalizedRow[detectedKey] !== undefined) {
+      return String(normalizedRow[detectedKey] || '').trim();
+    }
+    return '';
+  };
+
+  const parseSpreadsheetRecords = (records: Record<string, unknown>[]) => {
+    if (!records.length) {
+      throw new Error('A planilha está vazia.');
+    }
+
+    const headers = Object.keys(records[0] || {}).map(normalizeHeaderKey);
+    const detectedMap: Partial<Record<SpreadsheetImportField, string>> = {};
+
+    (Object.keys(SPREADSHEET_FIELD_CANDIDATES) as SpreadsheetImportField[]).forEach((field) => {
+      const match = SPREADSHEET_FIELD_CANDIDATES[field].find((candidate) =>
+        headers.some((header) => header === candidate || header.includes(candidate) || candidate.includes(header))
+      );
+      if (!match) return;
+      const matchedHeader = headers.find((header) => header === match || header.includes(match) || match.includes(header));
+      if (matchedHeader) detectedMap[field] = matchedHeader;
+    });
+
+    const detectedFields = Object.keys(detectedMap) as SpreadsheetImportField[];
+    if (!detectedFields.length) {
+      throw new Error('Não foi possível detectar colunas conhecidas. Verifique o cabeçalho da planilha.');
+    }
+
+    const parsedRows: ParsedSpreadsheetRow[] = records.map((record, index) => {
+      const normalizedRow = Object.entries(record).reduce<Record<string, string>>((acc, [key, value]) => {
+        acc[normalizeHeaderKey(key)] = String(value ?? '').trim();
+        return acc;
+      }, {});
+
+      const rawType = resolveFieldValue(normalizedRow, 'serviceType', detectedMap) || String(record.__sheetName || '');
+      const rawCode = resolveFieldValue(normalizedRow, 'code', detectedMap);
+      const parsedType = resolveServiceKind(rawType) || inferServiceKindFromCode(rawCode);
+
+      const contractValueRaw = resolveFieldValue(normalizedRow, 'contractValue', detectedMap);
+      const receivableRaw = resolveFieldValue(normalizedRow, 'receivable', detectedMap);
+      const receivedRaw = resolveFieldValue(normalizedRow, 'received', detectedMap);
+      const costsRaw = resolveFieldValue(normalizedRow, 'costs', detectedMap);
+
+      return {
+        lineNumber: index + 2,
+        code: rawCode,
+        serviceType: parsedType,
+        subtype: resolveFieldValue(normalizedRow, 'subtype', detectedMap) || undefined,
+        situation: resolveFieldValue(normalizedRow, 'situation', detectedMap) || undefined,
+        clientName: resolveFieldValue(normalizedRow, 'clientName', detectedMap) || undefined,
+        phone: resolveFieldValue(normalizedRow, 'phone', detectedMap) || undefined,
+        description: resolveFieldValue(normalizedRow, 'description', detectedMap) || undefined,
+        contractValue: contractValueRaw ? toNumber(contractValueRaw) : undefined,
+        contractDate: resolveSpreadsheetDateFromAny(record[detectedMap.contractDate || '']) || undefined,
+        paymentCondition: resolveFieldValue(normalizedRow, 'paymentCondition', detectedMap) || undefined,
+        receivable: receivableRaw ? toNumber(receivableRaw) : undefined,
+        received: receivedRaw ? toNumber(receivedRaw) : undefined,
+        costs: costsRaw ? toNumber(costsRaw) : undefined,
+        folderUrl: resolveFieldValue(normalizedRow, 'folderUrl', detectedMap) || undefined,
+        entryDate: resolveSpreadsheetDateFromAny(record[detectedMap.entryDate || '']) || undefined,
+        companyDocument: resolveFieldValue(normalizedRow, 'companyDocument', detectedMap) || undefined,
+        companyName: resolveFieldValue(normalizedRow, 'companyName', detectedMap) || undefined,
+        contactName: resolveFieldValue(normalizedRow, 'contactName', detectedMap) || undefined,
+        email: resolveFieldValue(normalizedRow, 'email', detectedMap) || undefined,
+        companyAddress: resolveFieldValue(normalizedRow, 'companyAddress', detectedMap) || undefined,
+        serviceAddress: resolveFieldValue(normalizedRow, 'serviceAddress', detectedMap) || undefined,
+        sheetName: String(record.__sheetName || '') || undefined,
+      };
+    }).filter((item) => (
+      item.code
+      || item.clientName
+      || item.companyName
+      || item.phone
+      || item.description
+      || item.contractValue
+    ));
+
+    if (!parsedRows.length) {
+      throw new Error('Nenhuma linha válida encontrada para importação.');
+    }
+
+    return { parsedRows, detectedFields };
+  };
+
+  const parseSpreadsheetImport = (content: string) => {
+    const records = parseCsvToRecords(content);
+    return parseSpreadsheetRecords(records);
+  };
+
+  const readExcelRecords = async (file: File) => {
+    const toNormalizedRecords = (sheet: XLSX.WorkSheet, sheetName: string) => {
+      const records = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '', raw: true });
+      return records.map((item) => ({
+        ...item,
+        __sheetName: sheetName,
+      }));
+    };
+
+    const extractRelevantSheetRecords = (workbook: XLSX.WorkBook) => {
+      const preferredSheetNames = workbook.SheetNames.filter((name) => {
+        const normalized = normalizeHeaderKey(name);
+        return normalized.includes('processoadm')
+          || normalized.includes('obras')
+          || normalized.includes('avcb')
+          || normalized.includes('clcb');
+      });
+      const selected = preferredSheetNames.length ? preferredSheetNames : workbook.SheetNames.slice(0, 1);
+      if (!selected.length) throw new Error('A planilha Excel não possui abas.');
+      return selected.flatMap((sheetName) => {
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) return [];
+        return toNormalizedRecords(sheet, sheetName);
+      });
+    };
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array', dense: true, WTF: false });
+      return extractRelevantSheetRecords(workbook);
+    } catch (firstError: any) {
+      try {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let index = 0; index < bytes.length; index += 1) {
+          binary += String.fromCharCode(bytes[index]);
+        }
+        const workbook = XLSX.read(binary, { type: 'binary', dense: true, WTF: false });
+        return extractRelevantSheetRecords(workbook);
+      } catch (secondError: any) {
+        const errorMessage = String(secondError?.message || firstError?.message || '');
+        if (errorMessage.includes('Unexpected record')) {
+          throw new Error(
+            'Este arquivo XLSB usa um formato binário não compatível com o parser atual. Salve como XLSX ou CSV e tente novamente.'
+          );
+        }
+        throw secondError;
+      }
+    }
+  };
 
   const replaceRow = (row: UnifiedServiceRow) => {
     setRows((current) => current.map((item) => item.key === row.key ? row : item));
@@ -768,6 +1099,304 @@ export const ServicesTrackingPage: React.FC = () => {
     }
   };
 
+  const handleSpreadsheetSelection = async (file: File) => {
+    try {
+      setImportProgress({
+        current: 0,
+        total: 0,
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        startedAt: 0,
+        lastLine: 0,
+        lastStatus: 'Arquivo carregado. Pronto para importar.',
+      });
+      const lowerName = file.name.toLowerCase();
+      let parsed: { parsedRows: ParsedSpreadsheetRow[]; detectedFields: SpreadsheetImportField[] };
+
+      if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls') || lowerName.endsWith('.xlsb')) {
+        const records = await readExcelRecords(file);
+        parsed = parseSpreadsheetRecords(records);
+      } else {
+        const text = await file.text();
+        parsed = parseSpreadsheetImport(text);
+      }
+
+      setImportFileName(file.name);
+      setImportPreviewRows(parsed.parsedRows);
+      setDetectedImportFields(parsed.detectedFields);
+      message.success(`${parsed.parsedRows.length} linha(s) pronta(s) para importação.`);
+    } catch (error: any) {
+      setImportFileName('');
+      setImportPreviewRows([]);
+      setDetectedImportFields([]);
+      setImportProgress({
+        current: 0,
+        total: 0,
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        startedAt: 0,
+        lastLine: 0,
+        lastStatus: 'Falha ao processar arquivo.',
+      });
+      message.error(error.message || 'Falha ao processar planilha.');
+    }
+    return false;
+  };
+
+  const createServiceInSourceModule = async (input: {
+    type: ServiceKind;
+    clientName: string;
+    phone: string;
+    subtype: string;
+    description: string;
+    situation?: string;
+    contractValue: number;
+    contractDate: string;
+    paymentCondition?: string;
+    receivable?: number;
+    received?: number;
+    costs?: number;
+  }) => {
+    const situacao = normalizeSituationForSource(input.situation);
+    const commonFinancial = {
+      valorContrato: Number(input.contractValue || 0),
+      dataContrato: input.contractDate,
+      condicaoPagamento: input.paymentCondition || '',
+      aReceber: Number(input.receivable || 0),
+      recebido: Number(input.received || 0),
+      custos: Number(input.costs || 0),
+    };
+
+    if (input.type === 'AVCB') {
+      return apiClient.post('/avcbs', {
+        situacao,
+        descricaoSituacao: input.description || '',
+        ...commonFinancial,
+      });
+    }
+
+    if (input.type === 'CLCB') {
+      return apiClient.post('/clcbs', {
+        nomeCliente: input.clientName,
+        endereco: '',
+        telefone: input.phone || '',
+        situacao,
+        descricaoSituacao: input.description || '',
+        ...commonFinancial,
+      });
+    }
+
+    if (input.type === 'OBRAS') {
+      return apiClient.post('/obras', {
+        nomeCliente: input.clientName,
+        endereco: '',
+        telefone: input.phone || '',
+        servico: input.subtype || 'Serviço importado',
+        situacao,
+        descricaoSituacao: input.description || '',
+        ...commonFinancial,
+      });
+    }
+
+    return apiClient.post('/processos-adm', {
+      situacao,
+      descricaoSituacao: input.description || '',
+      nomeCliente: input.clientName,
+      ...commonFinancial,
+    });
+  };
+
+  const executeSpreadsheetImport = async () => {
+    if (!importPreviewRows.length) {
+      message.warning('Selecione uma planilha antes de importar.');
+      return;
+    }
+
+    setImportingSpreadsheet(true);
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+    const nowDate = dayjs().format('YYYY-MM-DD');
+    const total = importPreviewRows.length;
+    setImportProgress({
+      current: 0,
+      total,
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      startedAt: Date.now(),
+      lastLine: 0,
+      lastStatus: 'Iniciando importação...',
+    });
+
+    try {
+      let cacheByCode = new Map(rows.map((row) => [normalizeCode(row.code), row]));
+
+      for (const item of importPreviewRows) {
+        try {
+          const itemCode = normalizeCode(item.code || '');
+          const existing = itemCode ? cacheByCode.get(itemCode) : undefined;
+
+          if (existing) {
+            const nextSituation = item.situation || existing.situation;
+            const nextRow: UnifiedServiceRow = {
+              ...existing,
+              serviceType: item.serviceType || existing.serviceType,
+              subtype: item.subtype || existing.subtype,
+              clientName: item.clientName || existing.clientName,
+              phone: item.phone ? formatPhoneBR(item.phone) : existing.phone,
+              situation: nextSituation,
+              description: item.description || existing.description,
+              contractValue: item.contractValue ?? existing.contractValue,
+              contractDate: item.contractDate || existing.contractDate,
+              paymentCondition: item.paymentCondition || existing.paymentCondition,
+              receivable: item.receivable ?? existing.receivable,
+              received: item.received ?? existing.received,
+              costs: item.costs ?? existing.costs,
+              folderUrl: item.folderUrl || existing.folderUrl,
+            };
+
+            const hasSituationChange = nextSituation !== existing.situation;
+            const hasOtherChanges =
+              nextRow.serviceType !== existing.serviceType
+              || nextRow.subtype !== existing.subtype
+              || nextRow.clientName !== existing.clientName
+              || nextRow.phone !== existing.phone
+              || nextRow.description !== existing.description
+              || nextRow.contractValue !== existing.contractValue
+              || nextRow.contractDate !== existing.contractDate
+              || nextRow.paymentCondition !== existing.paymentCondition
+              || nextRow.receivable !== existing.receivable
+              || nextRow.received !== existing.received
+              || nextRow.costs !== existing.costs
+              || nextRow.folderUrl !== existing.folderUrl;
+
+            if (!hasSituationChange && !hasOtherChanges) {
+              updated += 1;
+              setImportProgress((prev) => ({
+                ...prev,
+                current: prev.current + 1,
+                updated,
+                lastLine: item.lineNumber,
+                lastStatus: `Linha ${item.lineNumber}: sem alterações (mantida).`,
+              }));
+              continue;
+            }
+
+            let mapped: UnifiedServiceRow = existing;
+            if (hasSituationChange) {
+              const detail = await servicesTrackingApi.updateSituation(existing.id, nextSituation, 'Situação atualizada via importação de planilha.');
+              mapped = mapServiceRow(detail.service);
+            }
+
+            if (hasOtherChanges) {
+              const updatedRecord = await servicesTrackingApi.update(existing.id, toUpdatePayload({ ...mapped, ...nextRow }));
+              mapped = mapServiceRow(updatedRecord);
+            }
+
+            cacheByCode.set(normalizeCode(mapped.code), mapped);
+            updated += 1;
+            setImportProgress((prev) => ({
+              ...prev,
+              current: prev.current + 1,
+              updated,
+              lastLine: item.lineNumber,
+              lastStatus: `Linha ${item.lineNumber}: atualizado.`,
+            }));
+            continue;
+          }
+
+          const resolvedType = item.serviceType || inferServiceKindFromCode(item.code || '') || 'AVCB';
+          const defaultSubtype = item.subtype || DEFAULT_SUBTYPE_OPTIONS[resolvedType][0] || 'GERAL';
+          const resolvedClientName = item.clientName || item.companyName || 'Cliente importado';
+          const resolvedContractDate = item.contractDate || item.entryDate || nowDate;
+          const resolvedContractValue = Number(item.contractValue || 0);
+
+          const createValidationIssues: string[] = [];
+          if (!resolvedType) createValidationIssues.push('tipoServico');
+          if (!resolvedClientName) createValidationIssues.push('nomeCliente');
+          if (!resolvedContractDate) createValidationIssues.push('dataContrato');
+          if (createValidationIssues.length) {
+            throw new Error(`campos obrigatórios ausentes: ${createValidationIssues.join(', ')}`);
+          }
+
+          const createdRecord = await createServiceInSourceModule({
+            type: resolvedType,
+            clientName: resolvedClientName,
+            phone: item.phone || '',
+            subtype: defaultSubtype,
+            description: item.description || item.situation || '',
+            situation: item.situation,
+            contractValue: resolvedContractValue,
+            contractDate: resolvedContractDate,
+            paymentCondition: item.paymentCondition || '',
+            receivable: item.receivable ?? resolvedContractValue,
+            received: item.received ?? 0,
+            costs: item.costs ?? 0,
+          });
+          created += 1;
+          setImportProgress((prev) => ({
+            ...prev,
+            current: prev.current + 1,
+            created,
+            lastLine: item.lineNumber,
+            lastStatus: `Linha ${item.lineNumber}: criado (${createdRecord.data?.codigo || 'novo serviço'}).`,
+          }));
+        } catch (error: any) {
+          skipped += 1;
+          errors.push(`Linha ${item.lineNumber}: ${error.message || 'falha na importação.'}`);
+          setImportProgress((prev) => ({
+            ...prev,
+            current: prev.current + 1,
+            skipped,
+            lastLine: item.lineNumber,
+            lastStatus: `Linha ${item.lineNumber}: erro.`,
+          }));
+        }
+      }
+
+      await loadData();
+      setImportModalOpen(false);
+      setImportFileName('');
+      setImportPreviewRows([]);
+      setDetectedImportFields([]);
+
+      if (errors.length) {
+        message.warning(
+          `Importação finalizada com alertas. Criados: ${created}, atualizados: ${updated}, ignorados: ${skipped}.`
+        );
+        Modal.info({
+          title: 'Resumo da importação',
+          width: 720,
+          content: (
+            <Space direction="vertical" size={6}>
+              <Text>Criados: {created}</Text>
+              <Text>Atualizados: {updated}</Text>
+              <Text>Ignorados: {skipped}</Text>
+              <Text type="secondary">Erros encontrados:</Text>
+              <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+                {errors.map((entry) => (
+                  <Text key={entry} style={{ display: 'block' }}>{entry}</Text>
+                ))}
+              </div>
+            </Space>
+          ),
+        });
+      } else {
+        message.success(`Importação concluída. Criados: ${created}, atualizados: ${updated}.`);
+      }
+    } finally {
+      setImportingSpreadsheet(false);
+      setImportProgress((prev) => ({
+        ...prev,
+        lastStatus: 'Importação finalizada.',
+      }));
+    }
+  };
+
   const columns: ExcelColumnType<UnifiedServiceRow>[] = [
     {
       title: 'Codigo',
@@ -957,6 +1586,25 @@ export const ServicesTrackingPage: React.FC = () => {
         </Space>
 
         <Space wrap>
+          <Button
+            className="atlas-services-button"
+            icon={<ImportOutlined />}
+            onClick={() => {
+              setImportProgress({
+                current: 0,
+                total: 0,
+                created: 0,
+                updated: 0,
+                skipped: 0,
+                startedAt: 0,
+                lastLine: 0,
+                lastStatus: 'Aguardando arquivo.',
+              });
+              setImportModalOpen(true);
+            }}
+          >
+            Importar planilha
+          </Button>
           <Button
             className="atlas-services-button"
             icon={<PlusOutlined />}
@@ -1172,6 +1820,74 @@ export const ServicesTrackingPage: React.FC = () => {
           />
         ) : null}
       </Drawer>
+
+      <Modal
+        className="atlas-services-modal"
+        open={importModalOpen}
+        onCancel={() => {
+          if (importingSpreadsheet) return;
+          setImportModalOpen(false);
+        }}
+        title="Importar serviços por planilha"
+        okText="Importar agora"
+        cancelText="Fechar"
+        okButtonProps={{ loading: importingSpreadsheet, disabled: !importPreviewRows.length }}
+        onOk={() => void executeSpreadsheetImport()}
+      >
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Text type="secondary">
+            O sistema detecta automaticamente as colunas e importa em lote. Linhas com código existente são atualizadas; as demais são criadas.
+          </Text>
+
+          {importingSpreadsheet || importProgress.total > 0 ? (
+            <Card size="small">
+              <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Text strong>Progresso da importação</Text>
+                <Slider value={importProgressPercent} min={0} max={100} tooltip={{ open: false }} disabled />
+                <Text>{importProgress.current}/{importProgress.total} linha(s) processada(s) • {importProgressPercent}%</Text>
+                <Text type="secondary">
+                  Criados: {importProgress.created} | Atualizados: {importProgress.updated} | Ignorados: {importProgress.skipped} | Tempo: {importElapsedSeconds}s
+                </Text>
+                <Text type="secondary">{importProgress.lastStatus}</Text>
+              </Space>
+            </Card>
+          ) : null}
+
+          <Upload
+            beforeUpload={handleSpreadsheetSelection}
+            accept=".csv,.txt,.xls,.xlsx,.xlsb,application/vnd.ms-excel.sheet.binary.macroEnabled.12"
+            showUploadList={false}
+            disabled={importingSpreadsheet}
+          >
+            <Button icon={<UploadOutlined />} disabled={importingSpreadsheet}>
+              Selecionar planilha (CSV/XLS/XLSX/XLSB)
+            </Button>
+          </Upload>
+
+          {importFileName ? <Text strong>Arquivo: {importFileName}</Text> : null}
+          {detectedImportFields.length ? (
+            <Space size={[6, 6]} wrap>
+              {detectedImportFields.map((field) => (
+                <Tag key={field}>{field}</Tag>
+              ))}
+            </Space>
+          ) : null}
+
+          <Card size="small">
+            <Text strong>Prévia da importação</Text>
+            <div style={{ marginTop: 8 }}>
+              <Text>{importPreviewRows.length} linha(s) válida(s) detectada(s).</Text>
+            </div>
+            <div style={{ marginTop: 8, maxHeight: 220, overflowY: 'auto' }}>
+              {importPreviewRows.slice(0, 15).map((item) => (
+                <Text key={`${item.lineNumber}-${item.code}-${item.clientName}`} style={{ display: 'block' }}>
+                  Linha {item.lineNumber}: {item.code || 'SEM_CODIGO'} | {item.clientName || item.companyName || '-'} | {item.serviceType || '-'}
+                </Text>
+              ))}
+            </div>
+          </Card>
+        </Space>
+      </Modal>
 
       <Modal
         className="atlas-services-modal"

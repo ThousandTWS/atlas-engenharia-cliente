@@ -70,11 +70,32 @@ export interface DashboardSummary {
 }
 
 class ExecutiveDashboardService {
+  private readonly primaryTimeoutMs = 45000;
+  private readonly retryTimeoutMs = 90000;
+
+  private isTimeoutError(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error || '');
+    return message.toLowerCase().includes('timeout');
+  }
+
   async getSummary(dataInicial: string, dataFinal: string): Promise<DashboardSummary> {
-    const response = await apiClient.get<DashboardSummary>('/dashboard/resumo', {
-      params: { dataInicial, dataFinal },
-    });
-    return response.data;
+    try {
+      const response = await apiClient.get<DashboardSummary>('/dashboard/resumo', {
+        params: { dataInicial, dataFinal },
+        timeout: this.primaryTimeoutMs,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      if (!this.isTimeoutError(error)) {
+        throw error;
+      }
+
+      const retryResponse = await apiClient.get<DashboardSummary>('/dashboard/resumo', {
+        params: { dataInicial, dataFinal },
+        timeout: this.retryTimeoutMs,
+      });
+      return retryResponse.data;
+    }
   }
 }
 

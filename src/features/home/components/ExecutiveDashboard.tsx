@@ -37,7 +37,12 @@ export const ExecutiveDashboard = () => {
       );
       setSummary(response);
     } catch (error: unknown) {
-      message.error(`Erro ao carregar dashboard: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      if (errorMessage.toLowerCase().includes('timeout')) {
+        message.error('Dashboard demorou para responder. Tente novamente em alguns segundos.');
+      } else {
+        message.error(`Erro ao carregar dashboard: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }
