@@ -371,6 +371,8 @@ const EMPTY_SITUATION_CONFIG: ServiceSituationConfig = {
   OBRAS: [],
   PROCESSOS_ADM: [],
 };
+const INITIAL_SERVICES_LOAD_SIZE = 120;
+const FULL_SERVICES_LOAD_SIZE = 500;
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number.isFinite(value) ? value : 0);
@@ -516,10 +518,12 @@ export const ServicesTrackingPage: React.FC = () => {
     setSituationConfig(createSituationConfigMap(responses));
   }, []);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async (options?: { size?: number; silent?: boolean }) => {
+    const size = options?.size ?? FULL_SERVICES_LOAD_SIZE;
+    const silent = Boolean(options?.silent);
+    if (!silent) setLoading(true);
     try {
-      const services = await servicesTrackingApi.getAll({ size: 500 });
+      const services = await servicesTrackingApi.getAll({ size });
       const mapped = services.content.map(mapServiceRow);
       setRows(mapped);
       writeServicesRowsCache(mapped);
@@ -531,7 +535,7 @@ export const ServicesTrackingPage: React.FC = () => {
         message.error(`Erro ao carregar painel de acompanhamento: ${errorMessage}`);
       }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [message]);
 
@@ -543,7 +547,11 @@ export const ServicesTrackingPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    loadData();
+    void loadData({ size: INITIAL_SERVICES_LOAD_SIZE });
+    const timer = window.setTimeout(() => {
+      void loadData({ size: FULL_SERVICES_LOAD_SIZE, silent: true });
+    }, 80);
+    return () => window.clearTimeout(timer);
   }, [loadData]);
 
   useEffect(() => {
