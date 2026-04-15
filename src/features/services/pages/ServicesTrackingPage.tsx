@@ -497,7 +497,12 @@ export const ServicesTrackingPage: React.FC = () => {
       ]);
       setRows(services.content.map(mapServiceRow));
     } catch (error: any) {
-      message.error(`Erro ao carregar painel de acompanhamento: ${error.message}`);
+      const errorMessage = String(error?.message || '');
+      if (errorMessage.toLowerCase().includes('timeout')) {
+        message.error('O painel de acompanhamento demorou para responder. Tente novamente em alguns segundos.');
+      } else {
+        message.error(`Erro ao carregar painel de acompanhamento: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }

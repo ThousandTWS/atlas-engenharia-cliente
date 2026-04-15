@@ -154,10 +154,24 @@ const mapPendingCondition = (item: any): ServicePendingCondition => ({
 
 export const servicesTrackingApi = {
   async getAll(filters?: TrackingServicesFilters) {
-    const response = await apiClient.get<PaginatedResponse<TrackingServiceDto>>('/acompanhamento-servicos', {
-      params: filters,
-    });
-    return response.data;
+    try {
+      const response = await apiClient.get<PaginatedResponse<TrackingServiceDto>>('/acompanhamento-servicos', {
+        params: filters,
+        timeout: 60000,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message.toLowerCase() : String(error || '').toLowerCase();
+      if (!message.includes('timeout')) {
+        throw error;
+      }
+
+      const retry = await apiClient.get<PaginatedResponse<TrackingServiceDto>>('/acompanhamento-servicos', {
+        params: filters,
+        timeout: 120000,
+      });
+      return retry.data;
+    }
   },
 
   async getById(id: string | number) {
