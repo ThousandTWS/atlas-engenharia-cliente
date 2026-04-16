@@ -252,7 +252,7 @@ const SPREADSHEET_FIELD_CANDIDATES: Record<SpreadsheetImportField, string[]> = {
 const INSPECTION_STORAGE_KEY = 'atlas.service_tracking.inspection_schedule';
 const LEGACY_INSPECTION_STORAGE_KEY = 'prevent.service_tracking.inspection_schedule';
 const SERVICES_CACHE_STORAGE_KEY = 'atlas.service_tracking.rows_cache_v1';
-const SERVICES_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+const SERVICES_CACHE_MAX_AGE_MS = 2 * 20 * 5000;
 
 const readInspectionScheduleMap = (): InspectionScheduleMap => {
   if (typeof window === 'undefined') return {};
@@ -301,7 +301,6 @@ const writeServicesRowsCache = (rows: UnifiedServiceRow[]) => {
       rows,
     }));
   } catch {
-    // no-op
   }
 };
 
@@ -1509,11 +1508,11 @@ export const ServicesTrackingPage: React.FC = () => {
         return (
           <Space direction="vertical" size={6} style={{ width: '100%' }}>
             <Select
-              className="atlas-services-select"
+              className="atlas-services-select atlas-services-select--status"
               size="small"
               value={inlineEdit?.key === row.key && inlineEdit.field === 'situation' ? inlineEdit.value : row.situation}
               options={(situationConfig[row.serviceType] ?? []).map((item) => ({ label: item.label, value: item.label }))}
-              style={{ width: '100%', background: color, color: '#000' }}
+              style={{ width: '100%', background: color, color: '#fff' }}
               onFocus={() => setInlineEdit({ key: row.key, field: 'situation', value: row.situation })}
               onChange={(value) => setInlineEdit({ key: row.key, field: 'situation', value })}
               onBlur={() => saveInlineEdit(row)}
@@ -1709,7 +1708,7 @@ export const ServicesTrackingPage: React.FC = () => {
           tableLayout="auto"
           scroll={{ x: 'max-content' }}
           pagination={{
-            pageSize: 10,
+            pageSize: 30,
             showSizeChanger: true,
             showTotal: (total) => `Total de ${total} servico(s)`,
           }}

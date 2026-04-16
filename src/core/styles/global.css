@@ -2120,6 +2120,19 @@ body {
   min-height: 42px;
 }
 
+.atlas-services-select--status .ant-select-selector,
+.atlas-services-select--status .ant-select-selection-item,
+.atlas-services-select--status .ant-select-selection-placeholder,
+.atlas-services-select--status .ant-select-arrow {
+  color: #ffffff !important;
+}
+
+.atlas-services-select--status .ant-select-arrow .anticon,
+.atlas-services-select--status .ant-select-arrow .anticon svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
 .atlas-services-date.ant-picker {
   display: flex;
   align-items: center;
