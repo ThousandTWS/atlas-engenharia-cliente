@@ -187,6 +187,17 @@ export const servicesTrackingApi = {
     return response.data;
   },
 
+  async deleteFromSource(input: { type: ServiceKind; origemId: string | number }) {
+    const endpointByType: Record<ServiceKind, string> = {
+      AVCB: '/avcbs',
+      CLCB: '/clcbs',
+      OBRAS: '/obras',
+      PROCESSOS_ADM: '/processos-adm',
+    };
+    const endpoint = endpointByType[input.type];
+    await apiClient.delete(`${endpoint}/${input.origemId}`);
+  },
+
   async updateSituation(id: string | number, novaSituacao: string, descricao?: string) {
     const response = await apiClient.post<TrackingServiceDetailDto>(`/acompanhamento-servicos/${id}/situacao`, {
       novaSituacao,

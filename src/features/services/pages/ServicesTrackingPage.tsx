@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   App,
   Button,
@@ -27,6 +27,7 @@ import {
   EditOutlined,
   FilePdfOutlined,
   FolderOpenOutlined,
+  InboxOutlined,
   ImportOutlined,
   PlusOutlined,
   SaveOutlined,
@@ -43,6 +44,7 @@ import { pdfTemplatesService } from '../../../core/services/pdfTemplatesService'
 import { parseCsvToRecords, toNumber } from '../../../core/import-export/csv';
 import { renderPdfTemplate, toSafeTextVar } from '../../../shared/utils/pdfTemplate';
 import { PdfTemplateEditorModal } from '../../../shared/components/PdfTemplateEditorModal';
+import { useLiveSubscription, type LiveEvent } from '../../../core/realtime/liveProvider';
 import {
   servicesTrackingApi,
   type ServiceHistoryEntry,
@@ -57,6 +59,7 @@ import {
 import * as XLSX from 'xlsx';
 
 const { Title, Text } = Typography;
+const { Dragger } = Upload;
 
 type EditableField = 'subtype' | 'situation' | 'description';
 
@@ -146,6 +149,12 @@ interface ParsedSpreadsheetRow {
   sheetName?: string;
 }
 
+interface ParsedSpreadsheetImport {
+  parsedRows: ParsedSpreadsheetRow[];
+  detectedFields: SpreadsheetImportField[];
+  deduplicatedCount: number;
+}
+
 const normalizeHeaderKey = (value: string) =>
   String(value || '')
     .trim()
@@ -155,7 +164,27 @@ const normalizeHeaderKey = (value: string) =>
     .replace(/[^a-z0-9]/g, '');
 
 const normalizeCode = (value: string) =>
-  String(value || '').trim().toUpperCase();
+  String(value || '')
+    .trim()
+    .replace(/\s+/g, '')
+    .toUpperCase();
+
+const normalizeImportedCode = (value: string) => {
+  const normalized = String(value || '')
+    .replace(/\u00A0/g, ' ')
+    .trim();
+  if (!normalized) return '';
+  if (/^\d+(\.0+)?$/.test(normalized)) {
+    return normalized.replace(/\.0+$/, '');
+  }
+  return normalized;
+};
+
+const yieldToBrowser = async () => {
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, 0);
+  });
+};
 
 const resolveSpreadsheetDate = (value: string): string => {
   const raw = String(value || '').trim();
@@ -226,7 +255,7 @@ const normalizeSituationForSource = (value?: string): 'PENDENTE' | 'EM_ANDAMENTO
 };
 
 const SPREADSHEET_FIELD_CANDIDATES: Record<SpreadsheetImportField, string[]> = {
-  code: ['codigo', 'codigoservico', 'codservico', 'servicocodigo', 'servicecode', 'code', 'cod', 'coluna1'],
+  code: ['codigo', 'codigodoservico', 'codigoservico', 'codservico', 'servicocodigo', 'servicecode', 'code', 'cod', 'coluna1', 'numeroservico', 'numero'],
   serviceType: ['tiposervico', 'tipo', 'servico', 'servicetype'],
   subtype: ['subtipo', 'subtiposervico', 'subtype'],
   situation: ['situacao', 'status', 'etapa', 'fase'],
@@ -364,6 +393,18 @@ const DEFAULT_SUBTYPE_OPTIONS: Record<ServiceKind, string[]> = {
   PROCESSOS_ADM: ['Contrato', 'Renovacao', 'Regularizacao'],
 };
 
+const TRACKING_RESOURCE_CHANNELS = new Set([
+  'resources.avcbs',
+  'resources.clcbs',
+  'resources.obras',
+  'resources.processos_adm',
+]);
+
+const TRACKING_RESOURCES = new Set(['avcbs', 'clcbs', 'obras', 'processos_adm']);
+
+const buildRowOriginIdentity = (input: { serviceType: ServiceKind; origemId: number | string }) =>
+  `${input.serviceType}|${String(input.origemId)}`;
+
 const EMPTY_SITUATION_CONFIG: ServiceSituationConfig = {
   AVCB: [],
   CLCB: [],
@@ -441,11 +482,13 @@ export const ServicesTrackingPage: React.FC = () => {
   const { message } = App.useApp();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [situationColors, setSituationColors] = useState<Record<string, string>>(() => readSituationColors());
   const [pendingTagColor, setPendingTagColor] = useState<string>(() => readPendingTagColor());
   const [rows, setRows] = useState<UnifiedServiceRow[]>([]);
+  const [hiddenOriginIdentities, setHiddenOriginIdentities] = useState<Set<string>>(new Set());
   const [typeFilter, setTypeFilter] = useState<ServiceKind | 'ALL'>('ALL');
   const [searchText, setSearchText] = useState('');
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -453,6 +496,7 @@ export const ServicesTrackingPage: React.FC = () => {
   const [importFileName, setImportFileName] = useState('');
   const [importPreviewRows, setImportPreviewRows] = useState<ParsedSpreadsheetRow[]>([]);
   const [detectedImportFields, setDetectedImportFields] = useState<SpreadsheetImportField[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [importProgress, setImportProgress] = useState({
     current: 0,
     total: 0,
@@ -502,6 +546,7 @@ export const ServicesTrackingPage: React.FC = () => {
   const [reportTemplateLoading, setReportTemplateLoading] = useState(false);
   const [reportTemplateName, setReportTemplateName] = useState('');
   const [reportTemplateHtml, setReportTemplateHtml] = useState('');
+  const realtimeReloadTimerRef = useRef<number | null>(null);
 
   const drawerSituation = Form.useWatch<string>('situation', drawerForm) || '';
 
@@ -523,7 +568,9 @@ export const ServicesTrackingPage: React.FC = () => {
     if (!silent) setLoading(true);
     try {
       const services = await servicesTrackingApi.getAll({ size });
-      const mapped = services.content.map(mapServiceRow);
+      const mapped = services.content
+        .map(mapServiceRow)
+        .filter((row) => !hiddenOriginIdentities.has(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId })));
       setRows(mapped);
       writeServicesRowsCache(mapped);
     } catch (error: any) {
@@ -536,7 +583,7 @@ export const ServicesTrackingPage: React.FC = () => {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [message]);
+  }, [hiddenOriginIdentities, message]);
 
   useEffect(() => {
     const cachedRows = readServicesRowsCache();
@@ -556,6 +603,38 @@ export const ServicesTrackingPage: React.FC = () => {
   useEffect(() => {
     void loadSituationConfig();
   }, [loadSituationConfig]);
+
+  const scheduleRealtimeReload = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    if (realtimeReloadTimerRef.current !== null) {
+      window.clearTimeout(realtimeReloadTimerRef.current);
+    }
+
+    realtimeReloadTimerRef.current = window.setTimeout(() => {
+      realtimeReloadTimerRef.current = null;
+      void loadData({ size: FULL_SERVICES_LOAD_SIZE, silent: true });
+    }, 350);
+  }, [loadData]);
+
+  useLiveSubscription({
+    channel: 'resources.*',
+    types: ['created', 'updated', 'deleted'],
+    callback: (event: LiveEvent) => {
+      const channelMatch = TRACKING_RESOURCE_CHANNELS.has(event.channel);
+      const metaResource = String(event.meta?.resource || '').toLowerCase();
+      const metaMatch = TRACKING_RESOURCES.has(metaResource);
+      if (!channelMatch && !metaMatch) return;
+      scheduleRealtimeReload();
+    },
+  });
+
+  useEffect(() => {
+    return () => {
+      if (realtimeReloadTimerRef.current !== null) {
+        window.clearTimeout(realtimeReloadTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!drawerRow) {
@@ -672,6 +751,13 @@ export const ServicesTrackingPage: React.FC = () => {
     return matchesType && haystack.includes(searchText.trim().toLowerCase());
   }), [rows, searchText, typeFilter]);
 
+  const filteredRowKeys = useMemo(() => filteredRows.map((row) => row.key), [filteredRows]);
+  const allFilteredSelected = useMemo(() => {
+    if (!filteredRowKeys.length) return false;
+    const selected = new Set(selectedRowKeys.map((key) => String(key)));
+    return filteredRowKeys.every((key) => selected.has(String(key)));
+  }, [filteredRowKeys, selectedRowKeys]);
+
   const importProgressPercent = useMemo(() => {
     if (!importProgress.total) return 0;
     return Math.round((importProgress.current / importProgress.total) * 100);
@@ -694,7 +780,7 @@ export const ServicesTrackingPage: React.FC = () => {
     return '';
   };
 
-  const parseSpreadsheetRecords = (records: Record<string, unknown>[]) => {
+  const parseSpreadsheetRecords = async (records: Record<string, unknown>[]): Promise<ParsedSpreadsheetImport> => {
     if (!records.length) {
       throw new Error('A planilha está vazia.');
     }
@@ -716,14 +802,17 @@ export const ServicesTrackingPage: React.FC = () => {
       throw new Error('Não foi possível detectar colunas conhecidas. Verifique o cabeçalho da planilha.');
     }
 
-    const parsedRows: ParsedSpreadsheetRow[] = records.map((record, index) => {
+    const parsedRows: ParsedSpreadsheetRow[] = [];
+
+    for (let index = 0; index < records.length; index += 1) {
+      const record = records[index];
       const normalizedRow = Object.entries(record).reduce<Record<string, string>>((acc, [key, value]) => {
         acc[normalizeHeaderKey(key)] = String(value ?? '').trim();
         return acc;
       }, {});
 
       const rawType = resolveFieldValue(normalizedRow, 'serviceType', detectedMap) || String(record.__sheetName || '');
-      const rawCode = resolveFieldValue(normalizedRow, 'code', detectedMap);
+      const rawCode = normalizeImportedCode(resolveFieldValue(normalizedRow, 'code', detectedMap));
       const parsedType = resolveServiceKind(rawType) || inferServiceKindFromCode(rawCode);
 
       const contractValueRaw = resolveFieldValue(normalizedRow, 'contractValue', detectedMap);
@@ -731,7 +820,7 @@ export const ServicesTrackingPage: React.FC = () => {
       const receivedRaw = resolveFieldValue(normalizedRow, 'received', detectedMap);
       const costsRaw = resolveFieldValue(normalizedRow, 'costs', detectedMap);
 
-      return {
+      const nextItem: ParsedSpreadsheetRow = {
         lineNumber: index + 2,
         code: rawCode,
         serviceType: parsedType,
@@ -756,23 +845,71 @@ export const ServicesTrackingPage: React.FC = () => {
         serviceAddress: resolveFieldValue(normalizedRow, 'serviceAddress', detectedMap) || undefined,
         sheetName: String(record.__sheetName || '') || undefined,
       };
-    }).filter((item) => (
-      item.code
-      || item.clientName
-      || item.companyName
-      || item.phone
-      || item.description
-      || item.contractValue
-    ));
+
+      if (
+        nextItem.code
+        || nextItem.clientName
+        || nextItem.companyName
+        || nextItem.phone
+        || nextItem.description
+        || nextItem.contractValue
+      ) {
+        parsedRows.push(nextItem);
+      }
+
+      if (index > 0 && index % 250 === 0) {
+        await yieldToBrowser();
+      }
+    }
 
     if (!parsedRows.length) {
       throw new Error('Nenhuma linha válida encontrada para importação.');
     }
 
-    return { parsedRows, detectedFields };
+    let deduplicatedCount = 0;
+    const uniqueRows = new Map<string, ParsedSpreadsheetRow>();
+    for (let index = 0; index < parsedRows.length; index += 1) {
+      const item = parsedRows[index];
+      const normalizedCode = normalizeCode(item.code || '');
+      if (!normalizedCode) continue;
+      const resolvedType = item.serviceType || inferServiceKindFromCode(item.code || '');
+      if (!resolvedType) continue;
+      const dedupeKey = `${resolvedType}|${normalizedCode}`;
+      if (uniqueRows.has(dedupeKey)) {
+        deduplicatedCount += 1;
+      }
+      uniqueRows.set(dedupeKey, item);
+      if (index > 0 && index % 400 === 0) {
+        await yieldToBrowser();
+      }
+    }
+
+    const withoutDuplicates: ParsedSpreadsheetRow[] = [];
+    for (let index = 0; index < parsedRows.length; index += 1) {
+      const item = parsedRows[index];
+      const normalizedCode = normalizeCode(item.code || '');
+      if (!normalizedCode) {
+        withoutDuplicates.push(item);
+        continue;
+      }
+      const resolvedType = item.serviceType || inferServiceKindFromCode(item.code || '');
+      if (!resolvedType) {
+        withoutDuplicates.push(item);
+        continue;
+      }
+      const dedupeKey = `${resolvedType}|${normalizedCode}`;
+      if (uniqueRows.get(dedupeKey) === item) {
+        withoutDuplicates.push(item);
+      }
+      if (index > 0 && index % 400 === 0) {
+        await yieldToBrowser();
+      }
+    }
+
+    return { parsedRows: withoutDuplicates, detectedFields, deduplicatedCount };
   };
 
-  const parseSpreadsheetImport = (content: string) => {
+  const parseSpreadsheetImport = async (content: string): Promise<ParsedSpreadsheetImport> => {
     const records = parseCsvToRecords(content);
     return parseSpreadsheetRecords(records);
   };
@@ -890,6 +1027,129 @@ export const ServicesTrackingPage: React.FC = () => {
     } catch (error: any) {
       message.error(error.message || 'Erro ao concluir pendência.');
     }
+  };
+
+  const executeBulkDelete = async () => {
+    if (!selectedRowKeys.length) {
+      message.warning('Selecione ao menos um serviço para excluir.');
+      return;
+    }
+
+    const selectedIds = new Set(selectedRowKeys.map((key) => Number(key)));
+    const targets = rows.filter((row) => selectedIds.has(row.id));
+    if (!targets.length) {
+      message.warning('Nenhum serviço selecionado foi encontrado na lista atual.');
+      setSelectedRowKeys([]);
+      return;
+    }
+
+    Modal.confirm({
+      title: 'Excluir serviços selecionados',
+      content: `Confirma a exclusão de ${targets.length} serviço(s)? Esta ação não pode ser desfeita.`,
+      okText: 'Excluir em massa',
+      okButtonProps: { danger: true },
+      cancelText: 'Cancelar',
+      onOk: async () => {
+        setBulkDeleting(true);
+        let deleted = 0;
+        let alreadyMissing = 0;
+        const failed: string[] = [];
+        const removedIdentities = new Set<string>();
+
+        try {
+          for (let index = 0; index < targets.length; index += 1) {
+            const row = targets[index];
+            try {
+              await servicesTrackingApi.deleteFromSource({
+                type: row.serviceType,
+                origemId: row.origemId,
+              });
+              deleted += 1;
+              removedIdentities.add(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }));
+            } catch (error: any) {
+              const errorMessage = String(error?.message || '');
+              const normalized = normalizeHeaderKey(errorMessage);
+              const isMissingAtSource =
+                normalized.includes('naoencontradacomid')
+                || normalized.includes('naoencontradocomid');
+
+              if (isMissingAtSource) {
+                // Se o registro já não existe no módulo de origem, consideramos como removido para o fluxo em massa.
+                alreadyMissing += 1;
+                removedIdentities.add(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }));
+              } else {
+                failed.push(`${row.code || row.id}: ${errorMessage || 'erro ao excluir'}`);
+              }
+            }
+
+            if (index > 0 && index % 10 === 0) {
+              await yieldToBrowser();
+            }
+          }
+
+          if (removedIdentities.size > 0) {
+            setHiddenOriginIdentities((current) => {
+              const next = new Set(current);
+              removedIdentities.forEach((identity) => next.add(identity));
+              return next;
+            });
+            setRows((current) => {
+              const next = current.filter((row) =>
+                !removedIdentities.has(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }))
+              );
+              writeServicesRowsCache(next);
+              return next;
+            });
+          }
+
+          if (drawerRow && targets.some((target) => target.id === drawerRow.id)) {
+            setDrawerRow(null);
+          }
+
+          setSelectedRowKeys([]);
+
+          if (failed.length) {
+            message.warning(
+              `Exclusão em massa concluída com alertas. Excluídos: ${deleted}. Já inexistentes: ${alreadyMissing}. Falhas: ${failed.length}.`
+            );
+            Modal.info({
+              title: 'Falhas na exclusão em massa',
+              width: 720,
+              content: (
+                <Space direction="vertical" size={6}>
+                  <Text>Excluídos: {deleted}</Text>
+                  <Text>Já inexistentes na origem: {alreadyMissing}</Text>
+                  <Text>Falhas: {failed.length}</Text>
+                  <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+                    {failed.map((entry) => (
+                      <Text key={entry} style={{ display: 'block' }}>{entry}</Text>
+                    ))}
+                  </div>
+                </Space>
+              ),
+            });
+          } else {
+            message.success(
+              `Exclusão em massa concluída. Removidos: ${deleted}. Já inexistentes na origem: ${alreadyMissing}.`
+            );
+          }
+        } finally {
+          setBulkDeleting(false);
+        }
+      },
+    });
+  };
+
+  const toggleSelectFilteredRows = () => {
+    if (!filteredRowKeys.length) return;
+    setSelectedRowKeys((current) => {
+      const currentSet = new Set(current.map((key) => String(key)));
+      if (allFilteredSelected) {
+        return current.filter((key) => !filteredRowKeys.includes(String(key)));
+      }
+      filteredRowKeys.forEach((key) => currentSet.add(String(key)));
+      return Array.from(currentSet);
+    });
   };
 
   const saveInlineEdit = async (row: UnifiedServiceRow) => {
@@ -1166,20 +1426,26 @@ export const ServicesTrackingPage: React.FC = () => {
         lastStatus: 'Arquivo carregado. Pronto para importar.',
       });
       const lowerName = file.name.toLowerCase();
-      let parsed: { parsedRows: ParsedSpreadsheetRow[]; detectedFields: SpreadsheetImportField[] };
+      let parsed: ParsedSpreadsheetImport;
 
       if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls') || lowerName.endsWith('.xlsb')) {
         const records = await readExcelRecords(file);
-        parsed = parseSpreadsheetRecords(records);
+        parsed = await parseSpreadsheetRecords(records);
       } else {
         const text = await file.text();
-        parsed = parseSpreadsheetImport(text);
+        parsed = await parseSpreadsheetImport(text);
       }
 
       setImportFileName(file.name);
       setImportPreviewRows(parsed.parsedRows);
       setDetectedImportFields(parsed.detectedFields);
-      message.success(`${parsed.parsedRows.length} linha(s) pronta(s) para importação.`);
+      if (parsed.deduplicatedCount > 0) {
+        message.warning(
+          `${parsed.parsedRows.length} linha(s) pronta(s). ${parsed.deduplicatedCount} duplicada(s) por código/tipo foram removidas automaticamente.`
+        );
+      } else {
+        message.success(`${parsed.parsedRows.length} linha(s) pronta(s) para importação.`);
+      }
     } catch (error: any) {
       setImportFileName('');
       setImportPreviewRows([]);
@@ -1205,6 +1471,8 @@ export const ServicesTrackingPage: React.FC = () => {
     phone: string;
     subtype: string;
     description: string;
+    serviceAddress?: string;
+    companyAddress?: string;
     situation?: string;
     contractValue: number;
     contractDate: string;
@@ -1232,9 +1500,10 @@ export const ServicesTrackingPage: React.FC = () => {
     }
 
     if (input.type === 'CLCB') {
+      const safeAddress = input.serviceAddress || input.companyAddress || 'Endereço não informado';
       return apiClient.post('/clcbs', {
         nomeCliente: input.clientName,
-        endereco: '',
+        endereco: safeAddress,
         telefone: input.phone || '',
         situacao,
         descricaoSituacao: input.description || '',
@@ -1243,9 +1512,10 @@ export const ServicesTrackingPage: React.FC = () => {
     }
 
     if (input.type === 'OBRAS') {
+      const safeAddress = input.serviceAddress || input.companyAddress || 'Endereço não informado';
       return apiClient.post('/obras', {
         nomeCliente: input.clientName,
-        endereco: '',
+        endereco: safeAddress,
         telefone: input.phone || '',
         servico: input.subtype || 'Serviço importado',
         situacao,
@@ -1287,18 +1557,40 @@ export const ServicesTrackingPage: React.FC = () => {
     });
 
     try {
-      let cacheByCode = new Map(rows.map((row) => [normalizeCode(row.code), row]));
+      const buildImportCaches = (currentRows: UnifiedServiceRow[]) => {
+        const byIdentity = new Map<string, UnifiedServiceRow>();
+        const byCode = new Map<string, UnifiedServiceRow | null>();
+        currentRows.forEach((row) => {
+          const normalizedCode = normalizeCode(row.code);
+          if (!normalizedCode) return;
+          byIdentity.set(`${row.serviceType}|${normalizedCode}`, row);
+          const existingByCode = byCode.get(normalizedCode);
+          if (existingByCode === undefined) {
+            byCode.set(normalizedCode, row);
+            return;
+          }
+          if (existingByCode !== null && existingByCode.id !== row.id) {
+            byCode.set(normalizedCode, null);
+          }
+        });
+        return { byIdentity, byCode };
+      };
+
+      const { byIdentity, byCode } = buildImportCaches(rows);
 
       for (const item of importPreviewRows) {
         try {
           const itemCode = normalizeCode(item.code || '');
-          const existing = itemCode ? cacheByCode.get(itemCode) : undefined;
+          const resolvedType = item.serviceType || inferServiceKindFromCode(item.code || '');
+          const existingByIdentity = itemCode && resolvedType ? byIdentity.get(`${resolvedType}|${itemCode}`) : undefined;
+          const existingByCode = itemCode ? byCode.get(itemCode) : undefined;
+          const existing = existingByIdentity || (existingByCode === null ? undefined : existingByCode);
 
           if (existing) {
             const nextSituation = item.situation || existing.situation;
             const nextRow: UnifiedServiceRow = {
               ...existing,
-              serviceType: item.serviceType || existing.serviceType,
+              serviceType: existing.serviceType,
               subtype: item.subtype || existing.subtype,
               clientName: item.clientName || existing.clientName,
               phone: item.phone ? formatPhoneBR(item.phone) : existing.phone,
@@ -1351,7 +1643,11 @@ export const ServicesTrackingPage: React.FC = () => {
               mapped = mapServiceRow(updatedRecord);
             }
 
-            cacheByCode.set(normalizeCode(mapped.code), mapped);
+            const mappedCode = normalizeCode(mapped.code || '');
+            if (mappedCode) {
+              byIdentity.set(`${mapped.serviceType}|${mappedCode}`, mapped);
+              byCode.set(mappedCode, mapped);
+            }
             updated += 1;
             setImportProgress((prev) => ({
               ...prev,
@@ -1363,7 +1659,9 @@ export const ServicesTrackingPage: React.FC = () => {
             continue;
           }
 
-          const resolvedType = item.serviceType || inferServiceKindFromCode(item.code || '') || 'AVCB';
+          if (!resolvedType) {
+            throw new Error('tipo de serviço não identificado. Informe a coluna de tipo ou um código com prefixo válido.');
+          }
           const defaultSubtype = item.subtype || DEFAULT_SUBTYPE_OPTIONS[resolvedType][0] || 'GERAL';
           const resolvedClientName = item.clientName || item.companyName || 'Cliente importado';
           const resolvedContractDate = item.contractDate || item.entryDate || nowDate;
@@ -1383,6 +1681,8 @@ export const ServicesTrackingPage: React.FC = () => {
             phone: item.phone || '',
             subtype: defaultSubtype,
             description: item.description || item.situation || '',
+            serviceAddress: item.serviceAddress,
+            companyAddress: item.companyAddress,
             situation: item.situation,
             contractValue: resolvedContractValue,
             contractDate: resolvedContractDate,
@@ -1642,6 +1942,22 @@ export const ServicesTrackingPage: React.FC = () => {
         <Space wrap>
           <Button
             className="atlas-services-button"
+            disabled={!filteredRowKeys.length || bulkDeleting}
+            onClick={toggleSelectFilteredRows}
+          >
+            {allFilteredSelected ? 'Desmarcar filtrados' : `Selecionar filtrados (${filteredRowKeys.length})`}
+          </Button>
+          <Button
+            className="atlas-services-button"
+            danger
+            loading={bulkDeleting}
+            disabled={!selectedRowKeys.length || bulkDeleting}
+            onClick={() => void executeBulkDelete()}
+          >
+            Excluir selecionados ({selectedRowKeys.length})
+          </Button>
+          <Button
+            className="atlas-services-button"
             icon={<ImportOutlined />}
             onClick={() => {
               setImportProgress({
@@ -1711,6 +2027,11 @@ export const ServicesTrackingPage: React.FC = () => {
             pageSize: 30,
             showSizeChanger: true,
             showTotal: (total) => `Total de ${total} servico(s)`,
+          }}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: (keys) => setSelectedRowKeys(keys),
+            preserveSelectedRowKeys: true,
           }}
           onRow={(record) => ({
             onDoubleClick: () => void openDrawer(record),
@@ -1875,18 +2196,37 @@ export const ServicesTrackingPage: React.FC = () => {
         ) : null}
       </Drawer>
 
-      <Modal
-        className="atlas-services-modal"
+      <Drawer
+        className="atlas-services-drawer"
         open={importModalOpen}
-        onCancel={() => {
+        onClose={() => {
           if (importingSpreadsheet) return;
           setImportModalOpen(false);
         }}
         title="Importar serviços por planilha"
-        okText="Importar agora"
-        cancelText="Fechar"
-        okButtonProps={{ loading: importingSpreadsheet, disabled: !importPreviewRows.length }}
-        onOk={() => void executeSpreadsheetImport()}
+        placement="right"
+        width={560}
+        footer={(
+          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+            <Button
+              onClick={() => {
+                if (importingSpreadsheet) return;
+                setImportModalOpen(false);
+              }}
+              disabled={importingSpreadsheet}
+            >
+              Fechar
+            </Button>
+            <Button
+              type="primary"
+              loading={importingSpreadsheet}
+              disabled={!importPreviewRows.length}
+              onClick={() => void executeSpreadsheetImport()}
+            >
+              Importar agora
+            </Button>
+          </Space>
+        )}
       >
         <Space direction="vertical" size={12} style={{ width: '100%' }}>
           <Text type="secondary">
@@ -1907,16 +2247,31 @@ export const ServicesTrackingPage: React.FC = () => {
             </Card>
           ) : null}
 
-          <Upload
+          <Dragger
             beforeUpload={handleSpreadsheetSelection}
             accept=".csv,.txt,.xls,.xlsx,.xlsb,application/vnd.ms-excel.sheet.binary.macroEnabled.12"
             showUploadList={false}
             disabled={importingSpreadsheet}
+            multiple={false}
+            maxCount={1}
+            onDrop={(event) => {
+              const count = event.dataTransfer?.files?.length || 0;
+              if (count > 1) {
+                message.info('Apenas a primeira planilha será utilizada.');
+              }
+            }}
           >
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">Clique ou arraste a planilha para esta área</p>
+            <p className="ant-upload-hint">
+              Formatos aceitos: CSV, XLS, XLSX e XLSB.
+            </p>
             <Button icon={<UploadOutlined />} disabled={importingSpreadsheet}>
-              Selecionar planilha (CSV/XLS/XLSX/XLSB)
+              Selecionar planilha
             </Button>
-          </Upload>
+          </Dragger>
 
           {importFileName ? <Text strong>Arquivo: {importFileName}</Text> : null}
           {detectedImportFields.length ? (
@@ -1941,7 +2296,7 @@ export const ServicesTrackingPage: React.FC = () => {
             </div>
           </Card>
         </Space>
-      </Modal>
+      </Drawer>
 
       <Modal
         className="atlas-services-modal"

@@ -19,6 +19,9 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SidebarProfile } from './LayoutContext';
+import { avcbService, clcbService, processosAdmService } from '../../../core/services/genericService';
+import { obrasService } from '../../../core/services/obrasService';
+import { useLiveSubscription } from '../../../core/realtime/liveProvider';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -120,8 +123,60 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
   const location = useLocation();
   const sidebarProfileConfig = SIDEBAR_UX_PROFILES[sidebarProfile];
   const effectiveCollapsed = sidebarProfile === 'tv' ? false : collapsed;
+  const [hasPanelsData, setHasPanelsData] = React.useState(true);
 
   const menuIconStyle = { fontSize: `${sidebarProfileConfig.iconSize}px` };
+
+  const hasAnyRecords = React.useCallback((response: unknown) => {
+    if (Array.isArray(response)) {
+      return response.length > 0;
+    }
+
+    if (response && typeof response === 'object') {
+      const maybePaginated = response as { content?: unknown[]; totalElements?: number };
+      if (Array.isArray(maybePaginated.content)) {
+        return maybePaginated.content.length > 0 || Number(maybePaginated.totalElements || 0) > 0;
+      }
+      if (typeof maybePaginated.totalElements === 'number') {
+        return maybePaginated.totalElements > 0;
+      }
+    }
+
+    return false;
+  }, []);
+
+  const refreshPanelsVisibility = React.useCallback(async () => {
+    try {
+      const [avcbs, clcbs, obras, processos] = await Promise.all([
+        avcbService.getAll({ page: 0, size: 1 }),
+        clcbService.getAll({ page: 0, size: 1 }),
+        obrasService.getAll({ page: 0, size: 1 }),
+        processosAdmService.getAll({ page: 0, size: 1 }),
+      ]);
+
+      setHasPanelsData(
+        hasAnyRecords(avcbs)
+        || hasAnyRecords(clcbs)
+        || hasAnyRecords(obras)
+        || hasAnyRecords(processos)
+      );
+    } catch {
+      // Em falha de rede/API, mantemos os painéis visíveis para não bloquear navegação.
+      setHasPanelsData(true);
+    }
+  }, [hasAnyRecords]);
+
+  React.useEffect(() => {
+    void refreshPanelsVisibility();
+  }, [refreshPanelsVisibility]);
+
+  useLiveSubscription({
+    channel: 'resources.*',
+    types: ['created', 'deleted'],
+    callback: () => {
+      void refreshPanelsVisibility();
+    },
+  });
 
   const selectedMenuKey = React.useMemo(() => {
     const rootKeys = [
@@ -175,36 +230,40 @@ export const AppSider: React.FC<AppSiderProps> = ({ collapsed, setCollapsed, isM
         },
       ]
     },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'painéis-group',
-      type: 'group',
-      label: 'Painéis e Gestão',
-      children: [
-        {
-          key: '/processos',
-          icon: <AppstoreOutlined style={menuIconStyle} />,
-          label: 'Processos Adm',
-        },
-        {
-          key: '/clcb',
-          icon: <SafetyCertificateOutlined style={menuIconStyle} />,
-          label: 'Painel CLCB',
-        },
-        {
-          key: '/avcb',
-          icon: <FireOutlined style={menuIconStyle} />,
-          label: 'Painel AVCB',
-        },
-        {
-          key: '/obras',
-          icon: <BuildOutlined style={menuIconStyle} />,
-          label: 'Painel de Obras',
-        },
-      ]
-    },
+    ...(hasPanelsData
+      ? [
+          {
+            type: 'divider',
+          } as MenuItem,
+          {
+            key: 'painéis-group',
+            type: 'group',
+            label: 'Painéis e Gestão',
+            children: [
+              {
+                key: '/processos',
+                icon: <AppstoreOutlined style={menuIconStyle} />,
+                label: 'Processos Adm',
+              },
+              {
+                key: '/clcb',
+                icon: <SafetyCertificateOutlined style={menuIconStyle} />,
+                label: 'Painel CLCB',
+              },
+              {
+                key: '/avcb',
+                icon: <FireOutlined style={menuIconStyle} />,
+                label: 'Painel AVCB',
+              },
+              {
+                key: '/obras',
+                icon: <BuildOutlined style={menuIconStyle} />,
+                label: 'Painel de Obras',
+              },
+            ],
+          } as MenuItem,
+        ]
+      : []),
     {
       type: 'divider',
     },
