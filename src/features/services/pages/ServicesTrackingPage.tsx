@@ -165,18 +165,14 @@ const normalizeHeaderKey = (value: string) =>
 
 const normalizeCode = (value: string) =>
   String(value || '')
+    .replace(/\u00A0/g, ' ')
     .trim()
-    .replace(/\s+/g, '')
-    .toUpperCase();
+    .replace(/\s+/g, ' ');
 
 const normalizeImportedCode = (value: string) => {
   const normalized = String(value || '')
     .replace(/\u00A0/g, ' ')
     .trim();
-  if (!normalized) return '';
-  if (/^\d+(\.0+)?$/.test(normalized)) {
-    return normalized.replace(/\.0+$/, '');
-  }
   return normalized;
 };
 
@@ -333,6 +329,14 @@ const writeServicesRowsCache = (rows: UnifiedServiceRow[]) => {
   }
 };
 
+const clearServicesRowsCache = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(SERVICES_CACHE_STORAGE_KEY);
+  } catch {
+  }
+};
+
 const SITUATION_COLOR_STORAGE_KEY = 'atlas.service_tracking.situation_colors';
 const PENDING_TAG_COLOR_STORAGE_KEY = 'atlas.service_tracking.pending_tag_color';
 
@@ -401,9 +405,6 @@ const TRACKING_RESOURCE_CHANNELS = new Set([
 ]);
 
 const TRACKING_RESOURCES = new Set(['avcbs', 'clcbs', 'obras', 'processos_adm']);
-
-const buildRowOriginIdentity = (input: { serviceType: ServiceKind; origemId: number | string }) =>
-  `${input.serviceType}|${String(input.origemId)}`;
 
 const EMPTY_SITUATION_CONFIG: ServiceSituationConfig = {
   AVCB: [],
@@ -488,7 +489,6 @@ export const ServicesTrackingPage: React.FC = () => {
   const [situationColors, setSituationColors] = useState<Record<string, string>>(() => readSituationColors());
   const [pendingTagColor, setPendingTagColor] = useState<string>(() => readPendingTagColor());
   const [rows, setRows] = useState<UnifiedServiceRow[]>([]);
-  const [hiddenOriginIdentities, setHiddenOriginIdentities] = useState<Set<string>>(new Set());
   const [typeFilter, setTypeFilter] = useState<ServiceKind | 'ALL'>('ALL');
   const [searchText, setSearchText] = useState('');
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -568,11 +568,7 @@ export const ServicesTrackingPage: React.FC = () => {
     if (!silent) setLoading(true);
     try {
       const services = await servicesTrackingApi.getAll({ size });
-      const mapped = services.content
-        .map(mapServiceRow)
-        .filter((row: UnifiedServiceRow) =>
-          !hiddenOriginIdentities.has(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }))
-        );
+      const mapped = services.content.map(mapServiceRow);
       setRows(mapped);
       writeServicesRowsCache(mapped);
     } catch (error: any) {
@@ -585,7 +581,7 @@ export const ServicesTrackingPage: React.FC = () => {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [hiddenOriginIdentities, message]);
+  }, [message]);
 
   useEffect(() => {
     const cachedRows = readServicesRowsCache();
@@ -918,7 +914,11 @@ export const ServicesTrackingPage: React.FC = () => {
 
   const readExcelRecords = async (file: File) => {
     const toNormalizedRecords = (sheet: XLSX.WorkSheet, sheetName: string) => {
-      const records = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '', raw: true });
+      const records = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+        defval: '',
+        raw: false,
+        dateNF: 'yyyy-mm-dd',
+      });
       return records.map((item) => ({
         ...item,
         __sheetName: sheetName,
@@ -1056,29 +1056,14 @@ export const ServicesTrackingPage: React.FC = () => {
 
         try {
           await servicesTrackingApi.deleteBatch(targets.map((row) => row.id));
-
-          const removedIdentities = new Set(
-            targets.map((row) => buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }))
-          );
-
-          setHiddenOriginIdentities((current) => {
-            const next = new Set(current);
-            removedIdentities.forEach((identity) => next.add(identity));
-            return next;
-          });
-          setRows((current) => {
-            const next = current.filter((row) =>
-              !removedIdentities.has(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }))
-            );
-            writeServicesRowsCache(next);
-            return next;
-          });
+          clearServicesRowsCache();
 
           if (drawerRow && targets.some((target) => target.id === drawerRow.id)) {
             setDrawerRow(null);
           }
 
           setSelectedRowKeys([]);
+          await loadData({ silent: true });
           message.success(`Exclusão em massa concluída. Removidos: ${targets.length}.`);
         } catch (error: any) {
           message.error(error?.message || 'Erro ao excluir serviços selecionados.');
@@ -1415,6 +1400,7 @@ export const ServicesTrackingPage: React.FC = () => {
   };
 
   const createServiceInSourceModule = async (input: {
+    code?: string;
     type: ServiceKind;
     clientName: string;
     phone: string;
@@ -1442,6 +1428,7 @@ export const ServicesTrackingPage: React.FC = () => {
 
     if (input.type === 'AVCB') {
       return apiClient.post('/avcbs', {
+        codigo: input.code || undefined,
         situacao,
         descricaoSituacao: input.description || '',
         ...commonFinancial,
@@ -1451,6 +1438,7 @@ export const ServicesTrackingPage: React.FC = () => {
     if (input.type === 'CLCB') {
       const safeAddress = input.serviceAddress || input.companyAddress || 'Endereço não informado';
       return apiClient.post('/clcbs', {
+        codigo: input.code || undefined,
         nomeCliente: input.clientName,
         endereco: safeAddress,
         telefone: input.phone || '',
@@ -1463,6 +1451,7 @@ export const ServicesTrackingPage: React.FC = () => {
     if (input.type === 'OBRAS') {
       const safeAddress = input.serviceAddress || input.companyAddress || 'Endereço não informado';
       return apiClient.post('/obras', {
+        codigo: input.code || undefined,
         nomeCliente: input.clientName,
         endereco: safeAddress,
         telefone: input.phone || '',
@@ -1474,6 +1463,7 @@ export const ServicesTrackingPage: React.FC = () => {
     }
 
     return apiClient.post('/processos-adm', {
+      codigo: input.code || undefined,
       situacao,
       descricaoSituacao: input.description || '',
       nomeCliente: input.clientName,
@@ -1625,6 +1615,7 @@ export const ServicesTrackingPage: React.FC = () => {
           }
 
           const createdRecord = await createServiceInSourceModule({
+            code: item.code || undefined,
             type: resolvedType,
             clientName: resolvedClientName,
             phone: item.phone || '',
