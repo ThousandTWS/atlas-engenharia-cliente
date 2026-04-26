@@ -17,9 +17,9 @@ import {
 } from '../services/adsDataService';
 import { normalizeCampaignStatus, normalizeCampaignType } from '../services/adsNormalizationStrategies';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
-import { useCsvExport, useCsvImport } from '../../../core/import-export/hooks';
-import { toNumber } from '../../../core/import-export/csv';
-import { useNotificationCenter } from '../../../core/notifications/NotificationCenterContext';
+import { useCsvExport, useCsvImport } from '../../../core/services/import-export/hooks';
+import { toNumber } from '../../../core/services/import-export/csv';
+import { useNotificationCenter } from '../../../core/services/notifications/NotificationCenterContext';
 import {
   formatCurrencyPtBr,
   formatPercentPtBr,

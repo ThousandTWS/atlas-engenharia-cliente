@@ -1,29 +1,8 @@
-import { apiRequest } from '../api/apiClient';
+import { apiRequest } from '../../api/apiClient';
+import type { BackendNotification, BackendNotificationResponse } from './types';
 
 export type BackendNotificationCategory = 'FINANCEIRA' | 'TECNICA';
 export type BackendNotificationServiceType = 'AVCB' | 'CLCB' | 'OBRAS' | 'PROCESSOS_ADM';
-
-export interface BackendNotification {
-  id: number;
-  title: string;
-  message?: string;
-  category: BackendNotificationCategory;
-  serviceType?: BackendNotificationServiceType | null;
-  amount?: number | null;
-  createdAt: string;
-  lastActive: string;
-  isRead: boolean;
-  confirmedAt?: string | null;
-}
-
-export interface BackendNotificationResponse {
-  data: BackendNotification[];
-  totalPage: number;
-  totalData: number;
-  pageNumber: number;
-  hasNext: boolean;
-  pendingConfirmationCount: number;
-}
 
 const toQueryString = (params: Record<string, unknown>) => {
   const query = new URLSearchParams();

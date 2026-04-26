@@ -29,12 +29,12 @@ import type { CustoIndireto } from '../components/CustosIndiretosTable';
 import { CustosIndiretosFilters } from '../components/CustosIndiretosFilters';
 import { MetricTrendCards, type MetricTrendCardDefinition } from '../../../shared/components/charts/MetricTrendCards';
 import { useMetricCardFilters } from '../../../shared/hooks/useMetricCardFilters';
-import { custosIndiretosService } from '../../../core/services/genericService';
+import { custosIndiretosService } from '../../../core/services/generic/genericService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { buildFilteredSeries, pickNumericValue, toSeriesRecords } from '../../../shared/utils/metricSeries';
 import apiClient from '../../../core/api/apiClient';
-import { parseCsvToRecords, toNumber } from '../../../core/import-export/csv';
-import { useCsvExport } from '../../../core/import-export/hooks';
+import { parseCsvToRecords, toNumber } from '../../../core/services/import-export/csv';
+import { useCsvExport } from '../../../core/services/import-export/hooks';
 import { htmlToPlainText } from '../../../core/utils/text';
 import type { ColumnsType } from 'antd/es/table';
 

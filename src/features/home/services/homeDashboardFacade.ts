@@ -4,8 +4,8 @@ import {
   custosIndiretosService,
   lancamentosService,
   processosAdmService,
-} from '../../../core/services/genericService';
-import { obrasService } from '../../../core/services/obrasService';
+} from '../../../core/services/generic/genericService';
+import { obrasService } from '../../../core/services/obras/obrasService';
 import { adaptListResponse } from '../../../core/structural/adapter/listResponseAdapter';
 
 type HomeRecord = Record<string, unknown>;

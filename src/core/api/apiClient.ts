@@ -7,8 +7,8 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 import { isCookieAuthMode } from "../config/auth";
-import { authSessionStore } from "../services/authSessionStore";
-import type { RefreshTokenDTO, TokenResponse } from "../services/authService";
+import { authSessionStore } from "../services/auth/session/authSessionStore";
+import type { RefreshTokenDTO, TokenResponse } from "../services/auth/types";
 
 export const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() ||
@@ -61,12 +61,7 @@ class ApiClient {
           | (InternalAxiosRequestConfig & { _retry?: boolean })
           | undefined;
 
-        if (
-          !isCookieAuthMode() &&
-          response?.status === 401 &&
-          originalRequest &&
-          !originalRequest._retry
-        ) {
+        if (response?.status === 401 && originalRequest && !originalRequest._retry) {
           const path =
             typeof originalRequest.url === "string" ? originalRequest.url : "";
           const isAuthEndpoint =
@@ -78,16 +73,21 @@ class ApiClient {
             originalRequest._retry = true;
 
             try {
+              const cookieAuthMode = isCookieAuthMode();
               const currentRefreshToken = authSessionStore.getRefreshToken();
-              if (!currentRefreshToken) {
+              if (!cookieAuthMode && !currentRefreshToken) {
                 throw new Error("Sessão expirada");
               }
 
               if (!ApiClient.refreshPromise) {
+                const refreshPayload = cookieAuthMode
+                  ? undefined
+                  : ({
+                      refreshToken: currentRefreshToken,
+                    } as RefreshTokenDTO);
+
                 ApiClient.refreshPromise = ApiClient.instance
-                  .post<TokenResponse>("/auth/refresh-token", {
-                    refreshToken: currentRefreshToken,
-                  } as RefreshTokenDTO)
+                  .post<TokenResponse>("/auth/refresh-token", refreshPayload)
                   .then((refreshResponse) => {
                     authSessionStore.setSession({
                       accessToken: refreshResponse.data.token ?? null,
@@ -104,7 +104,7 @@ class ApiClient {
               }
 
               const refreshed = await ApiClient.refreshPromise;
-              if (originalRequest.headers) {
+              if (!cookieAuthMode && refreshed.token && originalRequest.headers) {
                 originalRequest.headers.Authorization = `Bearer ${refreshed.token}`;
               }
               return ApiClient.instance.request(originalRequest);

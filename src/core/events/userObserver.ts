@@ -1,6 +1,7 @@
-import type { User } from "../services/authService";
-import { authSessionStore } from "../services/authSessionStore";
+
+import { authSessionStore } from "../services/auth/session/authSessionStore";
 import { ObserverSubject } from "../patterns/observer";
+import type { User } from "../services/auth/types";
 
 export type UserUpdatedListener = (user: User | null) => void;
 

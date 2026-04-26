@@ -4,7 +4,7 @@ import { ArrowLeftOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { useUiPreferences } from '../../../shared/components/layout/uiPreferences';
-import { authService } from '../../../core/services/authService';
+import { authService } from '../../../core/services/auth/authService';
 
 const { Title, Text } = Typography;
 

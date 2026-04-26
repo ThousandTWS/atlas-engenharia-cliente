@@ -22,9 +22,9 @@ import type {
 import type { TableProps } from 'antd';
 import { FilterOutlined, SettingOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { authService } from '../../../core/services/authService';
+import { authService } from '../../../core/services/auth/authService';
 import { subscribeUserUpdated } from '../../../core/events/userObserver';
-import { buildCsv, downloadCsv, type CsvRecord } from '../../../core/import-export/csv';
+import { buildCsv, downloadCsv, type CsvRecord } from '../../../core/services/import-export/csv';
 
 type FilterValue = React.Key[] | null;
 

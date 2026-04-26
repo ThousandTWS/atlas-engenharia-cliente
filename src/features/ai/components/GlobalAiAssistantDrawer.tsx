@@ -35,7 +35,7 @@ import {
   sendGlobalAiMessage,
   type GlobalAiMessage,
 } from "../services/globalAiService";
-import { useNotificationCenter } from "../../../core/notifications/NotificationCenterContext";
+import { useNotificationCenter } from "../../../core/services/notifications/NotificationCenterContext";
 
 const { Text, Title } = Typography;
 
@@ -436,15 +436,14 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                                   marginTop: 2,
                                   borderRadius: 12,
                                   padding: "10px 12px",
-                                  border: `1px solid ${
-                                    isUser
+                                  border: `1px solid ${isUser
                                       ? isDarkMode
                                         ? "#2E3D63"
                                         : "#CBD5E1"
                                       : isDarkMode
                                         ? "#28436F"
                                         : "#C8DBFF"
-                                  }`,
+                                    }`,
                                   background: isUser
                                     ? isDarkMode
                                       ? "#141F35"
@@ -602,11 +601,10 @@ export const GlobalAiAssistantDrawer: React.FC = () => {
                             <Text strong>{capability.title}</Text>
                             <Tag
                               variant="filled"
-                              className={`atlas-status-badge ${
-                                capability.status === "enabled"
+                              className={`atlas-status-badge ${capability.status === "enabled"
                                   ? "atlas-status-badge-success"
                                   : "atlas-status-badge-info"
-                              }`}
+                                }`}
                             >
                               <span className="atlas-status-badge-dot" />
                               {capability.status === "enabled"

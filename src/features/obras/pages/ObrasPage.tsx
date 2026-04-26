@@ -17,8 +17,8 @@ import {
   type MetricTrendCardDefinition,
 } from "../../../shared/components/charts/MetricTrendCards";
 import { useMetricCardFilters } from "../../../shared/hooks/useMetricCardFilters";
-import { obrasService } from "../../../core/services/obrasService";
-import type { Obra } from "../../../core/services/obrasService";
+import { obrasService } from "../../../core/services/obras/obrasService";
+import type { Obra } from "../../../core/services/obras/obrasService";
 import { useLayout } from "../../../shared/components/layout/LayoutContext";
 import {
   buildFilteredSeries,

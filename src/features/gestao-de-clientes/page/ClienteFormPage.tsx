@@ -21,8 +21,8 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Cliente } from '../../../core/services/clientesService';
-import { clientesService } from '../../../core/services/clientesService';
+import type { Cliente } from '../../../core/services/client/clientesService';
+import { clientesService } from '../../../core/services/client/clientesService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { cepService } from '../../../core/services/cepService';
 import { normalizeCepBR } from '../../../shared/utils/inputFormat';

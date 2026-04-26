@@ -1,5 +1,6 @@
-import apiClient from '../api/apiClient';
-import { publishResourceEvent } from '../realtime/liveProvider';
+import apiClient from '../../api/apiClient';
+import { publishResourceEvent } from '../../realtime/liveProvider';
+import type { BaseModule, GenericFilters, PaginatedResponse } from './types';
 
 const serializeQueryParams = (params: Record<string, unknown>) => {
   const query = new URLSearchParams();
@@ -25,45 +26,9 @@ const serializeQueryParams = (params: Record<string, unknown>) => {
   return query.toString();
 };
 
-export interface BaseModule {
-  id?: number | string;
-  // Campos comuns a módulos tipo AVCB/CLCB
-  situacao?: string;
-  descricaoSituacao?: string;
-  valorContrato?: number;
-  dataContrato?: string;
-  nf?: string;
-  descontoNf?: number;
-  condicaoPagamento?: string;
-  aReceber?: number;
-  recebido?: number;
-  custos?: number;
-  // Campos comuns a módulos tipo Custos Indiretos/Lançamentos
-  data?: string;
-  descricao?: string;
-  valor?: number;
-  categoria?: string;
-}
-
-export interface PaginatedResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-}
-
-export interface GenericFilters {
-  page?: number;
-  size?: number;
-  sort?: string[];
-  [key: string]: unknown;
-}
-
 export const createGenericService = <T extends BaseModule>(endpoint: string) => ({
   resourceKey: endpoint.replace(/^\//, '').replace(/-/g, '_'),
   getAll: async (filters?: GenericFilters) => {
-    // Se o endpoint for um dos que agora suportam paginação no backend
     const response = await apiClient.get<PaginatedResponse<T> | T[]>(endpoint, {
       params: filters,
       paramsSerializer: {

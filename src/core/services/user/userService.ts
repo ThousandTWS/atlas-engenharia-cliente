@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { apiRequest } from "../api/apiClient";
-import { notifyUserUpdated } from "../events/userObserver";
-import { authSessionStore } from "./authSessionStore";
-import type { User } from "./authService";
+import { apiRequest } from "../../api/apiClient";
+import { notifyUserUpdated } from "../../events/userObserver";
+import { authSessionStore } from "../auth/session/authSessionStore";
+import type { User } from "../auth/types";
 
 export const UserService = {
   async getProfile(): Promise<User> {

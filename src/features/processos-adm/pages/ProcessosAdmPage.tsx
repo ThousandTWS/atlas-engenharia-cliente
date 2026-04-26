@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { ProcessosAdmTable } from "../components/ProcessosAdmTable";
 import type { ProcessoAdm } from "../components/ProcessosAdmTable";
 import { ProcessosAdmFilters } from "../components/ProcessosAdmFilters";
-import { processosAdmService } from "../../../core/services/genericService";
+import { processosAdmService } from "../../../core/services/generic/genericService";
 import { useLayout } from "../../../shared/components/layout/LayoutContext";
 import {
   MetricTrendCards,

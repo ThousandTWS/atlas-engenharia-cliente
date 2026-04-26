@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from '../../core/api/apiClient';
-import type { PaginatedResponse } from '../../core/services/genericService';
+import type { PaginatedResponse } from '../../core/services/generic/genericService';
 
 export type ServiceKind = 'AVCB' | 'CLCB' | 'OBRAS' | 'PROCESSOS_ADM';
 
@@ -196,6 +196,12 @@ export const servicesTrackingApi = {
     };
     const endpoint = endpointByType[input.type];
     await apiClient.delete(`${endpoint}/${input.origemId}`);
+  },
+
+  async deleteBatch(ids: Array<string | number>) {
+    await apiClient.post('/acompanhamento-servicos/delete-batch', {
+      ids: ids.map((id) => Number(id)).filter((id) => Number.isFinite(id)),
+    });
   },
 
   async updateSituation(id: string | number, novaSituacao: string, descricao?: string) {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, Form, Input, App } from 'antd';
 import { LoginOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '../../../core/services/authService';
+import { authService } from '../../../core/services/auth/authService';
 import { AuthShell } from '../components/AuthShell';
 
 interface LoginFormValues {

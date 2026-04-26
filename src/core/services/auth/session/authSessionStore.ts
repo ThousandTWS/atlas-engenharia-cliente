@@ -1,20 +1,8 @@
-import type { User } from './authService';
+import type { AuthSessionState, AuthSessionUpdate, User } from "../types";
 
 const AUTH_ACCESS_TOKEN_KEY = 'auth.access_token';
 const AUTH_REFRESH_TOKEN_KEY = 'auth.refresh_token';
 const AUTH_USER_KEY = 'auth.user';
-
-interface AuthSessionState {
-  accessToken: string | null;
-  refreshToken: string | null;
-  user: User | null;
-}
-
-interface AuthSessionUpdate {
-  accessToken?: string | null;
-  refreshToken?: string | null;
-  user?: User | null;
-}
 
 let hasHydratedFromSessionStorage = false;
 let inMemoryState: AuthSessionState = {
@@ -56,7 +44,6 @@ const writeSessionValue = (key: string, value: string | null): void => {
 
     window.sessionStorage.setItem(key, value);
   } catch {
-    // Ignore storage write failures (private mode, disabled storage, etc).
   }
 };
 

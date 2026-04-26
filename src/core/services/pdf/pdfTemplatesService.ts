@@ -1,12 +1,5 @@
-import apiClient from '../api/apiClient';
-
-export interface PdfTemplateRecord {
-  id: number;
-  key: string;
-  name: string;
-  html: string;
-  updatedAt?: string;
-}
+import apiClient from '../../api/apiClient';
+import type { PdfTemplateRecord } from './types';
 
 export const pdfTemplatesService = {
   async getByKey(key: string) {

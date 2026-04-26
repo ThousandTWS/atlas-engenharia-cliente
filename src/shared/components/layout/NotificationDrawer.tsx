@@ -21,8 +21,8 @@ import {
   FilterOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { useNotificationCenter, type NotificationCategory, type NotificationItem } from '../../../core/notifications/NotificationCenterContext';
-import { notificationRuleCatalog } from '../../../core/notifications/notificationRules';
+import { useNotificationCenter, type NotificationCategory, type NotificationItem } from '../../../core/services/notifications/NotificationCenterContext';
+import { notificationRuleCatalog } from '../../../core/services/notifications/notificationRules';
 
 const { Paragraph, Text, Title } = Typography;
 

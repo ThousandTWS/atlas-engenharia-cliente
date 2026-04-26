@@ -1,6 +1,6 @@
-import { createBrowserRouter } from 'react-router-dom';
 import App from '../../App';
-import { ProtectedRoute } from '../components/ProtectedRoute';
+import { createBrowserRouter } from 'react-router-dom';
+import { ProtectedRoute } from './protect/ProtectedRoute.tsx';
 import { HomePage } from '../../features/home/pages/HomePage';
 import { LoginPage } from '../../features/auth/pages/LoginPage';
 import { RegisterPage } from '../../features/auth/pages/RegisterPage';

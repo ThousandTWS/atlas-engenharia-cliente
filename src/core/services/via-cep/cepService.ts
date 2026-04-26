@@ -1,10 +1,5 @@
-export interface CepLookupResult {
-  cep: string;
-  street: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-}
+import type { CepLookupResult } from "./via-cep/types";
+
 
 const onlyDigits = (value: string) => String(value || '').replace(/\D/g, '');
 

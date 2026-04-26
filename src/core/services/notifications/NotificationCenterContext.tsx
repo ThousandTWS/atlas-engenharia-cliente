@@ -14,14 +14,14 @@ import {
   type NotificationType,
   type OpenNotificationParams,
 } from "./NotificationMediator";
-import { authService } from "../services/authService";
-import { subscribeUserUpdated } from "../events/userObserver";
+import { authService } from "../auth/authService";
+import { subscribeUserUpdated } from "../../events/userObserver";
 import {
   notificationsService,
-  type BackendNotification,
   type BackendNotificationCategory,
   type BackendNotificationServiceType,
-} from "../services/notificationsService";
+} from "./notificationsService";
+import type { BackendNotification } from "./types";
 
 export type NotificationCategory = "financial" | "technical";
 export type NotificationOrigin = "manual" | "automatic";
@@ -102,9 +102,9 @@ const mapBackendServiceType = (
   value?: BackendNotificationServiceType | null,
 ): NotificationServiceType | undefined =>
   value === "AVCB" ||
-  value === "CLCB" ||
-  value === "OBRAS" ||
-  value === "PROCESSOS_ADM"
+    value === "CLCB" ||
+    value === "OBRAS" ||
+    value === "PROCESSOS_ADM"
     ? value
     : undefined;
 
@@ -348,10 +348,10 @@ export const NotificationCenterProvider: React.FC<{
           current.map((item) =>
             item.id === id
               ? {
-                  ...item,
-                  read: true,
-                  confirmedAt: item.confirmedAt ?? confirmedAt,
-                }
+                ...item,
+                read: true,
+                confirmedAt: item.confirmedAt ?? confirmedAt,
+              }
               : item,
           ),
         );
@@ -362,10 +362,10 @@ export const NotificationCenterProvider: React.FC<{
         current.map((item) =>
           item.id === id
             ? {
-                ...item,
-                read: true,
-                confirmedAt: item.confirmedAt ?? new Date().toISOString(),
-              }
+              ...item,
+              read: true,
+              confirmedAt: item.confirmedAt ?? new Date().toISOString(),
+            }
             : item,
         ),
       );

@@ -18,8 +18,8 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
-import type { Cliente } from '../../../core/services/clientesService';
-import { clientesService } from '../../../core/services/clientesService';
+import type { Cliente } from '../../../core/services/client/clientesService';
+import { clientesService } from '../../../core/services/client/clientesService';
 import { ClientesTable } from '../components/ClientesTable';
 import { ClientesFilters } from '../components/ClientesFilters';
 

@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
-  liveProvider,
-  type LiveEvent,
-  type LiveEventType,
-} from "../realtime/liveProvider";
-import {
   FirstMatchStrategyResolver,
   type StrategyMatcher,
-} from "../patterns/strategy";
+} from "../../patterns/strategy";
+import { liveProvider } from "../../realtime/liveProvider";
+import type { LiveEvent, LiveEventType } from "../../realtime/types";
 
 export type NotificationType = "info" | "success" | "warning" | "error";
 

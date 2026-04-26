@@ -1,17 +1,5 @@
-import type {
-  NotificationItem,
-  NotificationCategory,
-} from "./NotificationCenterContext";
-import type { NotificationType } from "./NotificationMediator";
-
-interface NotificationRulePreview {
-  id: string;
-  category: NotificationCategory;
-  type: NotificationType;
-  title: string;
-  description: string;
-  timestamp: string;
-}
+import type { NotificationItem } from "./NotificationCenterContext";
+import type { NotificationRulePreview } from "./types";
 
 const addDays = (baseDate: Date, amount: number) => {
   const nextDate = new Date(baseDate);

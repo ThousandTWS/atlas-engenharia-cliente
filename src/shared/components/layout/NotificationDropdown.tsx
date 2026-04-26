@@ -8,7 +8,7 @@ import {
   ExclamationCircleOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
-import { useNotificationCenter, type NotificationItem } from '../../../core/notifications/NotificationCenterContext';
+import { useNotificationCenter, type NotificationItem } from '../../../core/services/notifications/NotificationCenterContext';
 
 const { Text } = Typography;
 

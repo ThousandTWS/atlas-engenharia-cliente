@@ -1,20 +1,13 @@
-import React, { Component, type ErrorInfo, type ReactNode } from 'react';
+import React, { Component, type ErrorInfo } from 'react';
 import { ConfigProvider, App as AntdApp, Alert } from 'antd';
 import { RouterProvider } from 'react-router-dom';
 import ptBR from 'antd/locale/pt_BR';
 import { router } from '../routes/router';
-import { NotificationCenterProvider } from '../notifications/NotificationCenterContext';
+import { NotificationCenterProvider } from '../services/notifications/NotificationCenterContext';
 import { LayoutProvider } from '../../shared/components/layout/LayoutContext';
 import useBootstrapTheme from '../../shared/theme/bootstrapTheme';
-
-interface ErrorBoundaryProps {
-  children: ReactNode;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
+import type { ErrorBoundaryProps } from 'antd/lib';
+import type { AppProviderProps, ErrorBoundaryState } from './types';
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
@@ -56,10 +49,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
     return this.props.children;
   }
-}
-
-interface AppProviderProps {
-  children?: React.ReactNode;
 }
 
 const ThemedRouter: React.FC = () => {

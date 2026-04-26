@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Row, Col, App } from 'antd';
-import { lancamentosService } from '../../../core/services/genericService';
+import { lancamentosService } from '../../../core/services/generic/genericService';
 import { GenericChart } from '../../../shared/components/charts/GenericChart';
 import dayjs from 'dayjs';
 

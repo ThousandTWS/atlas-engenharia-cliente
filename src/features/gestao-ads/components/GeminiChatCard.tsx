@@ -9,7 +9,7 @@ import type { AdsChatContextSnapshot } from '../services/adsDashboardFacade';
 import { adsDashboardFacade } from '../services/adsDashboardFacade';
 import { sendGeminiMessage, type GeminiChatMessage } from '../services/geminiChatService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
-import { useNotificationCenter } from '../../../core/notifications/NotificationCenterContext';
+import { useNotificationCenter } from '../../../core/services/notifications/NotificationCenterContext';
 
 const { Text } = Typography;
 

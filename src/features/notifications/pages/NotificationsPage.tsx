@@ -15,8 +15,8 @@ import {
 import type { TableProps } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
-import type { NotificationCategory, NotificationItem, NotificationServiceType } from '../../../core/notifications/NotificationCenterContext';
-import { notificationsService, type BackendNotification, type BackendNotificationCategory, type BackendNotificationServiceType } from '../../../core/services/notificationsService';
+import type { NotificationCategory, NotificationItem, NotificationServiceType } from '../../../core/services/notifications/NotificationCenterContext';
+import { notificationsService, type BackendNotification, type BackendNotificationCategory, type BackendNotificationServiceType } from '../../../core/services/notifications/notificationsService';
 import { ExcelLikeTable } from '../../../shared/components/table/ExcelLikeTable';
 
 const { Title, Text } = Typography;

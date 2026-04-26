@@ -13,8 +13,8 @@ import {
   SunOutlined,
 } from '@ant-design/icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { authService } from '../../../core/services/authService';
-import type { User } from '../../../core/services/authService';
+import { authService } from '../../../core/services/auth/authService';
+import type { User } from '../../../core/services/auth/authService';
 import { subscribeUserUpdated } from '../../../core/events/userObserver';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationDrawer } from './NotificationDrawer';

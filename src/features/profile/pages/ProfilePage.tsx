@@ -2,7 +2,7 @@ import React from 'react';
 import { App, Avatar, Button, Card, Col, Divider, Row, Space, Switch, Tag, Tooltip, Typography } from 'antd';
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../../../core/services/authService';
+import { authService } from '../../../core/services/auth/authService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { useUiPreferences } from '../../../shared/components/layout/uiPreferences';
 import { formatPhoneBR } from '../../../shared/utils/inputFormat';

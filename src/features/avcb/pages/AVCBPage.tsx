@@ -17,7 +17,7 @@ import {
   type MetricTrendCardDefinition,
 } from "../../../shared/components/charts/MetricTrendCards";
 import { useMetricCardFilters } from "../../../shared/hooks/useMetricCardFilters";
-import { avcbService } from "../../../core/services/genericService";
+import { avcbService } from "../../../core/services/generic/genericService";
 import { useLayout } from "../../../shared/components/layout/LayoutContext";
 import {
   buildFilteredSeries,

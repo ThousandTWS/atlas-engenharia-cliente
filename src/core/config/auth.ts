@@ -1,7 +1,7 @@
 export type AuthMode = "cookie" | "bearer";
 
 const resolveAuthMode = (): AuthMode => {
-  const rawValue = (import.meta.env.VITE_AUTH_MODE ?? "bearer")
+  const rawValue = (import.meta.env.VITE_AUTH_MODE ?? "cookie")
     .trim()
     .toLowerCase();
   return rawValue === "bearer" ? "bearer" : "cookie";

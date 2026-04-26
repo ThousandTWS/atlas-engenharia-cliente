@@ -22,7 +22,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { custosIndiretosService } from '../../../core/services/genericService';
+import { custosIndiretosService } from '../../../core/services/generic/genericService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 import { RichTextEditor } from '../../../shared/components/forms/RichTextEditor';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../shared/utils/currencyInput';

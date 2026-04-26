@@ -1,34 +1,5 @@
 import { useCallback, useEffect } from 'react';
-
-export type LiveEventType = 'created' | 'updated' | 'deleted' | 'custom';
-
-export interface LiveEvent<TPayload = unknown> {
-  id: string;
-  channel: string;
-  type: LiveEventType;
-  payload?: TPayload;
-  timestamp: string;
-  meta?: Record<string, unknown>;
-  origin?: 'local' | 'remote';
-}
-
-interface SubscribeParams {
-  channel: string;
-  callback: (event: LiveEvent) => void;
-  types?: LiveEventType[];
-}
-
-interface SubscriptionEntry extends SubscribeParams {
-  id: string;
-}
-
-export interface PublishParams {
-  channel: string;
-  type: LiveEventType;
-  payload?: unknown;
-  meta?: Record<string, unknown>;
-  origin?: 'local' | 'remote';
-}
+import type { LiveEvent, LiveEventType, PublishParams, SubscribeParams, SubscriptionEntry } from './types';
 
 const randomId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;

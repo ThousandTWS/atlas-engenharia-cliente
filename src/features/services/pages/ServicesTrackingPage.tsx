@@ -40,8 +40,8 @@ import apiClient from '../../../core/api/apiClient';
 import { formatPhoneBR, normalizePhoneBR } from '../../../shared/utils/inputFormat';
 import { htmlToPlainText } from '../../../core/utils/text';
 import { ExcelLikeTable, type ExcelColumnType } from '../../../shared/components/table/ExcelLikeTable';
-import { pdfTemplatesService } from '../../../core/services/pdfTemplatesService';
-import { parseCsvToRecords, toNumber } from '../../../core/import-export/csv';
+import { pdfTemplatesService } from '../../../core/services/pdf/pdfTemplatesService';
+import { parseCsvToRecords, toNumber } from '../../../core/services/import-export/csv';
 import { renderPdfTemplate, toSafeTextVar } from '../../../shared/utils/pdfTemplate';
 import { PdfTemplateEditorModal } from '../../../shared/components/PdfTemplateEditorModal';
 import { useLiveSubscription, type LiveEvent } from '../../../core/realtime/liveProvider';
@@ -1051,88 +1051,35 @@ export const ServicesTrackingPage: React.FC = () => {
       cancelText: 'Cancelar',
       onOk: async () => {
         setBulkDeleting(true);
-        let deleted = 0;
-        let alreadyMissing = 0;
-        const failed: string[] = [];
-        const removedIdentities = new Set<string>();
 
         try {
-          for (let index = 0; index < targets.length; index += 1) {
-            const row = targets[index];
-            try {
-              await servicesTrackingApi.deleteFromSource({
-                type: row.serviceType,
-                origemId: row.origemId,
-              });
-              deleted += 1;
-              removedIdentities.add(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }));
-            } catch (error: any) {
-              const errorMessage = String(error?.message || '');
-              const normalized = normalizeHeaderKey(errorMessage);
-              const isMissingAtSource =
-                normalized.includes('naoencontradacomid')
-                || normalized.includes('naoencontradocomid');
+          await servicesTrackingApi.deleteBatch(targets.map((row) => row.id));
 
-              if (isMissingAtSource) {
-                // Se o registro já não existe no módulo de origem, consideramos como removido para o fluxo em massa.
-                alreadyMissing += 1;
-                removedIdentities.add(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }));
-              } else {
-                failed.push(`${row.code || row.id}: ${errorMessage || 'erro ao excluir'}`);
-              }
-            }
+          const removedIdentities = new Set(
+            targets.map((row) => buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }))
+          );
 
-            if (index > 0 && index % 10 === 0) {
-              await yieldToBrowser();
-            }
-          }
-
-          if (removedIdentities.size > 0) {
-            setHiddenOriginIdentities((current) => {
-              const next = new Set(current);
-              removedIdentities.forEach((identity) => next.add(identity));
-              return next;
-            });
-            setRows((current) => {
-              const next = current.filter((row) =>
-                !removedIdentities.has(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }))
-              );
-              writeServicesRowsCache(next);
-              return next;
-            });
-          }
+          setHiddenOriginIdentities((current) => {
+            const next = new Set(current);
+            removedIdentities.forEach((identity) => next.add(identity));
+            return next;
+          });
+          setRows((current) => {
+            const next = current.filter((row) =>
+              !removedIdentities.has(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }))
+            );
+            writeServicesRowsCache(next);
+            return next;
+          });
 
           if (drawerRow && targets.some((target) => target.id === drawerRow.id)) {
             setDrawerRow(null);
           }
 
           setSelectedRowKeys([]);
-
-          if (failed.length) {
-            message.warning(
-              `Exclusão em massa concluída com alertas. Excluídos: ${deleted}. Já inexistentes: ${alreadyMissing}. Falhas: ${failed.length}.`
-            );
-            Modal.info({
-              title: 'Falhas na exclusão em massa',
-              width: 720,
-              content: (
-                <Space direction="vertical" size={6}>
-                  <Text>Excluídos: {deleted}</Text>
-                  <Text>Já inexistentes na origem: {alreadyMissing}</Text>
-                  <Text>Falhas: {failed.length}</Text>
-                  <div style={{ maxHeight: 260, overflowY: 'auto' }}>
-                    {failed.map((entry) => (
-                      <Text key={entry} style={{ display: 'block' }}>{entry}</Text>
-                    ))}
-                  </div>
-                </Space>
-              ),
-            });
-          } else {
-            message.success(
-              `Exclusão em massa concluída. Removidos: ${deleted}. Já inexistentes na origem: ${alreadyMissing}.`
-            );
-          }
+          message.success(`Exclusão em massa concluída. Removidos: ${targets.length}.`);
+        } catch (error: any) {
+          message.error(error?.message || 'Erro ao excluir serviços selecionados.');
         } finally {
           setBulkDeleting(false);
         }

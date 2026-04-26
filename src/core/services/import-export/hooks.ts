@@ -3,17 +3,8 @@ import {
   buildCsv,
   downloadCsv,
   parseCsvToRecords,
-  type CsvDelimiter,
-  type CsvRecord,
 } from "./csv";
-
-interface UseCsvExportOptions<TItem> {
-  filename: string;
-  mapData: (item: TItem) => CsvRecord;
-  columns?: string[];
-  delimiter?: CsvDelimiter;
-  includeBom?: boolean;
-}
+import type { UseCsvExportOptions } from "./types";
 
 export const useCsvExport = <TItem>({
   filename,

@@ -14,7 +14,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { TablePaginationConfig } from 'antd/es/table/interface';
-import type { Cliente } from '../../../core/services/clientesService';
+import type { Cliente } from '../../../core/services/client/clientesService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 
 const { Text } = Typography;

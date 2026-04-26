@@ -19,8 +19,8 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SidebarProfile } from './LayoutContext';
-import { avcbService, clcbService, processosAdmService } from '../../../core/services/genericService';
-import { obrasService } from '../../../core/services/obrasService';
+import { avcbService, clcbService, processosAdmService } from '../../../core/services/generic/genericService';
+import { obrasService } from '../../../core/services/obras/obrasService';
 import { useLiveSubscription } from '../../../core/realtime/liveProvider';
 
 const { Sider } = Layout;

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Form, Input, Button, Typography, App } from 'antd';
 import { MailOutlined, SafetyOutlined, LockOutlined, KeyOutlined } from '@ant-design/icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { authService, type ResetPasswordDTO } from '../../../core/services/authService';
+import { authService, type ResetPasswordDTO } from '../../../core/services/auth/authService';
 import { AuthShell } from '../components/AuthShell';
 
 const { Text } = Typography;
