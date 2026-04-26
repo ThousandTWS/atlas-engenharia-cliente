@@ -319,8 +319,28 @@ body {
   background: #1e2a47 !important;
 }
 
+.atlas-header-icon-btn.atlas-header-menu-btn.ant-btn,
+.atlas-header-icon-btn.atlas-header-menu-btn.ant-btn:hover,
+.atlas-header-icon-btn.atlas-header-menu-btn.ant-btn:focus,
+.atlas-header-icon-btn.atlas-header-menu-btn.ant-btn:active {
+  border-color: var(--atlas-primary-border) !important;
+  background: linear-gradient(180deg, var(--atlas-primary-from) 0%, var(--atlas-primary-to) 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px var(--atlas-primary-shadow);
+}
+
+.atlas-header-icon-btn.atlas-header-menu-btn.ant-btn:hover,
+.atlas-header-icon-btn.atlas-header-menu-btn.ant-btn:focus {
+  background: linear-gradient(180deg, var(--atlas-primary-hover-from) 0%, var(--atlas-primary-hover-to) 100%) !important;
+}
+
 .atlas-global-search {
   width: 100%;
+}
+
+.atlas-antv-line-chart {
+  width: 100%;
+  height: 100%;
 }
 
 .atlas-global-search.ant-input-search {

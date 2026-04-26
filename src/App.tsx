@@ -52,7 +52,7 @@ function AppLayoutStructure() {
             marginLeft: sideBarWidth,
             transition: "all 0.2s",
             minWidth: 0,
-            background: isDarkMode ? "#0A0F1C" : "#1E1F2112",
+            background: isDarkMode ? "#0A0F1C" : "#F7F8FA",
           }}
         >
           <AppHeader
@@ -71,7 +71,7 @@ function AppLayoutStructure() {
               color: isDarkMode ? "#fff" : "#1E293B",
               background: isDarkMode
                 ? "linear-gradient(145deg, #141B2D 0%, #0A0F1C 100%)"
-                : "#FCFCFC",
+                : "#FFFFFF",
               borderRadius: contentBorderRadius,
               overflow: "initial",
             }}
@@ -88,7 +88,48 @@ function AppLayoutStructure() {
 }
 
 function App() {
-  const configProps = { theme: { algorithm: theme.defaultAlgorithm } };
+  const { isDarkMode } = useLayout();
+  const configProps = {
+    theme: {
+      algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+      token: {
+        colorPrimary: "#A67458",
+        colorPrimaryHover: "#B48368",
+        colorPrimaryActive: "#8B5E47",
+        colorBgLayout: isDarkMode ? "#0A0F1C" : "#F7F8FA",
+        colorBgContainer: isDarkMode ? "#141B2D" : "#ffffff",
+        colorBorder: isDarkMode ? "#2A3A5C" : "#d9d9d9",
+        colorText: isDarkMode ? "#E2E8F0" : "rgba(0, 0, 0, 0.88)",
+      },
+      components: {
+        Button: {
+          colorPrimary: "#A67458",
+          colorPrimaryHover: "#B48368",
+          colorPrimaryActive: "#8B5E47",
+          algorithm: true,
+        },
+        Modal: {
+          contentBg: isDarkMode ? "#141B2D" : "#ffffff",
+          headerBg: isDarkMode ? "#141B2D" : "#ffffff",
+          titleColor: isDarkMode ? "#ffffff" : "rgba(0, 0, 0, 0.88)",
+        },
+        Table: {
+          headerBg: isDarkMode ? "#1C2536" : "#fafafa",
+          headerColor: isDarkMode ? "#FFFFFF" : "rgba(0, 0, 0, 0.88)",
+          colorBgContainer: isDarkMode ? "#0A0F1C" : "#ffffff",
+          colorText: isDarkMode ? "#E2E8F0" : "rgba(0, 0, 0, 0.88)",
+          rowHoverBg: isDarkMode ? "#1E293B" : "#fafafa",
+        },
+        Select: {
+          selectorBg: isDarkMode ? "#171C2A" : "#ffffff",
+          optionSelectedBg: isDarkMode ? "#1E293B" : "#e6f4ff",
+          colorBgElevated: isDarkMode ? "#171C2A" : "#ffffff",
+          colorBorder: isDarkMode ? "#2A3A5C" : "#d9d9d9",
+        },
+      },
+    },
+  };
+
   return (
     <ConfigProvider {...configProps}>
       <GlobalAiDrawerProvider>

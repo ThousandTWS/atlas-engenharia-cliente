@@ -200,7 +200,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed?.(!collapsed)}
-            className="atlas-header-icon-btn"
+            className="atlas-header-icon-btn atlas-header-menu-btn"
             style={{ ...iconButtonStyle, fontSize: 16 }}
           />
         </Tooltip>

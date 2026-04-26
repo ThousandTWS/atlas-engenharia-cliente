@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { App, Button, Card, Col, DatePicker, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Chart } from '@antv/g2';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import dayjs, { type Dayjs } from 'dayjs';
 import { executiveDashboardService, type DashboardSummary } from '../services/executiveDashboardService';
 import { formatCurrencyPtBr } from '../../../core/structural/flyweight/numberFormatterFlyweight';
+import { useLayout } from '../../../shared/components/layout/LayoutContext';
 
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
@@ -12,6 +14,13 @@ const currency = (value: number) => formatCurrencyPtBr(value ?? 0, 2);
 const number = (value: number) => new Intl.NumberFormat('pt-BR').format(value ?? 0);
 const percent = (value: number) => `${(value ?? 0).toFixed(2)}%`;
 const defaultRange = (): [Dayjs, Dayjs] => [dayjs().startOf('month'), dayjs().endOf('day')];
+const statusChartPalette = ['#A67458', '#64748B', '#0F766E', '#B45309', '#7C3AED', '#DC2626'];
+
+const formatStatusLabel = (value: string) =>
+  value
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 const financialCards = (summary: DashboardSummary) => [
   { key: 'receita', title: 'Receita contratada', value: currency(summary.financeiro.receitaContratada), accent: '#0f766e' },
@@ -22,8 +31,111 @@ const financialCards = (summary: DashboardSummary) => [
   { key: 'margem', title: 'Margem', value: percent(summary.financeiro.margemPercentual), accent: '#1d4ed8' },
 ];
 
+type SituationChartItem = {
+  situacao: string;
+  label: string;
+  quantidade: number;
+};
+
+const SituationLineChart = ({ data, isDarkMode }: { data: SituationChartItem[]; isDarkMode: boolean }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const chartData = data.map((item, index) => ({
+      status: item.label,
+      quantidade: item.quantidade,
+      serie: 'Serviços',
+      color: statusChartPalette[index % statusChartPalette.length],
+    }));
+
+    const chart = new Chart({
+      container: containerRef.current,
+      autoFit: true,
+      height: 280,
+    });
+
+    chart.options({
+      type: 'view',
+      data: chartData,
+      theme: isDarkMode ? 'classicDark' : 'classic',
+      marginTop: 18,
+      marginRight: 28,
+      marginBottom: 44,
+      marginLeft: 46,
+      scale: {
+        color: {
+          range: ['#22D3EE'],
+        },
+        y: {
+          nice: true,
+        },
+      },
+      axis: {
+        x: {
+          title: null,
+          labelFontSize: 12,
+          labelFill: isDarkMode ? '#9EB3D3' : '#64748B',
+          line: true,
+          lineStroke: isDarkMode ? '#456078' : '#CBD5E1',
+          tick: false,
+        },
+        y: {
+          title: null,
+          labelFontSize: 12,
+          labelFill: isDarkMode ? '#9EB3D3' : '#64748B',
+          grid: true,
+          gridStroke: isDarkMode ? '#355064' : '#E2E8F0',
+          gridLineDash: [4, 4],
+        },
+      },
+      legend: {
+        color: {
+          position: 'top',
+          itemLabelFill: isDarkMode ? '#E2E8F0' : '#334155',
+          marker: 'smooth',
+        },
+      },
+      tooltip: {
+        title: (item: SituationChartItem) => item.label,
+        items: [{ channel: 'y', name: 'Quantidade', valueFormatter: (value: number) => number(value) }],
+      },
+      children: [
+        {
+          type: 'line',
+          encode: { x: 'status', y: 'quantidade', color: 'serie', shape: 'smooth' },
+          style: {
+            lineWidth: 3,
+            shadowColor: isDarkMode ? '#22D3EE55' : '#22D3EE33',
+            shadowBlur: 12,
+          },
+        },
+        {
+          type: 'point',
+          encode: { x: 'status', y: 'quantidade', color: 'serie', shape: 'point' },
+          style: {
+            r: 5,
+            lineWidth: 2,
+            stroke: isDarkMode ? '#173244' : '#FFFFFF',
+          },
+        },
+      ],
+    });
+
+    chart.render();
+
+    return () => {
+      chart.destroy();
+    };
+  }, [data, isDarkMode]);
+
+  return <div ref={containerRef} className="atlas-antv-line-chart" />;
+};
+
 export const ExecutiveDashboard = () => {
   const { message } = App.useApp();
+  const { isDarkMode } = useLayout();
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<[Dayjs, Dayjs]>(defaultRange);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -58,6 +170,10 @@ export const ExecutiveDashboard = () => {
   })) ?? [], [summary]);
 
   const situationData = summary?.carteira.servicosPorSituacao ?? [];
+  const situationChartData = situationData.map((item) => ({
+    ...item,
+    label: formatStatusLabel(item.situacao),
+  }));
   const providerRows = summary?.prestadores.topPrestadoresPorCusto ?? [];
   const payableRows = summary?.prestadores.aPagarPorPrestador ?? [];
   const bottleneckRows = summary?.operacional.etapasComMaiorGargalo ?? [];
@@ -128,19 +244,7 @@ export const ExecutiveDashboard = () => {
               <Col xs={12} md={6}><Statistic title="Cancelamento" value={summary.carteira.taxaCancelamentoPercentual} formatter={(value) => percent(Number(value))} /></Col>
             </Row>
             <div style={{ width: '100%', height: 280 }}>
-              <ResponsiveContainer>
-                <BarChart data={situationData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="situacao" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip formatter={(value) => number(Number(value))} />
-                  <Bar dataKey="quantidade" radius={[10, 10, 0, 0]}>
-                    {situationData.map((item, index) => (
-                      <Cell key={`${item.situacao}-${index}`} fill={['#2563eb', '#0f766e', '#f59e0b', '#7c3aed', '#dc2626'][index % 5]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <SituationLineChart data={situationChartData} isDarkMode={isDarkMode} />
             </div>
           </Card>
         </Col>
