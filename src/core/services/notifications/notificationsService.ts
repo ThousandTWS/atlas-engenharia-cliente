@@ -1,6 +1,8 @@
 import { apiRequest } from '../../api/apiClient';
 import type { BackendNotification, BackendNotificationResponse } from './types';
 
+export type { BackendNotification, BackendNotificationResponse } from './types';
+
 export type BackendNotificationCategory = 'FINANCEIRA' | 'TECNICA';
 export type BackendNotificationServiceType = 'AVCB' | 'CLCB' | 'OBRAS' | 'PROCESSOS_ADM';
 

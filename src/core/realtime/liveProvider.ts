@@ -1,6 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import type { LiveEvent, LiveEventType, PublishParams, SubscribeParams, SubscriptionEntry } from './types';
 
+export type { LiveEvent, LiveEventType, PublishParams, SubscribeParams } from './types';
+
 const randomId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 

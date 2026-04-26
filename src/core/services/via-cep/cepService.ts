@@ -1,4 +1,4 @@
-import type { CepLookupResult } from "./via-cep/types";
+import type { CepLookupResult } from "./types";
 
 
 const onlyDigits = (value: string) => String(value || '').replace(/\D/g, '');
@@ -32,4 +32,3 @@ export const cepService = {
     };
   },
 };
-

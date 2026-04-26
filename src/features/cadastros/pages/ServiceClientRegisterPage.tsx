@@ -25,7 +25,7 @@ import { FilePdfOutlined, PlusOutlined, SaveOutlined, SearchOutlined } from '@an
 import dayjs, { type Dayjs } from 'dayjs';
 import { useSearchParams } from 'react-router-dom';
 import { clientesService } from '../../../core/services/client/clientesService';
-import { cepService } from '../../../core/services/cepService';
+import { cepService } from '../../../core/services/via-cep/cepService';
 import { pdfTemplatesService } from '../../../core/services/pdf/pdfTemplatesService';
 import { servicesTrackingApi } from '../../services/servicesTrackingApi';
 import { cadastrosApi, type BudgetRecord, type LinkedProviderRecord, type PaymentConditionRecord, type PaymentInstallment, type ProviderRecord, type ServiceKind, type ServiceRegistrationRecord, type SubtypeConfig } from '../cadastrosApi';

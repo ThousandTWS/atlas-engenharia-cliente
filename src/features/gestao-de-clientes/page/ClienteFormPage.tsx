@@ -24,7 +24,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { Cliente } from '../../../core/services/client/clientesService';
 import { clientesService } from '../../../core/services/client/clientesService';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
-import { cepService } from '../../../core/services/cepService';
+import { cepService } from '../../../core/services/via-cep/cepService';
 import { normalizeCepBR } from '../../../shared/utils/inputFormat';
 
 const { Title, Text } = Typography;

@@ -1,6 +1,8 @@
 import apiClient from '../../api/apiClient';
 import type { Cliente, ClientesFilters, ClientesPaginatedResponse } from '.';
 
+export type { Cliente, ClientesFilters, ClientesPaginatedResponse } from '.';
+
 export const clientesService = {
   getAll: async (filters?: ClientesFilters) => {
     const response = await apiClient.get<ClientesPaginatedResponse>('/clientes', {

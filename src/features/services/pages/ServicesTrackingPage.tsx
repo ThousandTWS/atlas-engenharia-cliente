@@ -570,7 +570,9 @@ export const ServicesTrackingPage: React.FC = () => {
       const services = await servicesTrackingApi.getAll({ size });
       const mapped = services.content
         .map(mapServiceRow)
-        .filter((row) => !hiddenOriginIdentities.has(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId })));
+        .filter((row: UnifiedServiceRow) =>
+          !hiddenOriginIdentities.has(buildRowOriginIdentity({ serviceType: row.serviceType, origemId: row.origemId }))
+        );
       setRows(mapped);
       writeServicesRowsCache(mapped);
     } catch (error: any) {

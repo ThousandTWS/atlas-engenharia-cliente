@@ -2,6 +2,8 @@ import apiClient from '../../api/apiClient';
 import { publishResourceEvent } from '../../realtime/liveProvider';
 import type { BaseModule, GenericFilters, PaginatedResponse } from './types';
 
+export type { BaseModule, GenericFilters, PaginatedResponse } from './types';
+
 const serializeQueryParams = (params: Record<string, unknown>) => {
   const query = new URLSearchParams();
 

@@ -351,7 +351,7 @@ export const cadastrosApi = {
     return {
       ...response.data,
       content: response.data.content.map(mapService),
-    };
+    } satisfies PaginatedResponse<ServiceRegistrationRecord>;
   },
 
   async saveService(item: ServiceRegistrationRecord) {
