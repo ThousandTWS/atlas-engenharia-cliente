@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { App, Button, Card, Col, DatePicker, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { App, Button, Card, Col, DatePicker, Empty, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
 import { Chart } from '@antv/g2';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar } from 'recharts';
 import dayjs, { type Dayjs } from 'dayjs';
-import { executiveDashboardService, type DashboardSummary } from '../services/executiveDashboardService';
+import { executiveDashboardService, type DashboardSummary, type DashboardValueByType } from '../services/executiveDashboardService';
 import { formatCurrencyPtBr } from '../../../core/structural/flyweight/numberFormatterFlyweight';
 import { useLayout } from '../../../shared/components/layout/LayoutContext';
 
@@ -133,6 +133,92 @@ const SituationLineChart = ({ data, isDarkMode }: { data: SituationChartItem[]; 
   return <div ref={containerRef} className="atlas-antv-line-chart" />;
 };
 
+const TicketDonutChart = ({ data, isDarkMode }: { data: DashboardValueByType[]; isDarkMode: boolean }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const total = data.reduce((sum, item) => sum + (item.valor || 0), 0);
+
+  useEffect(() => {
+    if (!containerRef.current || data.length === 0) return;
+
+    const chartData = data.map((item) => ({
+      tipo: formatStatusLabel(item.tipo),
+      valor: item.valor,
+    }));
+
+    const chart = new Chart({
+      container: containerRef.current,
+      autoFit: true,
+      height: 240,
+    });
+
+    chart.options({
+      type: 'interval',
+      data: chartData,
+      theme: isDarkMode ? 'classicDark' : 'classic',
+      coordinate: { type: 'theta', innerRadius: 0.68, outerRadius: 0.9 },
+      transform: [{ type: 'stackY' }],
+      encode: { y: 'valor', color: 'tipo' },
+      scale: {
+        color: {
+          range: ['#2F80ED', '#18C7C7', '#F28C52', '#A67458', '#7C3AED', '#64748B'],
+        },
+      },
+      legend: {
+        color: {
+          position: 'bottom',
+          layout: { justifyContent: 'center' },
+          itemLabelFill: isDarkMode ? '#D6E1F3' : '#334155',
+          itemLabelFontSize: 12,
+        },
+      },
+      tooltip: {
+        items: [{
+          channel: 'y',
+          name: 'Ticket',
+          valueFormatter: (value: number) => currency(value),
+        }],
+      },
+      style: {
+        inset: 1,
+        radius: 8,
+        stroke: isDarkMode ? '#141B2D' : '#FFFFFF',
+        lineWidth: 3,
+      },
+    });
+
+    chart.render();
+
+    return () => {
+      chart.destroy();
+    };
+  }, [data, isDarkMode]);
+
+  if (data.length === 0) {
+    return (
+      <div className="atlas-ticket-donut-empty">
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Não há dados" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="atlas-ticket-donut">
+      <div ref={containerRef} className="atlas-ticket-donut__chart" />
+      <div className="atlas-ticket-donut__center">
+        <span>Total</span>
+        <strong>{currency(total)}</strong>
+      </div>
+    </div>
+  );
+};
+
+type ReceivableColumnItem = {
+  label: string;
+  'Em 7 dias': number;
+  'Em 30 dias': number;
+  'Em atraso': number;
+};
+
 export const ExecutiveDashboard = () => {
   const { message } = App.useApp();
   const { isDarkMode } = useLayout();
@@ -168,6 +254,29 @@ export const ExecutiveDashboard = () => {
     ...item,
     label: dayjs(item.dataReferencia).format('DD/MM'),
   })) ?? [], [summary]);
+
+  const receivableColumnData = useMemo<ReceivableColumnItem[]>(() => {
+    if (!summary) return [];
+
+    const points = forecastData.length > 0
+      ? forecastData.filter((_, index) => index % Math.max(1, Math.ceil(forecastData.length / 6)) === 0).slice(0, 6)
+      : [{ label: dayjs(summary.dataFinal).format('DD/MM'), valor: 0 }];
+
+    const totalForecast = points.reduce((sum, item) => sum + (Number(item.valor) || 0), 0) || 1;
+    const sevenDays = summary.contasReceber.parcelasAVencerEm7Dias;
+    const thirtyDays = summary.contasReceber.parcelasAVencerEm30Dias;
+    const overdue = summary.contasReceber.parcelasEmAtraso;
+
+    return points.map((item) => {
+      const weight = (Number(item.valor) || 0) / totalForecast;
+      return {
+        label: item.label,
+        'Em 7 dias': sevenDays * weight,
+        'Em 30 dias': thirtyDays * weight,
+        'Em atraso': overdue * weight,
+      };
+    });
+  }, [forecastData, summary]);
 
   const situationData = summary?.carteira.servicosPorSituacao ?? [];
   const situationChartData = situationData.map((item) => ({
@@ -250,16 +359,7 @@ export const ExecutiveDashboard = () => {
         </Col>
         <Col xs={24} xl={10} className="atlas-equal-height-col">
           <Card title="Ticket médio por tipo" className="atlas-equal-height-card" style={{ borderRadius: 16 }}>
-            <Table
-              size="small"
-              rowKey="tipo"
-              pagination={false}
-              dataSource={summary.carteira.ticketMedioPorTipo}
-              columns={[
-                { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
-                { title: 'Ticket', dataIndex: 'valor', key: 'valor', align: 'right', render: (value: number) => currency(value) },
-              ]}
-            />
+            <TicketDonutChart data={summary.carteira.ticketMedioPorTipo} isDarkMode={isDarkMode} />
           </Card>
         </Col>
       </Row>
@@ -274,19 +374,15 @@ export const ExecutiveDashboard = () => {
             </Row>
             <div style={{ width: '100%', height: 280 }}>
               <ResponsiveContainer>
-                <AreaChart data={forecastData}>
-                  <defs>
-                    <linearGradient id="forecastFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.45} />
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart data={receivableColumnData} margin={{ top: 8, right: 12, left: 0, bottom: 8 }} barCategoryGap="28%">
+                  <CartesianGrid strokeDasharray="4 4" stroke={isDarkMode ? '#355064' : '#E2E8F0'} vertical={false} />
                   <XAxis dataKey="label" />
-                  <YAxis />
+                  <YAxis tickFormatter={(value) => currency(Number(value)).replace('R$', '').trim()} />
                   <Tooltip formatter={(value) => currency(Number(value))} />
-                  <Area type="monotone" dataKey="valor" stroke="#2563eb" fill="url(#forecastFill)" strokeWidth={3} />
-                </AreaChart>
+                  <Bar dataKey="Em 7 dias" stackId="receivable" fill="#2F80ED" radius={[0, 0, 4, 4]} />
+                  <Bar dataKey="Em 30 dias" stackId="receivable" fill="#18C7C7" />
+                  <Bar dataKey="Em atraso" stackId="receivable" fill="#F28C52" radius={[4, 4, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </Card>
