@@ -88,7 +88,6 @@ export const LoginPage: React.FC = () => {
         >
           <Input.Password className="atlas-form-input" prefix={<LockOutlined />} placeholder="Sua senha de acesso" />
         </Form.Item>
-
         <Form.Item style={{ marginTop: 24, marginBottom: 8 }}>
           <Button
             type="primary"

@@ -12,7 +12,7 @@ import type { RefreshTokenDTO, TokenResponse } from "../services/auth/types";
 
 export const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() ||
-  "https://goldfish-app-w3676.ondigitalocean.app/api";
+  "https://backend-atlas-engenharia-production-52b3.up.railway.app/api";
 
 class ApiClient {
   private static instance: AxiosInstance;
